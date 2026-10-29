@@ -15,11 +15,12 @@ async function drop(page, specs) {
     const dt = new DataTransfer();
     specs.forEach(f => {
       let data;
-      if (f.csv) data = new TextEncoder().encode('﻿' + f.csv);
+      if (f.b64) data = Uint8Array.from(atob(f.b64), c => c.charCodeAt(0)); // 미리 만들어 둔 파일(tests/fixtures)
+      else if (f.csv) data = new TextEncoder().encode('﻿' + f.csv);
       else {
         const wb = X.utils.book_new();
         f.sheets.forEach(([name, aoa]) => X.utils.book_append_sheet(wb, X.utils.aoa_to_sheet(aoa), name));
-        data = X.write(wb, { type: 'array', bookType: 'xlsx' });
+        data = X.write(wb, { type: 'array', bookType: f.bookType || 'xlsx' });
       }
       dt.items.add(new File([data], f.name));
     });
@@ -39,6 +40,8 @@ async function main() {
   const settle = () => page.waitForTimeout(500);
 
   await page.goto(url(path.join(ROOT, 'index.html')));
+  // 숨겨야 할 것(알림·확인 막대·위 버튼)이 처음 화면에 보이면 안 됨
+  for (const sel of ['#notice', '#resetConfirm', '#topActions', '#colorPop']) assert.equal(await page.isVisible(sel), false, sel + ' 가 보임');
 
   // 합치기: 칸 순서가 달라도 합치고, 제목이 다른 탭·빈 탭은 빼고 알려 준다
   const H = ['주문번호', '주문일', '고객', '금액'];
@@ -91,17 +94,53 @@ async function main() {
   await page.fill('#search', '교체확인'); await settle();
   assert.equal(await count(), 1);
 
-  // 가짜 데이터로 체험
+  // 처음부터: 취소하면 그대로, 지우기를 누르면 처음 화면
+  const reset = async () => {
+    await page.click('#resetBtn');
+    await page.click('#resetYes');
+    await page.waitForSelector('#intro:not([hidden])');
+  };
   await page.click('#resetBtn');
   await page.click('#resetNo');
-  assert.equal(await page.$eval('#view', e => e.hidden), false); // 취소하면 그대로
-  await page.click('#resetBtn');
-  await page.click('#resetYes');
-  await page.waitForSelector('#intro:not([hidden])');
+  assert.equal(await page.$eval('#view', e => e.hidden), false);
+  await reset();
+
+  // 셀 색깔: 표에 원본 색을 칠하고, 칸마다 쓰인 색으로 거른다 (tests/make-color-fixture.py로 만든 파일)
+  const fx = n => ({ name: n, b64: fs.readFileSync(path.join(__dirname, 'fixtures', n)).toString('base64') });
+  await drop(page, [fx('색.xlsx'), fx('무색.xlsx'),
+    { name: '옛형식.xls', bookType: 'biff8', sheets: [['Sheet1', [['번호', '상태', '금액', '메모'], [10, '정상', 1000, 'y']]]] }]);
+  await page.waitForSelector('#view:not([hidden])', { timeout: 30000 });
+  await settle();
+  summary = await text('#summary');
+  assert.match(summary, /10건/);
+  assert.match(summary, /색칠된 칸 7개/); // 제목 줄 색, 값 없는 칸 색은 빼고
+  assert.match(summary, /색 정보 안내 2개/); // 조건부 서식, .xls
+  assert.deepEqual(await page.$$eval('.cbtn', b => b.map(x => x.dataset.ci)), ['1', '2']); // 상태(배경색)·금액(글자색)만
+  const styles = await page.$$eval('#body .c[style]', c => c.map(x => x.getAttribute('style')));
+  assert.ok(styles.some(x => x.includes('background:#ccc1da')), '테마색+밝기'); // 강조4(8064A2) 60% 밝게
+  assert.ok(styles.some(x => x.includes('background:#ccffcc')), '옛 색 번호 42');
+  assert.ok(styles.some(x => x.includes('color:#0070c0')), '글자색 rgb');
+  assert.ok(styles.some(x => x.includes('color:#c0504d')), '글자색 테마');
+  await page.click('.cbtn[data-ci="1"]');
+  await page.check('#colorPop input[value="#ff0000"]'); await settle();
+  assert.equal(await count(), 3); // 1월 2개 + 칸 순서가 다른 2월 1개
+  assert.match(await text('#body'), /2월/);
+  await page.check('#colorPop input[value=""]'); await settle();
+  assert.equal(await count(), 8); // 빨강 또는 색 없음
+  await page.keyboard.press('Escape');
+  assert.equal(await page.isVisible('#colorPop'), false);
+  assert.match(await page.$eval('.cbtn[data-ci="1"]', e => e.className), /\bon\b/);
+  await page.click('#clearBtn'); await settle();
+  assert.equal(await count(), 10);
+  await reset();
+
+  // 가짜 데이터로 체험(배송상태·금액에 색이 칠해져 있음)
   await page.selectOption('#sampleSize', '10000');
   await page.click('#sampleBtn');
   await page.waitForSelector('#view:not([hidden])', { timeout: 60000 });
   assert.match(await text('#summary'), /10,000건/);
+  assert.match(await text('#summary'), /색칠된 칸/);
+  assert.equal(await page.$$eval('.cbtn', b => b.length), 2);
   assert.deepEqual(errors, []);
 
   // vendor 폴더 없이 index.html만 연 경우(압축 파일 안에서 바로 연 경우 등) 안내가 뜬다
