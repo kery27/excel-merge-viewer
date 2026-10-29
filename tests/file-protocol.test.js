@@ -1,5 +1,5 @@
 // 파일 더블클릭(file://)으로 열었을 때 동작 확인 — 서버 없이 index.html을 직접 연다.
-// 실행: node tests/file-protocol.test.js   (Playwright + Chromium 필요)
+// 실행: node tests/file-protocol.test.js   (Playwright + Chromium 필요. 한글 파일 이름을 넘기므로 UTF-8 로케일에서 — 리눅스면 LANG=C.UTF-8)
 // 가짜 데이터만 쓴다. 엑셀 파일은 페이지 안에서 vendor의 SheetJS로 만들어 드래그 앤 드롭처럼 넣는다.
 const { chromium } = require('playwright');
 const assert = require('assert');
@@ -30,7 +30,7 @@ async function drop(page, specs) {
 
 async function main() {
   const browser = await chromium.launch();
-  const page = await browser.newPage();
+  const page = await browser.newPage({ acceptDownloads: true });
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
@@ -141,6 +141,70 @@ async function main() {
   assert.match(await text('#summary'), /10,000건/);
   assert.match(await text('#summary'), /색칠된 칸/);
   assert.equal(await page.$$eval('.cbtn', b => b.length), 2);
+
+  // 저장 · 다시 열기: 파일로(비밀번호 없이/있게), 이 브라우저에
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'emv-save-'));
+  const download = async () => {
+    const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#saveFile')]);
+    const f = path.join(tmp, dl.suggestedFilename());
+    await dl.saveAs(f);
+    return f;
+  };
+  await page.click('#saveBtn');
+  const plain = await download();
+  assert.match(path.basename(plain), /^엑셀모아보기_.*\.db$/);
+  await page.check('#pwOn');
+  await page.fill('#pw1', 'ab'); await page.fill('#pw2', 'ab');
+  await page.click('#saveFile');
+  assert.match(await text('#saveMsg'), /4글자 이상/);
+  await page.fill('#pw1', 'test1234'); await page.fill('#pw2', 'test1234');
+  const locked = await download();
+  assert.match(path.basename(locked), /_비밀번호\.db$/);
+  await page.click('#saveLocal');
+  await page.waitForFunction(() => /저장했어요|못했어요/.test(document.querySelector('#saveMsg').textContent));
+  assert.match(await text('#saveMsg'), /브라우저에 저장했어요/);
+
+  const reopened = async () => {
+    await page.waitForSelector('#view:not([hidden])', { timeout: 30000 });
+    await settle();
+    assert.match(await text('#summary'), /10,000건/);
+    assert.match(await text('#summary'), /연 시간/);
+    assert.equal(await page.$$eval('.cbtn', b => b.length), 2); // 색 정보도 같이 돌아옴
+    await page.click('.cbtn');
+    await page.locator('#colorPop input').first().check(); await settle();
+    assert.ok((await count()) > 0 && (await count()) < 10000);
+    await page.keyboard.press('Escape');
+  };
+  // 새로 열면 [이어서 보기]
+  await page.goto(url(path.join(ROOT, 'index.html')));
+  await page.waitForSelector('#resume:not([hidden])');
+  assert.match(await text('#resumeInfo'), /파일 2개 · 10,000건/);
+  await page.click('#resumeBtn');
+  await reopened();
+  // 저장본 파일 열기
+  await page.goto(url(path.join(ROOT, 'index.html')));
+  await page.setInputFiles('#fileInput', plain);
+  await reopened();
+  // 비밀번호 파일: 틀리면 다시 묻고, 맞으면 열림
+  await page.goto(url(path.join(ROOT, 'index.html')));
+  await page.setInputFiles('#fileInput', locked);
+  await page.waitForSelector('#pwDlg:not([hidden])');
+  await page.fill('#pwIn', 'wrong'); await page.click('#pwOk');
+  await page.waitForFunction(() => /맞지 않아요/.test(document.querySelector('#pwErr').textContent));
+  await page.fill('#pwIn', 'test1234'); await page.click('#pwOk');
+  await reopened();
+  // 엑셀 모아보기 저장본이 아닌 .db
+  const bogus = path.join(tmp, '아무파일.db');
+  fs.writeFileSync(bogus, 'not a database');
+  await page.setInputFiles('#fileInput', bogus);
+  await page.waitForSelector('#notice:not([hidden])');
+  assert.match(await text('#noticeText'), /저장본이 아니에요/);
+  // [지우기]하면 [이어서 보기]가 사라짐
+  await page.goto(url(path.join(ROOT, 'index.html')));
+  await page.waitForSelector('#resume:not([hidden])');
+  await page.click('#resumeDel');
+  await page.waitForSelector('#resume', { state: 'hidden' });
+  fs.rmSync(tmp, { recursive: true, force: true });
   assert.deepEqual(errors, []);
 
   // vendor 폴더 없이 index.html만 연 경우(압축 파일 안에서 바로 연 경우 등) 안내가 뜬다

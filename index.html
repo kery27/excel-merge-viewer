@@ -121,10 +121,29 @@
   #notice button { padding: 2px 10px; }
   .confirmBar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--sub); }
 
+  #resume { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 14px; padding: 12px 16px; background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 10px; font-size: 13px; color: var(--ink); }
+  #resume .what { flex: 1; min-width: 200px; line-height: 1.6; }
+  #resume .what span { color: var(--sub); }
+  #savePanel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px 28px; font-size: 13px; }
+  #savePanel h3 { margin: 0 0 4px; font-size: 14px; }
+  #savePanel p { margin: 0 0 8px; color: var(--sub); line-height: 1.6; }
+  #savePanel .small { font-size: 12px; color: var(--faint); }
+  #savePanel input[type=password] { padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--field); color: var(--ink); width: 100%; margin-bottom: 6px; }
+  #savePanel .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  #saveMsg { grid-column: 1 / -1; color: var(--ink); min-height: 1em; }
+  #saveMsg.err { color: var(--warn); }
+  #pwDlg { position: fixed; inset: 0; z-index: 30; background: rgba(10,12,20,.45); display: flex; align-items: center; justify-content: center; padding: 16px; }
+  #pwDlg .box { background: var(--panel); color: var(--ink); border-radius: 12px; padding: 18px 20px; width: 100%; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,.3); font-size: 13px; line-height: 1.6; }
+  #pwDlg h3 { margin: 0 0 6px; font-size: 15px; }
+  #pwDlg input { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--field); color: var(--ink); margin: 6px 0; }
+  #pwErr { color: var(--warn); min-height: 1.4em; }
+  #pwDlg .row { display: flex; justify-content: flex-end; gap: 8px; }
+
   @media (max-width: 640px) {
     main { padding: 12px 16px; }
     #intro h1 { font-size: 20px; }
     #count { margin-left: 0; width: 100%; }
+    #savePanel { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -133,6 +152,7 @@
   <div class="brand"><span class="logo">▦</span>엑셀 모아보기</div>
   <div class="topActions" id="topActions" hidden>
     <button id="addMoreBtn">파일 더 넣기</button>
+    <button id="saveBtn" class="ghost">저장</button>
     <button id="resetBtn" class="ghost">처음부터</button>
   </div>
   <div class="confirmBar" id="resetConfirm" hidden>
@@ -145,11 +165,16 @@
 <main>
   <div id="notice" role="alert" hidden><span id="noticeText"></span><button id="noticeClose" class="ghost">닫기</button></div>
   <section id="intro">
+    <div id="resume" hidden>
+      <div class="what"><b>지난번에 이 브라우저에 저장한 데이터가 있어요</b><br><span id="resumeInfo"></span></div>
+      <button id="resumeBtn">이어서 보기</button>
+      <button id="resumeDel" class="ghost">지우기</button>
+    </div>
     <h1>엑셀 여러 개를 던지면, 하나로 모아 바로 찾아봅니다</h1>
     <p class="lead">월별 탭, 연도별 파일로 흩어진 데이터를 한 화면에서 조건으로 걸러 보세요.<br>파일은 이 PC 밖으로 나가지 않아요. 인터넷이 없어도 됩니다.</p>
     <div id="drop">
       <strong>엑셀·CSV 파일을 여기로 끌어다 놓으세요</strong>
-      <span>여러 개를 한꺼번에 넣어도 돼요 · 또는 눌러서 파일 고르기</span>
+      <span>여러 개를 한꺼번에 넣어도 돼요 · 저장해 둔 .db 파일도 여기로 · 또는 눌러서 파일 고르기</span>
     </div>
     <div class="sampleRow">
       파일이 없으면
@@ -175,6 +200,26 @@
   </section>
 
   <section id="view" hidden>
+    <div id="savePanel" hidden>
+      <div>
+        <h3>파일로 저장</h3>
+        <p>모은 데이터를 .db 파일 하나로 내려받아요. 다음엔 이 파일을 끌어다 놓으면 엑셀을 다시 읽지 않고 바로 열려요. 다른 PC로 옮길 수도 있어요.</p>
+        <label class="row" style="margin-bottom:6px"><input type="checkbox" id="pwOn"> 비밀번호 걸기</label>
+        <div id="pwRow" hidden>
+          <input type="password" id="pw1" placeholder="비밀번호 (4글자 이상)" autocomplete="new-password">
+          <input type="password" id="pw2" placeholder="한 번 더 입력" autocomplete="new-password">
+          <p class="small">비밀번호를 잊으면 누구도 열 수 없어요. 원본 엑셀은 따로 보관해 두세요.</p>
+        </div>
+        <button id="saveFile">파일로 내려받기</button>
+      </div>
+      <div>
+        <h3>이 브라우저에 저장</h3>
+        <p>다음에 이 화면을 열면 [이어서 보기]로 바로 열려요. 이 PC의 이 브라우저에서만 보이고, 한 번에 하나만 저장돼요(전에 저장한 것은 바뀜).</p>
+        <p class="small">여러 사람이 같이 쓰는 PC라면 파일로 저장하고 비밀번호를 거는 쪽이 안전해요.</p>
+        <div class="row"><button id="saveLocal">브라우저에 저장</button><button id="saveClose" class="ghost">닫기</button></div>
+      </div>
+      <div id="saveMsg"></div>
+    </div>
     <div id="summary"></div>
     <div class="toolbar">
       <input id="search" type="text" placeholder="전체에서 찾기 (띄어 쓰면 모두 포함된 줄만)" autocomplete="off">
@@ -186,7 +231,16 @@
   </section>
 </main>
 <div id="colorPop" hidden></div>
-<input type="file" id="fileInput" multiple accept=".xlsx,.xlsm,.xls,.csv" hidden>
+<div id="pwDlg" hidden>
+  <div class="box" role="dialog" aria-labelledby="pwTitle">
+    <h3 id="pwTitle">비밀번호가 걸린 파일이에요</h3>
+    <div id="pwMsg"></div>
+    <input type="password" id="pwIn" placeholder="비밀번호" autocomplete="off">
+    <div id="pwErr"></div>
+    <div class="row"><button id="pwCancel" class="ghost">취소</button><button id="pwOk">열기</button></div>
+  </div>
+</div>
+<input type="file" id="fileInput" multiple accept=".xlsx,.xlsm,.xls,.csv,.db" hidden>
 
 <script>
 // ===== Worker: 엑셀 읽기 · 합치기(SQLite, 메모리) · 조회 =====
@@ -575,6 +629,37 @@ function workerMain() {
     return out;
   }
 
+  // ---- 저장본(.db): 모은 데이터 DB를 통째로. 다시 열 때 엑셀을 읽지 않아 몇십~몇백 밀리초면 열린다 ----
+  // 화면 복원에 필요한 것(제목 줄, 넣은 파일 요약, 색 있는 칸)은 DB 안 meta 표에 JSON으로 같이 넣는다.
+  const SAVE_APP = 'excel-merge-viewer', SAVE_VERSION = 1;
+  function exportDb(loadLog) {
+    if (!db) throw new Error('저장할 데이터가 없어요.');
+    const meta = { app: SAVE_APP, version: SAVE_VERSION, cols, colorCols: Array.from(colorCols), loadLog, savedAt: new Date().toISOString() };
+    db.run('CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT)');
+    db.run('INSERT OR REPLACE INTO meta VALUES (?, ?)', ['state', JSON.stringify(meta)]);
+    return db.export(); // 전체 SQLite 파일 바이트
+  }
+  async function openDb(buffer) {
+    await ready;
+    const t0 = performance.now();
+    let next;
+    try { next = new SQL.Database(new Uint8Array(buffer)); }
+    catch (e) { throw new Error('저장본을 열 수 없어요. 파일이 손상된 것 같아요.'); }
+    let meta = null;
+    try { meta = JSON.parse(next.exec("SELECT v FROM meta WHERE k = 'state'")[0].values[0][0]); } catch (e) {}
+    if (!meta || meta.app !== SAVE_APP || !Array.isArray(meta.cols)) {
+      next.close();
+      throw new Error('엑셀 모아보기에서 저장한 파일이 아니에요.');
+    }
+    if (meta.version > SAVE_VERSION) { next.close(); throw new Error('더 새로운 버전에서 저장한 파일이에요. 이 화면을 새 버전으로 바꿔 주세요.'); }
+    if (db) db.close();
+    db = next; cols = meta.cols; ids = new Int32Array(0);
+    colorCols.clear(); (meta.colorCols || []).forEach(i => colorCols.add(i));
+    Object.keys(numericCols).forEach(k => delete numericCols[k]);
+    const total = db.exec('SELECT COUNT(*) FROM data')[0].values[0][0];
+    return { cols, total, loadLog: meta.loadLog || [], savedAt: meta.savedAt, ms: performance.now() - t0 };
+  }
+
   function sampleRows() {
     const res = db.exec('SELECT ' + cols.map((_, i) => 'c' + i).join(', ') + ' FROM data LIMIT 200');
     return res.length ? res[0].values : [];
@@ -696,6 +781,12 @@ function workerMain() {
       else if (cmd === 'sources') result = sources();
       else if (cmd === 'sample-rows') result = sampleRows();
       else if (cmd === 'colors') result = colorStats();
+      else if (cmd === 'export') {
+        const bytes = exportDb(e.data.loadLog);
+        self.postMessage({ type: 'reply', id, result: bytes.buffer }, [bytes.buffer]); // 복사 없이 넘김
+        return;
+      }
+      else if (cmd === 'open') result = await openDb(e.data.buffer);
       else if (cmd === 'reset') { if (db) db.close(); db = null; cols = null; ids = new Int32Array(0); colorCols.clear(); result = true; }
       self.postMessage({ type: 'reply', id, result });
     } catch (err) {
@@ -752,6 +843,8 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&am
 
 function show(id) {
   ['#intro', '#progress', '#view'].forEach(s => { $(s).hidden = s !== id; });
+  if (id === '#intro') refreshResume();
+  if (id !== '#view') $('#savePanel').hidden = true;
   $('#topActions').hidden = id !== '#view';
   $('#resetConfirm').hidden = true;
 }
@@ -764,8 +857,19 @@ function notify(msg) {
 // ---- 파일 넣기 ----
 async function addFiles(fileList) {
   $('#notice').hidden = true;
-  const files = Array.from(fileList).filter(f => /\.(xlsx|xlsm|xls|csv)$/i.test(f.name));
-  if (!files.length) { notify('엑셀(.xlsx/.xls) 또는 CSV 파일만 넣을 수 있어요.'); return; }
+  const all = Array.from(fileList);
+  // 저장본(.db)이 섞여 있으면 먼저 그걸 연다(지금 모은 데이터를 바꿈) — 같이 넣은 엑셀은 그 위에 더한다
+  const saved = all.filter(f => /\.db$/i.test(f.name));
+  if (saved.length) {
+    if (saved.length > 1) notify('저장본(.db)은 한 번에 하나만 열 수 있어요. "' + saved[0].name + '"만 열었어요.');
+    const ok = await openSavedFile(saved[0]);
+    if (!ok) return;
+  }
+  const files = all.filter(f => /\.(xlsx|xlsm|xls|csv)$/i.test(f.name));
+  if (!files.length) {
+    if (!saved.length) notify('엑셀(.xlsx/.xls), CSV, 또는 저장해 둔 .db 파일만 넣을 수 있어요.');
+    return;
+  }
   show('#progress');
   $('#progTitle').textContent = '파일 ' + files.length + '개를 읽는 중이에요';
   setProgress('파일 여는 중…', 0);
@@ -817,7 +921,21 @@ async function afterLoad(res) {
     notify('넣은 파일에서 데이터가 있는 탭을 찾지 못했어요.');
     return;
   }
-  cols = res.cols;
+  await showData(res.cols);
+}
+
+// 저장본을 열었을 때: 넣은 파일 요약은 저장본에 든 것으로 바꿈
+async function afterOpen(res, from) {
+  lastLoad = { ms: res.ms, opened: from, savedAt: res.savedAt };
+  loadLog = res.loadLog;
+  total = res.total;
+  state = { search: '', filters: {}, colors: {}, src: null, sort: null };
+  $('#search').value = '';
+  await showData(res.cols);
+}
+
+async function showData(newCols) {
+  cols = newCols;
   const sample = await call('sample-rows');
   numeric = cols.map((_, i) => sample.length > 0 && sample.filter(r => r[i] !== '').length > 0 &&
     sample.every(r => r[i] === '' || /^-?[\d,]+(\.\d+)?$/.test(r[i])));
@@ -843,7 +961,10 @@ function renderSummary() {
   });
   const filesOk = loadLog.filter(f => f.sheets.some(s => s.status === 'ok')).length;
   let html = '파일 <b>' + filesOk + '개</b> · 탭 <b>' + okSheets.length + '개</b>에서 <b>' + fmt(total) + '건</b>을 하나로 모았어요';
-  if (lastLoad) {
+  if (lastLoad && lastLoad.opened) {
+    html += ' · ' + esc(lastLoad.opened) + ' 연 시간 <b>' + sec(lastLoad.ms) + '</b>';
+    if (lastLoad.savedAt) html += ' <span style="color:var(--faint)">(' + esc(when(lastLoad.savedAt)) + ' 저장)</span>';
+  } else if (lastLoad) {
     html += ' · 방금 읽은 시간 <b>' + sec(lastLoad.ms) + '</b>';
     if (lastLoad.genMs != null) html += ' <span style="color:var(--faint)">(가짜 파일 만드는 데 ' + sec(lastLoad.genMs) + ' 별도)</span>';
   }
@@ -894,6 +1015,210 @@ async function fillSources() {
   $('#srcSel').value = state.src ? JSON.stringify(state.src) : '';
   if ($('#srcSel').value === '' && state.src) state.src = null;
 }
+
+// ---- 저장 · 다시 열기 ----
+const when = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }); };
+const mb = n => (n / 1048576).toFixed(n < 10485760 ? 1 : 0) + 'MB';
+const SQLITE_MAGIC = 'SQLite format 3';
+function headText(buf, n) { const u = new Uint8Array(buf, 0, Math.min(n, buf.byteLength)); let t = ''; for (const c of u) t += String.fromCharCode(c); return t; }
+
+// 비밀번호 걸기: 브라우저 내장 WebCrypto(AES-GCM 256, 키는 PBKDF2-SHA256 20만 번) — 외부 라이브러리·인터넷 없음, file://에서도 동작.
+// sql.js는 암호화된 SQLite를 못 열어서 .db 파일 전체를 통째로 암호화한다(projectA scripts/file-crypto.js와 같은 방식, 머리글만 다름).
+// 형식: 'EXCELMOA-ENC1'(13바이트) + salt 16 + 확인용 iv 12 + 확인용 암호문 24 + iv 12 + 암호문.
+// 확인용 조각이 있어서 "비밀번호 틀림"과 "파일 손상(받다가 끊김 등)"을 가른다.
+const Crypt = (() => {
+  const MAGIC = 'EXCELMOA-ENC1', CHECK = 'EXCELMOA', ITER = 200000;
+  const HEAD = MAGIC.length + 16 + 12 + 24 + 12;
+  const WRONG = 'WRONG_PASSWORD';
+  const isEncrypted = buf => buf.byteLength >= MAGIC.length && headText(buf, MAGIC.length) === MAGIC;
+  async function key(pw, salt) {
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: ITER, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+  }
+  async function encrypt(buf, pw) {
+    const salt = crypto.getRandomValues(new Uint8Array(16)), civ = crypto.getRandomValues(new Uint8Array(12)), iv = crypto.getRandomValues(new Uint8Array(12));
+    const k = await key(pw, salt);
+    const check = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: civ }, k, new TextEncoder().encode(CHECK)));
+    const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, k, buf));
+    const out = new Uint8Array(HEAD + ct.length);
+    for (let i = 0; i < MAGIC.length; i++) out[i] = MAGIC.charCodeAt(i);
+    let p = MAGIC.length;
+    out.set(salt, p); p += 16; out.set(civ, p); p += 12; out.set(check, p); p += 24; out.set(iv, p); p += 12; out.set(ct, p);
+    return out.buffer;
+  }
+  async function decrypt(buf, pw) {
+    const u = new Uint8Array(buf);
+    if (u.length < HEAD + 16) throw new Error('파일이 손상됐어요(받다가 끊긴 것 같아요). 원래 파일을 다시 받아서 열어 주세요.');
+    let p = MAGIC.length;
+    const salt = u.slice(p, p + 16); p += 16;
+    const civ = u.slice(p, p + 12); p += 12;
+    const check = u.slice(p, p + 24); p += 24;
+    const iv = u.slice(p, p + 12); p += 12;
+    const k = await key(pw, salt);
+    try { await crypto.subtle.decrypt({ name: 'AES-GCM', iv: civ }, k, check); } catch (e) { throw new Error(WRONG); }
+    try { return await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, k, u.subarray(p)); }
+    catch (e) { throw new Error('파일이 손상됐어요(받다가 끊긴 것 같아요). 비밀번호는 맞아요. 원래 파일을 다시 받아서 열어 주세요.'); }
+  }
+  return { isEncrypted, encrypt, decrypt, WRONG };
+})();
+
+// 화면 안 비밀번호 입력 창 — 입력한 비밀번호, [취소]면 null
+function askPassword(fileName, error) {
+  return new Promise(resolve => {
+    $('#pwMsg').textContent = '"' + fileName + '"을(를) 열려면 비밀번호를 입력해 주세요.';
+    $('#pwErr').textContent = error || '';
+    $('#pwIn').value = '';
+    $('#pwDlg').hidden = false;
+    $('#pwIn').focus();
+    const done = v => {
+      $('#pwDlg').hidden = true;
+      $('#pwOk').onclick = $('#pwCancel').onclick = $('#pwIn').onkeydown = null;
+      resolve(v);
+    };
+    const ok = () => { if (!$('#pwIn').value) { $('#pwErr').textContent = '비밀번호를 입력해 주세요.'; return; } done($('#pwIn').value); };
+    $('#pwOk').onclick = ok;
+    $('#pwCancel').onclick = () => done(null);
+    $('#pwIn').onkeydown = e => { if (e.key === 'Enter') ok(); if (e.key === 'Escape') done(null); };
+  });
+}
+
+// 저장본 바이트 열기(암호화돼 있으면 비밀번호를 물음). 성공하면 true
+// 연 시간 = 파일 읽기(t0, 부르는 쪽에서 잼)부터 화면에 뜨기 전까지. 비밀번호를 치는 동안은 뺀다
+async function openSavedBuffer(buf, label, from, t0) {
+  if (t0 == null) t0 = performance.now();
+  if (Crypt.isEncrypted(buf)) {
+    let err = '';
+    for (;;) {
+      const pw = await askPassword(label, err);
+      if (pw === null) return false;
+      t0 = performance.now();
+      try { buf = await Crypt.decrypt(buf, pw); break; }
+      catch (e) {
+        if (e.message !== Crypt.WRONG) { notify(e.message); return false; }
+        err = '비밀번호가 맞지 않아요. 다시 입력해 주세요.';
+      }
+    }
+  }
+  if (headText(buf, SQLITE_MAGIC.length) !== SQLITE_MAGIC) { notify('"' + label + '"은(는) 엑셀 모아보기 저장본이 아니에요.'); return false; }
+  show('#progress');
+  $('#progTitle').textContent = '저장본을 여는 중이에요';
+  setProgress('"' + label + '" 여는 중…', 0.5);
+  try {
+    const res = await call('open', { buffer: buf }, [buf]);
+    res.ms = performance.now() - t0;
+    await afterOpen(res, from);
+    return true;
+  } catch (e) {
+    notify(e.message);
+    show(total ? '#view' : '#intro');
+    return false;
+  }
+}
+async function openSavedFile(f) {
+  const t0 = performance.now();
+  return openSavedBuffer(await f.arrayBuffer(), f.name, '저장본 "' + f.name + '"', t0);
+}
+
+// 이 브라우저에 저장: IndexedDB에 하나만(파일 이름·건수 같은 요약과 함께). 실패해도 화면은 그대로 동작
+const LocalSave = (() => {
+  const DB = 'excel-merge-viewer', STORE = 'saves', KEY = 'last';
+  function open() {
+    return new Promise((resolve, reject) => {
+      let req;
+      try { req = indexedDB.open(DB, 1); } catch (e) { reject(e); return; }
+      req.onupgradeneeded = () => req.result.createObjectStore(STORE);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  async function run(mode, fn) {
+    const idb = await open();
+    try {
+      return await new Promise((resolve, reject) => {
+        const tx = idb.transaction(STORE, mode);
+        const r = fn(tx.objectStore(STORE));
+        tx.oncomplete = () => resolve(r && r.result);
+        tx.onerror = tx.onabort = () => reject(tx.error || new Error('브라우저 저장소에 쓰지 못했어요.'));
+      });
+    } finally { idb.close(); }
+  }
+  return {
+    put: (blob, info) => run('readwrite', st => st.put({ blob, info }, KEY)),
+    get: () => run('readonly', st => st.get(KEY)),
+    del: () => run('readwrite', st => st.delete(KEY)),
+  };
+})();
+
+async function refreshResume() {
+  let rec = null;
+  try { rec = await LocalSave.get(); } catch (e) { rec = null; }
+  $('#resume').hidden = !rec;
+  if (rec) {
+    const i = rec.info || {};
+    $('#resumeInfo').textContent = '파일 ' + (i.files || []).length + '개 · ' + fmt(i.total || 0) + '건 · ' + mb(i.bytes || rec.blob.size) + ' · ' + when(i.savedAt) + ' 저장';
+  }
+}
+
+async function exportBytes() {
+  return call('export', { loadLog });
+}
+function setSaveMsg(text, err) { $('#saveMsg').textContent = text; $('#saveMsg').classList.toggle('err', !!err); }
+function busySave(on) { ['#saveFile', '#saveLocal'].forEach(s => { $(s).disabled = on; }); }
+
+$('#saveBtn').addEventListener('click', () => { $('#savePanel').hidden = !$('#savePanel').hidden; setSaveMsg(''); measureHead(); schedulePaint(); });
+$('#saveClose').addEventListener('click', () => { $('#savePanel').hidden = true; schedulePaint(); });
+$('#pwOn').addEventListener('change', e => { $('#pwRow').hidden = !e.target.checked; });
+$('#saveFile').addEventListener('click', async () => {
+  const pwOn = $('#pwOn').checked, pw = $('#pw1').value;
+  if (pwOn) {
+    if (pw.length < 4) { setSaveMsg('비밀번호는 4글자 이상으로 정해 주세요.', true); return; }
+    if (pw !== $('#pw2').value) { setSaveMsg('두 번 입력한 비밀번호가 달라요.', true); return; }
+  }
+  busySave(true);
+  setSaveMsg('파일을 만드는 중이에요…');
+  try {
+    const t0 = performance.now();
+    let buf = await exportBytes();
+    if (pwOn) buf = await Crypt.encrypt(buf, pw);
+    const size = buf.byteLength;
+    const d = new Date(), pad = n => String(n).padStart(2, '0');
+    const name = '엑셀모아보기_' + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + '_' + pad(d.getHours()) + pad(d.getMinutes()) + (pwOn ? '_비밀번호' : '') + '.db';
+    const url = URL.createObjectURL(new Blob([buf], { type: 'application/octet-stream' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    setSaveMsg('"' + name + '"(' + mb(size) + ')을 내려받았어요 · ' + sec(performance.now() - t0) + '. 다음엔 이 파일을 끌어다 놓으면 바로 열려요.');
+    $('#pw1').value = $('#pw2').value = '';
+  } catch (e) {
+    setSaveMsg('저장하지 못했어요: ' + e.message, true);
+  } finally { busySave(false); }
+});
+$('#saveLocal').addEventListener('click', async () => {
+  busySave(true);
+  setSaveMsg('브라우저에 저장하는 중이에요…');
+  try {
+    const t0 = performance.now();
+    const buf = await exportBytes();
+    const info = { files: loadLog.map(f => f.name), total, bytes: buf.byteLength, savedAt: new Date().toISOString() };
+    await LocalSave.put(new Blob([buf]), info);
+    setSaveMsg('이 브라우저에 저장했어요(' + mb(info.bytes) + ' · ' + sec(performance.now() - t0) + '). 다음에 이 화면을 열면 [이어서 보기]로 바로 열려요.');
+  } catch (e) {
+    setSaveMsg('브라우저에 저장하지 못했어요(저장 공간이 부족하거나 이 브라우저가 막고 있어요). 파일로 저장해 주세요. (' + e.message + ')', true);
+  } finally { busySave(false); }
+});
+$('#resumeBtn').addEventListener('click', async () => {
+  try {
+    const rec = await LocalSave.get();
+    if (!rec) { refreshResume(); return; }
+    const t0 = performance.now();
+    await openSavedBuffer(await rec.blob.arrayBuffer(), '브라우저에 저장한 데이터', '브라우저에 저장한 데이터', t0);
+  } catch (e) { notify('저장한 데이터를 열지 못했어요: ' + e.message); }
+});
+$('#resumeDel').addEventListener('click', async () => {
+  try { await LocalSave.del(); } catch (e) {}
+  refreshResume();
+});
 
 // ---- 표 ----
 function textWidth(s) {
@@ -1134,6 +1459,7 @@ if (!BUNDLES_OK) {
   $('#sampleBtn').disabled = true;
 } else {
   startWorker();
+  refreshResume();
 }
 </script>
 </body>
