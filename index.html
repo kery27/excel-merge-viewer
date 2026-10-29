@@ -13,18 +13,37 @@
     --bg: #f4f5f8; --panel: #ffffff; --ink: #1d2433; --sub: #5d6678; --faint: #9aa2b1;
     --line: #e2e5ec; --accent: #4257e8; --accent-soft: #eef0fe; --warn: #b5541c; --warn-soft: #fff4ec;
     --row-alt: #fafbfd; --row-hover: #f1f3fe;
+    --field: #ffffff; --head-bg: #f7f8fb; --line-soft: #eef0f4; --drop-line: #c3c9d6; --on-accent: #ffffff;
+    --focus: rgba(66,87,232,.15);
+  }
+  /* 어두운 화면 — 같은 토큰만 다시 정의(시스템 설정, data-theme 둘 다 따름) */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14161c; --panel: #1c1f27; --ink: #e6e8ee; --sub: #a3aaba; --faint: #737b8c;
+      --line: #2e323d; --accent: #7b8cff; --accent-soft: #252b4a; --warn: #f0a36e; --warn-soft: #3a2a1e;
+      --row-alt: #1f222b; --row-hover: #262b3d;
+      --field: #15171d; --head-bg: #21242d; --line-soft: #262a33; --drop-line: #3d4250; --on-accent: #0f1220;
+      --focus: rgba(123,140,255,.25); color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14161c; --panel: #1c1f27; --ink: #e6e8ee; --sub: #a3aaba; --faint: #737b8c;
+    --line: #2e323d; --accent: #7b8cff; --accent-soft: #252b4a; --warn: #f0a36e; --warn-soft: #3a2a1e;
+    --row-alt: #1f222b; --row-hover: #262b3d;
+    --field: #15171d; --head-bg: #21242d; --line-soft: #262a33; --drop-line: #3d4250; --on-accent: #0f1220;
+    --focus: rgba(123,140,255,.25); color-scheme: dark;
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; }
   body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Pretendard", -apple-system, "Malgun Gothic", sans-serif; font-size: 14px; display: flex; flex-direction: column; }
   button, input, select { font: inherit; }
-  button { cursor: pointer; border: 1px solid var(--accent); background: var(--accent); color: #fff; border-radius: 8px; padding: 7px 14px; }
-  button.ghost { background: #fff; color: var(--ink); border-color: var(--line); }
+  button { cursor: pointer; border: 1px solid var(--accent); background: var(--accent); color: var(--on-accent); border-radius: 8px; padding: 7px 14px; }
+  button.ghost { background: var(--field); color: var(--ink); border-color: var(--line); }
   button:disabled { opacity: 0.5; cursor: default; }
 
   .top { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; background: var(--panel); border-bottom: 1px solid var(--line); }
   .brand { font-weight: 800; font-size: 16px; display: flex; align-items: center; gap: 8px; }
-  .logo { width: 26px; height: 26px; border-radius: 7px; background: var(--accent); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 15px; }
+  .logo { width: 26px; height: 26px; border-radius: 7px; background: var(--accent); color: var(--on-accent); display: inline-flex; align-items: center; justify-content: center; font-size: 15px; }
   .topActions { display: flex; gap: 8px; }
 
   main { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 16px 20px; gap: 12px; }
@@ -32,12 +51,12 @@
   #intro { max-width: 720px; margin: 24px auto 0; width: 100%; }
   #intro h1 { font-size: 24px; margin: 0 0 8px; letter-spacing: -0.3px; }
   #intro .lead { color: var(--sub); margin: 0 0 20px; line-height: 1.6; }
-  #drop { border: 2px dashed #c3c9d6; border-radius: 14px; background: var(--panel); padding: 44px 20px; text-align: center; cursor: pointer; transition: border-color .15s, background .15s; }
+  #drop { border: 2px dashed var(--drop-line); border-radius: 14px; background: var(--panel); padding: 44px 20px; text-align: center; cursor: pointer; transition: border-color .15s, background .15s; }
   #drop strong { display: block; font-size: 16px; margin-bottom: 6px; }
   #drop span { color: var(--faint); font-size: 13px; }
   #drop.over, body.dragging #drop { border-color: var(--accent); background: var(--accent-soft); }
   .sampleRow { margin: 12px 0 0; color: var(--sub); font-size: 13px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .sampleRow select { padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+  .sampleRow select { padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--field); color: var(--ink); }
   .sampleRow button { padding: 5px 12px; }
   .rules { margin: 20px 0 0; padding: 14px 18px 14px 34px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; color: var(--sub); line-height: 1.8; font-size: 13px; }
   .rules b { color: var(--ink); }
@@ -55,29 +74,34 @@
   #summary summary { cursor: pointer; color: var(--warn); }
   #summary ul { margin: 6px 0 0; padding-left: 20px; line-height: 1.7; }
   .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .toolbar input, .toolbar select { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
-  .toolbar input:focus, .toolbar select:focus, #head input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(66,87,232,.15); }
+  .toolbar input, .toolbar select { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--field); color: var(--ink); }
+  .toolbar input:focus, .toolbar select:focus, #head input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--focus); }
   #search { flex: 1; min-width: 200px; }
   #srcSel { max-width: 260px; }
   #count { margin-left: auto; color: var(--sub); font-size: 13px; white-space: nowrap; }
   #count b { color: var(--ink); }
 
   #grid { flex: 1; min-height: 240px; overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; position: relative; }
-  #head { position: sticky; top: 0; z-index: 2; display: grid; grid-template-columns: var(--cols); background: #f7f8fb; border-bottom: 1px solid var(--line); }
+  #head { position: sticky; top: 0; z-index: 2; display: grid; grid-template-columns: var(--cols); background: var(--head-bg); border-bottom: 1px solid var(--line); }
   .hc { padding: 6px 6px 7px; border-right: 1px solid var(--line); min-width: 0; }
   .hc .t { display: flex; align-items: center; gap: 4px; font-weight: 700; font-size: 12px; padding: 2px 2px 5px; cursor: pointer; user-select: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .hc .t .arrow { color: var(--accent); font-size: 10px; }
-  .hc input { width: 100%; padding: 4px 6px; border: 1px solid var(--line); border-radius: 5px; font-size: 12px; background: #fff; }
+  .hc input { width: 100%; padding: 4px 6px; border: 1px solid var(--line); border-radius: 5px; font-size: 12px; background: var(--field); color: var(--ink); }
   .hc input.on { border-color: var(--accent); background: var(--accent-soft); }
   .hc.src .t { cursor: default; color: var(--sub); }
   #body { position: relative; }
-  .r { position: absolute; left: 0; height: 30px; display: grid; grid-template-columns: var(--cols); border-bottom: 1px solid #eef0f4; }
+  .r { position: absolute; left: 0; height: 30px; display: grid; grid-template-columns: var(--cols); border-bottom: 1px solid var(--line-soft); }
   .r:nth-child(even) { background: var(--row-alt); }
   .r:hover { background: var(--row-hover); }
-  .c { padding: 0 8px; line-height: 29px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-right: 1px solid #f0f1f5; font-size: 13px; }
+  .c { padding: 0 8px; line-height: 29px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-right: 1px solid var(--line-soft); font-size: 13px; }
   .c.src { color: var(--faint); font-size: 12px; }
   .c.num { text-align: right; font-variant-numeric: tabular-nums; }
   #empty { position: absolute; left: 0; right: 0; top: 120px; text-align: center; color: var(--faint); }
+
+  #notice { display: flex; align-items: flex-start; gap: 10px; background: var(--warn-soft); color: var(--ink); border: 1px solid var(--warn); border-radius: 10px; padding: 10px 14px; font-size: 13px; line-height: 1.6; }
+  #notice span { flex: 1; min-width: 0; }
+  #notice button { padding: 2px 10px; }
+  .confirmBar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--sub); }
 
   @media (max-width: 640px) {
     main { padding: 12px 16px; }
@@ -93,9 +117,15 @@
     <button id="addMoreBtn">파일 더 넣기</button>
     <button id="resetBtn" class="ghost">처음부터</button>
   </div>
+  <div class="confirmBar" id="resetConfirm" hidden>
+    모은 데이터를 지우고 처음 화면으로 갈까요? 원본 파일은 그대로예요.
+    <button id="resetYes">지우기</button>
+    <button id="resetNo" class="ghost">취소</button>
+  </div>
 </header>
 
 <main>
+  <div id="notice" role="alert" hidden><span id="noticeText"></span><button id="noticeClose" class="ghost">닫기</button></div>
   <section id="intro">
     <h1>엑셀 여러 개를 던지면, 하나로 모아 바로 찾아봅니다</h1>
     <p class="lead">월별 탭, 연도별 파일로 흩어진 데이터를 한 화면에서 조건으로 걸러 보세요.<br>파일은 이 PC 밖으로 나가지 않아요. 인터넷이 없어도 됩니다.</p>
@@ -435,12 +465,19 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&am
 function show(id) {
   ['#intro', '#progress', '#view'].forEach(s => { $(s).hidden = s !== id; });
   $('#topActions').hidden = id !== '#view';
+  $('#resetConfirm').hidden = true;
+}
+// alert() 대신 화면 안에 알림 — 웹에 올린 페이지(iframe)에서는 alert/confirm 창이 안 뜰 수 있음
+function notify(msg) {
+  $('#noticeText').textContent = msg;
+  $('#notice').hidden = false;
 }
 
 // ---- 파일 넣기 ----
 async function addFiles(fileList) {
+  $('#notice').hidden = true;
   const files = Array.from(fileList).filter(f => /\.(xlsx|xlsm|xls|csv)$/i.test(f.name));
-  if (!files.length) { alert('엑셀(.xlsx/.xls) 또는 CSV 파일만 넣을 수 있어요.'); return; }
+  if (!files.length) { notify('엑셀(.xlsx/.xls) 또는 CSV 파일만 넣을 수 있어요.'); return; }
   show('#progress');
   $('#progTitle').textContent = '파일 ' + files.length + '개를 읽는 중이에요';
   setProgress('파일 여는 중…', 0);
@@ -450,7 +487,7 @@ async function addFiles(fileList) {
     const res = await call('add', { files: payload }, payload.map(p => p.buffer));
     await afterLoad(res);
   } catch (e) {
-    alert('읽는 중 문제가 생겼어요: ' + e.message);
+    notify('읽는 중 문제가 생겼어요: ' + e.message);
     show(total ? '#view' : '#intro');
   }
 }
@@ -463,7 +500,7 @@ async function runSample() {
     const res = await call('sample', { total: Number($('#sampleSize').value) });
     await afterLoad(res);
   } catch (e) {
-    alert('체험 데이터를 만드는 중 문제가 생겼어요: ' + e.message);
+    notify('체험 데이터를 만드는 중 문제가 생겼어요: ' + e.message);
     show('#intro');
   }
 }
@@ -489,7 +526,7 @@ async function afterLoad(res) {
   total = res.total;
   if (!res.cols) {
     show('#intro');
-    alert('넣은 파일에서 데이터가 있는 탭을 찾지 못했어요.');
+    notify('넣은 파일에서 데이터가 있는 탭을 찾지 못했어요.');
     return;
   }
   cols = res.cols;
@@ -686,8 +723,16 @@ $('#drop').addEventListener('click', () => $('#fileInput').click());
 $('#addMoreBtn').addEventListener('click', () => $('#fileInput').click());
 $('#fileInput').addEventListener('change', e => { if (e.target.files.length) addFiles(e.target.files); e.target.value = ''; });
 $('#sampleBtn').addEventListener('click', runSample);
-$('#resetBtn').addEventListener('click', async () => {
-  if (!confirm('모은 데이터를 지우고 처음 화면으로 돌아갈까요? (원본 파일은 그대로예요)')) return;
+$('#noticeClose').addEventListener('click', () => { $('#notice').hidden = true; });
+$('#resetBtn').addEventListener('click', () => {
+  $('#topActions').hidden = true;
+  $('#resetConfirm').hidden = false;
+});
+$('#resetNo').addEventListener('click', () => {
+  $('#resetConfirm').hidden = true;
+  $('#topActions').hidden = false;
+});
+$('#resetYes').addEventListener('click', async () => {
   await call('reset');
   cols = []; total = 0; matched = 0; loadLog = []; lastLoad = null;
   state = { search: '', filters: {}, src: null, sort: null };

@@ -33,7 +33,7 @@ async function main() {
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
-  page.on('dialog', d => d.accept());
+  page.on('dialog', d => { errors.push('alert/confirm 창이 떴음: ' + d.message()); d.dismiss(); }); // 웹(iframe)에선 안 뜨므로 쓰면 안 됨
   const text = sel => page.$eval(sel, e => e.innerText);
   const count = async () => Number((await text('#count')).match(/^([\d,]+)건/)[1].replace(/,/g, ''));
   const settle = () => page.waitForTimeout(500);
@@ -93,6 +93,10 @@ async function main() {
 
   // 가짜 데이터로 체험
   await page.click('#resetBtn');
+  await page.click('#resetNo');
+  assert.equal(await page.$eval('#view', e => e.hidden), false); // 취소하면 그대로
+  await page.click('#resetBtn');
+  await page.click('#resetYes');
   await page.waitForSelector('#intro:not([hidden])');
   await page.selectOption('#sampleSize', '10000');
   await page.click('#sampleBtn');
