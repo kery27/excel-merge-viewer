@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>엑셀 모아보기</title>
+<!-- 라이브러리는 CDN이 아니라 vendor/ 로컬 번들 — 인터넷이 없어도, 파일 더블클릭(file://)으로 열어도 동작하게.
+     Worker 안에서는 file:// 리소스를 importScripts로 못 불러오므로, 번들의 팩토리 함수를 toString()으로 넘긴다. -->
+<script src="vendor/xlsx/xlsx-bundle.js"></script>
+<script src="vendor/sqljs/sqljs-bundle.js"></script>
+<style>
+  :root {
+    --bg: #f4f5f8; --panel: #ffffff; --ink: #1d2433; --sub: #5d6678; --faint: #9aa2b1;
+    --line: #e2e5ec; --accent: #4257e8; --accent-soft: #eef0fe; --warn: #b5541c; --warn-soft: #fff4ec;
+    --row-alt: #fafbfd; --row-hover: #f1f3fe;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Pretendard", -apple-system, "Malgun Gothic", sans-serif; font-size: 14px; display: flex; flex-direction: column; }
+  button, input, select { font: inherit; }
+  button { cursor: pointer; border: 1px solid var(--accent); background: var(--accent); color: #fff; border-radius: 8px; padding: 7px 14px; }
+  button.ghost { background: #fff; color: var(--ink); border-color: var(--line); }
+  button:disabled { opacity: 0.5; cursor: default; }
+
+  .top { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; background: var(--panel); border-bottom: 1px solid var(--line); }
+  .brand { font-weight: 800; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+  .logo { width: 26px; height: 26px; border-radius: 7px; background: var(--accent); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 15px; }
+  .topActions { display: flex; gap: 8px; }
+
+  main { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 16px 20px; gap: 12px; }
+
+  #intro { max-width: 720px; margin: 24px auto 0; width: 100%; }
+  #intro h1 { font-size: 24px; margin: 0 0 8px; letter-spacing: -0.3px; }
+  #intro .lead { color: var(--sub); margin: 0 0 20px; line-height: 1.6; }
+  #drop { border: 2px dashed #c3c9d6; border-radius: 14px; background: var(--panel); padding: 44px 20px; text-align: center; cursor: pointer; transition: border-color .15s, background .15s; }
+  #drop strong { display: block; font-size: 16px; margin-bottom: 6px; }
+  #drop span { color: var(--faint); font-size: 13px; }
+  #drop.over, body.dragging #drop { border-color: var(--accent); background: var(--accent-soft); }
+  .sampleRow { margin: 12px 0 0; color: var(--sub); font-size: 13px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .sampleRow select { padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+  .sampleRow button { padding: 5px 12px; }
+  .rules { margin: 20px 0 0; padding: 14px 18px 14px 34px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; color: var(--sub); line-height: 1.8; font-size: 13px; }
+  .rules b { color: var(--ink); }
+
+  #progress { max-width: 720px; margin: 24px auto 0; width: 100%; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; }
+  #progress h2 { font-size: 16px; margin: 0 0 4px; }
+  #progText { color: var(--sub); font-size: 13px; margin-bottom: 12px; }
+  .bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+
+  #view { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; }
+  #summary { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; font-size: 13px; color: var(--sub); }
+  #summary b { color: var(--ink); }
+  #summary details { margin-top: 6px; }
+  #summary summary { cursor: pointer; color: var(--warn); }
+  #summary ul { margin: 6px 0 0; padding-left: 20px; line-height: 1.7; }
+  .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .toolbar input, .toolbar select { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+  .toolbar input:focus, .toolbar select:focus, #head input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(66,87,232,.15); }
+  #search { flex: 1; min-width: 200px; }
+  #srcSel { max-width: 260px; }
+  #count { margin-left: auto; color: var(--sub); font-size: 13px; white-space: nowrap; }
+  #count b { color: var(--ink); }
+
+  #grid { flex: 1; min-height: 240px; overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; position: relative; }
+  #head { position: sticky; top: 0; z-index: 2; display: grid; grid-template-columns: var(--cols); background: #f7f8fb; border-bottom: 1px solid var(--line); }
+  .hc { padding: 6px 6px 7px; border-right: 1px solid var(--line); min-width: 0; }
+  .hc .t { display: flex; align-items: center; gap: 4px; font-weight: 700; font-size: 12px; padding: 2px 2px 5px; cursor: pointer; user-select: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hc .t .arrow { color: var(--accent); font-size: 10px; }
+  .hc input { width: 100%; padding: 4px 6px; border: 1px solid var(--line); border-radius: 5px; font-size: 12px; background: #fff; }
+  .hc input.on { border-color: var(--accent); background: var(--accent-soft); }
+  .hc.src .t { cursor: default; color: var(--sub); }
+  #body { position: relative; }
+  .r { position: absolute; left: 0; height: 30px; display: grid; grid-template-columns: var(--cols); border-bottom: 1px solid #eef0f4; }
+  .r:nth-child(even) { background: var(--row-alt); }
+  .r:hover { background: var(--row-hover); }
+  .c { padding: 0 8px; line-height: 29px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-right: 1px solid #f0f1f5; font-size: 13px; }
+  .c.src { color: var(--faint); font-size: 12px; }
+  .c.num { text-align: right; font-variant-numeric: tabular-nums; }
+  #empty { position: absolute; left: 0; right: 0; top: 120px; text-align: center; color: var(--faint); }
+
+  @media (max-width: 640px) {
+    main { padding: 12px 16px; }
+    #intro h1 { font-size: 20px; }
+    #count { margin-left: 0; width: 100%; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="logo">▦</span>엑셀 모아보기</div>
+  <div class="topActions" id="topActions" hidden>
+    <button id="addMoreBtn">파일 더 넣기</button>
+    <button id="resetBtn" class="ghost">처음부터</button>
+  </div>
+</header>
+
+<main>
+  <section id="intro">
+    <h1>엑셀 여러 개를 던지면, 하나로 모아 바로 찾아봅니다</h1>
+    <p class="lead">월별 탭, 연도별 파일로 흩어진 데이터를 한 화면에서 조건으로 걸러 보세요.<br>파일은 이 PC 밖으로 나가지 않아요. 인터넷이 없어도 됩니다.</p>
+    <div id="drop">
+      <strong>엑셀·CSV 파일을 여기로 끌어다 놓으세요</strong>
+      <span>여러 개를 한꺼번에 넣어도 돼요 · 또는 눌러서 파일 고르기</span>
+    </div>
+    <div class="sampleRow">
+      파일이 없으면
+      <select id="sampleSize">
+        <option value="10000">약 1만 건</option>
+        <option value="100000">약 10만 건</option>
+        <option value="300000" selected>약 30만 건</option>
+        <option value="500000">약 50만 건</option>
+      </select>
+      <button id="sampleBtn">가짜 데이터로 체험</button>
+    </div>
+    <ul class="rules">
+      <li><b>같은 구조</b>끼리 합쳐요 — 첫 줄(제목 줄)의 칸 이름이 같은 탭·파일. 칸 순서는 달라도 괜찮아요.</li>
+      <li>제목이 다른 탭(메모·요약 탭 등)은 빼고, 무엇을 뺐는지 알려 드려요.</li>
+      <li>같은 이름의 파일을 다시 넣으면 새 파일 내용으로 바꿔요.</li>
+    </ul>
+  </section>
+
+  <section id="progress" hidden>
+    <h2 id="progTitle">파일을 읽는 중이에요</h2>
+    <div id="progText">준비 중…</div>
+    <div class="bar"><i id="progBar"></i></div>
+  </section>
+
+  <section id="view" hidden>
+    <div id="summary"></div>
+    <div class="toolbar">
+      <input id="search" type="text" placeholder="전체에서 찾기 (띄어 쓰면 모두 포함된 줄만)" autocomplete="off">
+      <select id="srcSel"></select>
+      <button id="clearBtn" class="ghost">조건 지우기</button>
+      <span id="count"></span>
+    </div>
+    <div id="grid"><div id="head"></div><div id="body"></div></div>
+  </section>
+</main>
+<input type="file" id="fileInput" multiple accept=".xlsx,.xlsm,.xls,.csv" hidden>
+
+<script>
+// ===== Worker: 엑셀 읽기 · 합치기(SQLite, 메모리) · 조회 =====
+// 화면이 멈추지 않도록 무거운 일은 전부 여기서 한다. 메인 화면과는 {id, cmd} 요청 / {type:'reply'} 응답으로 주고받음.
+function workerMain() {
+  let SQL = null, db = null;
+  let cols = null;              // 기준 구조(처음 넣은 데이터 탭의 제목 줄)
+  let ids = new Int32Array(0);  // 현재 조건에 맞는 행 id 목록(정렬 순서대로)
+  const numericCols = {};       // 숫자 칸인지(정렬용) 캐시
+  const ready = initSqlJs({ wasmBinary: sqljsWasmBinary() }).then(s => { SQL = s; });
+
+  function progress(data) { self.postMessage(Object.assign({ type: 'progress' }, data)); }
+
+  // 제목 줄 만들기: 앞뒤 공백만 정리, 끝쪽 빈 제목은 버림, 가운데 빈 제목·중복 제목은 이름을 붙여 구분
+  function makeHeader(row) {
+    const names = row.map(v => String(v == null ? '' : v).trim());
+    while (names.length && names[names.length - 1] === '') names.pop();
+    const seen = {};
+    return names.map((n, i) => {
+      let name = n || '(빈 제목 ' + (i + 1) + ')';
+      if (seen[name]) { seen[name]++; name = name + ' (' + seen[name] + ')'; } else seen[name] = 1;
+      return name;
+    });
+  }
+
+  function setBase(header) {
+    cols = header;
+    db = new SQL.Database();
+    db.run('CREATE TABLE data (id INTEGER PRIMARY KEY, src_file TEXT, src_sheet TEXT, src_row INTEGER, _all TEXT, ' +
+      cols.map((_, i) => 'c' + i + ' TEXT').join(', ') + ')');
+  }
+
+  // 같은 구조인지: 제목 이름의 집합이 같으면 OK(순서 무관). perm[j] = 이 탭 j번째 칸이 기준의 몇 번째 칸인지
+  function matchHeader(header) {
+    const pos = {};
+    cols.forEach((n, i) => { pos[n] = i; });
+    const extra = header.filter(n => !(n in pos));
+    const missing = cols.filter(n => header.indexOf(n) < 0);
+    if (extra.length || missing.length) return { ok: false, extra, missing };
+    return { ok: true, perm: header.map(n => pos[n]) };
+  }
+
+  function readBook(f) {
+    if (/\.csv$/i.test(f.name)) {
+      // CSV는 UTF-8이 아니면 한국 엑셀 기본(EUC-KR)으로 다시 읽는다
+      let text;
+      try { text = new TextDecoder('utf-8', { fatal: true }).decode(f.buffer); }
+      catch (e) { text = new TextDecoder('euc-kr').decode(f.buffer); }
+      return XLSX.read(text.replace(/^﻿/, ''), { type: 'string', raw: true, dense: true });
+    }
+    return XLSX.read(f.buffer, { type: 'array', dense: true });
+  }
+
+  function processSheet(fileName, sheetName, ws) {
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '', dateNF: 'yyyy-mm-dd', blankrows: true });
+    let r0 = 0;
+    try { r0 = XLSX.utils.decode_range(ws['!ref']).s.r; } catch (e) {}
+    let h = -1;
+    for (let i = 0; i < rows.length && i < 50; i++) {
+      if (rows[i].some(v => String(v).trim() !== '')) { h = i; break; }
+    }
+    if (h < 0) return { sheet: sheetName, status: 'empty', rows: 0 };
+    const header = makeHeader(rows[h]);
+    if (!header.length) return { sheet: sheetName, status: 'empty', rows: 0 };
+    if (!cols) setBase(header);
+    const m = matchHeader(header);
+    if (!m.ok) return { sheet: sheetName, status: 'diff', rows: 0, missing: m.missing, extra: m.extra };
+
+    const n = cols.length;
+    const stmt = db.prepare('INSERT INTO data (src_file, src_sheet, src_row, _all, ' + cols.map((_, i) => 'c' + i).join(', ') +
+      ') VALUES (?, ?, ?, ?, ' + cols.map(() => '?').join(', ') + ')');
+    let count = 0;
+    db.run('BEGIN'); // 탭 하나 = 트랜잭션 하나(줄마다 커밋하면 수십 배 느림)
+    try {
+      for (let i = h + 1; i < rows.length; i++) {
+        const row = rows[i];
+        const vals = new Array(n).fill('');
+        let any = false;
+        for (let j = 0; j < header.length; j++) {
+          const v = row[j];
+          if (v == null || v === '') continue;
+          const s = String(v);
+          vals[m.perm[j]] = s;
+          if (!any && s.trim() !== '') any = true;
+        }
+        if (!any) continue; // 빈 줄은 건너뜀
+        stmt.run([fileName, sheetName, r0 + i + 1, vals.join('\t').toLowerCase()].concat(vals));
+        count++;
+      }
+    } finally { stmt.free(); db.run('COMMIT'); }
+    if (!count) return { sheet: sheetName, status: 'empty', rows: 0 };
+    return { sheet: sheetName, status: 'ok', rows: count };
+  }
+
+  async function addFiles(files) {
+    await ready;
+    const t0 = performance.now();
+    // 진행률 표시용: 탭 개수를 먼저 알 수 없으니 파일 단위 + 파일 안 탭 단위로 알린다
+    const result = [];
+    for (let fi = 0; fi < files.length; fi++) {
+      const f = files[fi];
+      progress({ file: f.name, fileIndex: fi, fileCount: files.length, phase: 'open' });
+      let wb;
+      try { wb = readBook(f); }
+      catch (e) { result.push({ name: f.name, error: '읽을 수 없는 파일이에요 (' + (e && e.message || e) + ')', sheets: [] }); continue; }
+      f.buffer = null;
+      let replaced = 0;
+      if (db) {
+        db.run('DELETE FROM data WHERE src_file = ?', [f.name]);
+        replaced = db.getRowsModified();
+      }
+      const sheets = [];
+      wb.SheetNames.forEach((sn, si) => {
+        progress({ file: f.name, fileIndex: fi, fileCount: files.length, phase: 'sheet', sheet: sn, sheetIndex: si, sheetCount: wb.SheetNames.length });
+        sheets.push(processSheet(f.name, sn, wb.Sheets[sn]));
+        wb.Sheets[sn] = null; // 메모리 바로 풀기
+      });
+      result.push({ name: f.name, replaced, sheets });
+    }
+    Object.keys(numericCols).forEach(k => delete numericCols[k]);
+    return { files: result, cols, ms: performance.now() - t0, total: db ? db.exec('SELECT COUNT(*) FROM data')[0].values[0][0] : 0 };
+  }
+
+  function isNumericCol(i) {
+    if (i in numericCols) return numericCols[i];
+    const res = db.exec('SELECT c' + i + " FROM data WHERE c" + i + " <> '' LIMIT 300");
+    const vals = res.length ? res[0].values.map(r => r[0]) : [];
+    return (numericCols[i] = vals.length > 0 && vals.every(v => /^-?[\d,]+(\.\d+)?$/.test(v)));
+  }
+
+  function query(q) {
+    const t0 = performance.now();
+    if (!db) { ids = new Int32Array(0); return { count: 0, ms: 0 }; }
+    const where = [], args = [];
+    if (q.src) {
+      where.push('src_file = ?'); args.push(q.src.file);
+      if (q.src.sheet != null) { where.push('src_sheet = ?'); args.push(q.src.sheet); }
+    }
+    String(q.search || '').toLowerCase().split(/\s+/).filter(Boolean).forEach(t => { where.push('instr(_all, ?) > 0'); args.push(t); });
+    Object.keys(q.filters || {}).forEach(k => {
+      const v = String(q.filters[k]).trim().toLowerCase();
+      if (v) { where.push('instr(lower(c' + Number(k) + '), ?) > 0'); args.push(v); }
+    });
+    let order = 'id';
+    if (q.sort && q.sort.col != null) {
+      const c = 'c' + Number(q.sort.col);
+      const dir = q.sort.dir === 'desc' ? 'DESC' : 'ASC';
+      order = (isNumericCol(q.sort.col) ? "CAST(REPLACE(" + c + ", ',', '') AS REAL)" : c) + ' ' + dir + ', id';
+    }
+    const st = db.prepare('SELECT id FROM data' + (where.length ? ' WHERE ' + where.join(' AND ') : '') + ' ORDER BY ' + order);
+    st.bind(args);
+    const out = [];
+    while (st.step()) out.push(st.get()[0]);
+    st.free();
+    ids = Int32Array.from(out);
+    return { count: ids.length, ms: performance.now() - t0 };
+  }
+
+  function rows(r) {
+    const slice = Array.from(ids.subarray(r.start, r.end));
+    if (!slice.length) return { start: r.start, rows: [] };
+    const res = db.exec('SELECT id, src_file, src_sheet, src_row, ' + cols.map((_, i) => 'c' + i).join(', ') +
+      ' FROM data WHERE id IN (' + slice.join(',') + ')');
+    const byId = {};
+    if (res.length) res[0].values.forEach(v => { byId[v[0]] = v; });
+    return { start: r.start, rows: slice.map(id => byId[id]) };
+  }
+
+  function sources() {
+    if (!db) return [];
+    const res = db.exec('SELECT src_file, src_sheet, COUNT(*) FROM data GROUP BY src_file, src_sheet ORDER BY MIN(id)');
+    return res.length ? res[0].values : [];
+  }
+
+  function sampleRows() {
+    const res = db.exec('SELECT ' + cols.map((_, i) => 'c' + i).join(', ') + ' FROM data LIMIT 200');
+    return res.length ? res[0].values : [];
+  }
+
+  // ---- 체험용 가짜 데이터: 실제 엑셀 파일(xlsx)을 메모리에서 만들어, 사용자가 넣은 파일과 똑같은 과정으로 읽는다 ----
+  function makeSample(total) {
+    let seed = 42;
+    const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+    const pick = a => a[Math.floor(rnd() * a.length)];
+    const head = ['주문일', '주문번호', '고객명', '지역', '상품명', '수량', '단가', '금액', '결제수단', '배송상태', '담당자'];
+    const products = [['무선 마우스', 15900], ['기계식 키보드', 89000], ['USB-C 허브', 32000], ['모니터 받침대', 27000], ['노트북 파우치', 19800],
+      ['27인치 모니터', 259000], ['웹캠', 45000], ['데스크 매트', 12900], ['멀티탭', 16500], ['블루투스 스피커', 59000]];
+    const regions = ['서울', '경기', '인천', '부산', '대구', '광주', '대전', '울산', '세종', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'];
+    const pays = ['카드', '계좌이체', '간편결제', '무통장'];
+    const states = ['배송완료', '배송완료', '배송완료', '배송중', '주문접수', '취소', '반품'];
+    const staff = ['샘플담당자A', '샘플담당자B', '샘플담당자C', '샘플담당자D', '샘플담당자E'];
+    let seq = 0;
+    const row = (y, m) => {
+      const p = pick(products), q = 1 + Math.floor(rnd() * 5);
+      seq++;
+      return [new Date(y, m - 1, 1 + Math.floor(rnd() * 28)), 'ORD-' + String(seq).padStart(7, '0'),
+        '테스트고객' + String(1 + Math.floor(rnd() * 20000)).padStart(5, '0'), pick(regions), p[0], q, p[1], p[1] * q,
+        pick(pays), pick(states), pick(staff)];
+    };
+    const toBuf = wb => XLSX.write(wb, { type: 'array', bookType: 'xlsx', bookSST: true, compression: true });
+
+    // ① 과거 파일: 탭 하나에 2016~2020년 5년치
+    const pastN = Math.round(total * 0.4);
+    const past = [head];
+    for (let k = 0; k < pastN; k++) { const mi = Math.floor(k / pastN * 60); past.push(row(2016 + Math.floor(mi / 12), mi % 12 + 1)); }
+    const wb1 = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb1, XLSX.utils.aoa_to_sheet(past, { dateNF: 'yyyy-mm-dd' }), '2016-2020');
+
+    // ② 최근 파일: 2021~2025년 월별 탭 60개 + 메모 탭(제목이 달라 빠짐) + 빈 탭. 마지막 탭은 칸 순서를 바꿔 둠(순서 무관 확인용)
+    const per = Math.round(total * 0.6 / 60);
+    const wb2 = XLSX.utils.book_new();
+    for (let mi = 0; mi < 60; mi++) {
+      const y = 2021 + Math.floor(mi / 12), m = mi % 12 + 1;
+      let aoa = [head];
+      for (let k = 0; k < per; k++) aoa.push(row(y, m));
+      if (mi === 59) aoa = aoa.map(r => [r[10]].concat(r.slice(0, 10))); // 담당자 칸을 맨 앞으로
+      XLSX.utils.book_append_sheet(wb2, XLSX.utils.aoa_to_sheet(aoa, { dateNF: 'yyyy-mm-dd' }), String(y).slice(2) + String(m).padStart(2, '0'));
+    }
+    XLSX.utils.book_append_sheet(wb2, XLSX.utils.aoa_to_sheet([['메모'], ['월별 주문 내역 — 매달 새 탭을 추가']]), '메모');
+    XLSX.utils.book_append_sheet(wb2, XLSX.utils.aoa_to_sheet([]), '빈 탭');
+    return [{ name: '주문내역_2016-2020.xlsx', buffer: toBuf(wb1) }, { name: '주문내역_월별_2021-2025.xlsx', buffer: toBuf(wb2) }];
+  }
+
+  self.onmessage = async e => {
+    const { id, cmd } = e.data;
+    try {
+      let result;
+      if (cmd === 'add') result = await addFiles(e.data.files);
+      else if (cmd === 'sample') {
+        await ready;
+        progress({ phase: 'gen' });
+        const t0 = performance.now();
+        const files = makeSample(e.data.total);
+        const genMs = performance.now() - t0;
+        result = await addFiles(files);
+        result.genMs = genMs;
+      }
+      else if (cmd === 'query') result = query(e.data.q);
+      else if (cmd === 'rows') result = rows(e.data);
+      else if (cmd === 'sources') result = sources();
+      else if (cmd === 'sample-rows') result = sampleRows();
+      else if (cmd === 'reset') { if (db) db.close(); db = null; cols = null; ids = new Int32Array(0); result = true; }
+      self.postMessage({ type: 'reply', id, result });
+    } catch (err) {
+      self.postMessage({ type: 'reply', id, error: String(err && err.message || err) });
+    }
+  };
+}
+
+// ===== 메인 화면 =====
+const $ = s => document.querySelector(s);
+const BUNDLES_OK = typeof __xlsxFactory === 'function' && typeof __sqljsFactory === 'function';
+const ROW_H = 30;
+
+let worker = null, reqId = 0;
+const waiting = {};
+function startWorker() {
+  const src = 'const initSqlJs = (' + __sqljsFactory.toString() + ')();\n' +
+    'var SQLJS_WASM_B64 = "' + SQLJS_WASM_B64 + '";\n' + sqljsWasmBinary.toString() + '\n' +
+    'const XLSX = (' + __xlsxFactory.toString() + ')();\n' +
+    '(' + workerMain.toString() + ')();';
+  worker = new Worker(URL.createObjectURL(new Blob([src], { type: 'application/javascript' })));
+  worker.onmessage = e => {
+    const m = e.data;
+    if (m.type === 'progress') return onProgress(m);
+    const w = waiting[m.id];
+    delete waiting[m.id];
+    if (!w) return;
+    m.error ? w.reject(new Error(m.error)) : w.resolve(m.result);
+  };
+}
+function call(cmd, data, transfer) {
+  return new Promise((resolve, reject) => {
+    const id = ++reqId;
+    waiting[id] = { resolve, reject };
+    worker.postMessage(Object.assign({ id, cmd }, data || {}), transfer || []);
+  });
+}
+
+// ---- 상태 ----
+let cols = [];
+let total = 0, matched = 0;
+let state = { search: '', filters: {}, src: null, sort: null };
+let qVer = 0;              // 조건이 바뀔 때마다 증가 — 늦게 도착한 옛 결과는 버림
+let cache = { ver: -1, start: 0, rows: [] };
+let fetching = false;
+let numeric = [];
+let loadLog = [];          // 지금까지 넣은 파일 결과(요약 표시용)
+let lastLoad = null;
+
+const fmt = n => Number(n).toLocaleString('ko-KR');
+const sec = ms => (ms / 1000).toFixed(ms < 1000 ? 2 : 1) + '초';
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+function show(id) {
+  ['#intro', '#progress', '#view'].forEach(s => { $(s).hidden = s !== id; });
+  $('#topActions').hidden = id !== '#view';
+}
+
+// ---- 파일 넣기 ----
+async function addFiles(fileList) {
+  const files = Array.from(fileList).filter(f => /\.(xlsx|xlsm|xls|csv)$/i.test(f.name));
+  if (!files.length) { alert('엑셀(.xlsx/.xls) 또는 CSV 파일만 넣을 수 있어요.'); return; }
+  show('#progress');
+  $('#progTitle').textContent = '파일 ' + files.length + '개를 읽는 중이에요';
+  setProgress('파일 여는 중…', 0);
+  const payload = [];
+  for (const f of files) payload.push({ name: f.name, buffer: await f.arrayBuffer() });
+  try {
+    const res = await call('add', { files: payload }, payload.map(p => p.buffer));
+    await afterLoad(res);
+  } catch (e) {
+    alert('읽는 중 문제가 생겼어요: ' + e.message);
+    show(total ? '#view' : '#intro');
+  }
+}
+
+async function runSample() {
+  show('#progress');
+  $('#progTitle').textContent = '가짜 데이터로 체험 준비 중이에요';
+  setProgress('가짜 엑셀 파일 2개를 만드는 중… (실제 파일과 똑같이 다시 읽어서 시간을 잽니다)', 0);
+  try {
+    const res = await call('sample', { total: Number($('#sampleSize').value) });
+    await afterLoad(res);
+  } catch (e) {
+    alert('체험 데이터를 만드는 중 문제가 생겼어요: ' + e.message);
+    show('#intro');
+  }
+}
+
+function setProgress(text, ratio) {
+  $('#progText').textContent = text;
+  $('#progBar').style.width = Math.round(ratio * 100) + '%';
+}
+function onProgress(m) {
+  if (m.phase === 'gen') return;
+  const base = m.fileIndex / m.fileCount;
+  if (m.phase === 'open') setProgress('"' + m.file + '" 여는 중… (' + (m.fileIndex + 1) + '/' + m.fileCount + ')', base);
+  else setProgress('"' + m.file + '" › 탭 "' + m.sheet + '" 합치는 중 (' + (m.sheetIndex + 1) + '/' + m.sheetCount + ')',
+    base + (m.sheetIndex + 1) / m.sheetCount / m.fileCount);
+}
+
+async function afterLoad(res) {
+  lastLoad = res;
+  res.files.forEach(f => {
+    loadLog = loadLog.filter(x => x.name !== f.name);
+    loadLog.push(f);
+  });
+  total = res.total;
+  if (!res.cols) {
+    show('#intro');
+    alert('넣은 파일에서 데이터가 있는 탭을 찾지 못했어요.');
+    return;
+  }
+  cols = res.cols;
+  const sample = await call('sample-rows');
+  numeric = cols.map((_, i) => sample.length > 0 && sample.filter(r => r[i] !== '').length > 0 &&
+    sample.every(r => r[i] === '' || /^-?[\d,]+(\.\d+)?$/.test(r[i])));
+  setupColumns(sample);
+  await fillSources();
+  show('#view');
+  renderSummary();
+  measureHead();
+  await runQuery();
+}
+
+function renderSummary() {
+  const okSheets = [], skipped = [], errors = [];
+  loadLog.forEach(f => {
+    if (f.error) errors.push(f);
+    f.sheets.forEach(s => {
+      if (s.status === 'ok') okSheets.push(s);
+      else if (s.status === 'diff') skipped.push({ file: f.name, s });
+      else skipped.push({ file: f.name, s });
+    });
+  });
+  const filesOk = loadLog.filter(f => f.sheets.some(s => s.status === 'ok')).length;
+  let html = '파일 <b>' + filesOk + '개</b> · 탭 <b>' + okSheets.length + '개</b>에서 <b>' + fmt(total) + '건</b>을 하나로 모았어요';
+  if (lastLoad) {
+    html += ' · 방금 읽은 시간 <b>' + sec(lastLoad.ms) + '</b>';
+    if (lastLoad.genMs != null) html += ' <span style="color:var(--faint)">(가짜 파일 만드는 데 ' + sec(lastLoad.genMs) + ' 별도)</span>';
+  }
+  const items = [];
+  errors.forEach(f => items.push('<li>' + esc(f.name) + ' — ' + esc(f.error) + '</li>'));
+  skipped.forEach(({ file, s }) => {
+    let why;
+    if (s.status === 'empty') why = '데이터가 없는 탭';
+    else {
+      const parts = [];
+      if (s.missing.length) parts.push('없는 칸: ' + esc(s.missing.slice(0, 3).join(', ')) + (s.missing.length > 3 ? ' 외 ' + (s.missing.length - 3) + '개' : ''));
+      if (s.extra.length) parts.push('더 있는 칸: ' + esc(s.extra.slice(0, 3).join(', ')) + (s.extra.length > 3 ? ' 외 ' + (s.extra.length - 3) + '개' : ''));
+      why = '제목 줄이 달라서 뺐어요 (' + parts.join(' / ') + ')';
+    }
+    items.push('<li>' + esc(file) + ' › ' + esc(s.sheet) + ' — ' + why + '</li>');
+  });
+  if (items.length) html += '<details><summary>합치지 않은 탭·파일 ' + items.length + '개</summary><ul>' + items.join('') + '</ul></details>';
+  $('#summary').innerHTML = html;
+}
+
+async function fillSources() {
+  const list = await call('sources');
+  const byFile = new Map();
+  list.forEach(([file, sheet, n]) => {
+    if (!byFile.has(file)) byFile.set(file, []);
+    byFile.get(file).push([sheet, n]);
+  });
+  let html = '<option value="">전체 (' + fmt(total) + '건)</option>';
+  byFile.forEach((sheets, file) => {
+    const sum = sheets.reduce((a, s) => a + s[1], 0);
+    html += '<optgroup label="' + esc(file) + '">';
+    html += '<option value="' + esc(JSON.stringify({ file })) + '">' + esc(file) + ' 전체 (' + fmt(sum) + '건)</option>';
+    if (sheets.length > 1) sheets.forEach(([sheet, n]) => {
+      html += '<option value="' + esc(JSON.stringify({ file, sheet })) + '">　탭 ' + esc(sheet) + ' (' + fmt(n) + '건)</option>';
+    });
+    html += '</optgroup>';
+  });
+  $('#srcSel').innerHTML = html;
+  $('#srcSel').value = state.src ? JSON.stringify(state.src) : '';
+  if ($('#srcSel').value === '' && state.src) state.src = null;
+}
+
+// ---- 표 ----
+function textWidth(s) {
+  let w = 0;
+  for (const ch of String(s)) w += ch.charCodeAt(0) > 255 ? 13 : 7.5;
+  return w;
+}
+function setupColumns(sample) {
+  const widths = cols.map((name, i) => {
+    let w = textWidth(name) + 30;
+    sample.slice(0, 100).forEach(r => { w = Math.max(w, textWidth(r[i]) + 18); });
+    return Math.round(Math.min(280, Math.max(70, w)));
+  });
+  const srcW = 110;
+  const all = [srcW].concat(widths);
+  const sum = all.reduce((a, b) => a + b, 0);
+  $('#grid').style.setProperty('--cols', all.map(w => w + 'px').join(' '));
+  $('#head').style.width = sum + 'px';
+  $('#body').style.width = sum + 'px';
+  let html = '<div class="hc src"><div class="t">출처 (탭)</div></div>';
+  cols.forEach((name, i) => {
+    html += '<div class="hc" data-i="' + i + '"><div class="t" title="' + esc(name) + '"><span>' + esc(name) +
+      '</span><span class="arrow"></span></div><input type="text" data-i="' + i + '" placeholder="포함" value="' + esc(state.filters[i] || '') + '"></div>';
+  });
+  $('#head').innerHTML = html;
+  updateSortArrows();
+}
+function updateSortArrows() {
+  document.querySelectorAll('.hc[data-i]').forEach(el => {
+    const i = Number(el.dataset.i);
+    el.querySelector('.arrow').textContent = state.sort && state.sort.col === i ? (state.sort.dir === 'asc' ? '▲' : '▼') : '';
+  });
+  document.querySelectorAll('.hc input').forEach(inp => inp.classList.toggle('on', !!inp.value.trim()));
+}
+
+let headH = 0;
+function measureHead() { headH = $('#head').offsetHeight; } // 화면에 보인 뒤에 재야 0이 안 나옴
+
+async function runQuery() {
+  const ver = ++qVer;
+  const res = await call('query', { q: state });
+  if (ver !== qVer) return;
+  matched = res.count;
+  $('#count').innerHTML = '<b>' + fmt(matched) + '건</b>' + (matched !== total ? ' / 전체 ' + fmt(total) + '건' : '') + ' · ' + sec(res.ms);
+  $('#body').style.height = matched * ROW_H + 'px';
+  const grid = $('#grid');
+  const maxTop = Math.max(0, matched * ROW_H + headH - grid.clientHeight);
+  if (grid.scrollTop > maxTop) grid.scrollTop = maxTop; // 목록이 줄었을 때 옛 스크롤 위치로 빈 화면이 되지 않게
+  cache = { ver: -1, start: 0, rows: [] };
+  paint();
+}
+
+let raf = 0;
+function schedulePaint() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; paint(); }); }
+
+async function paint() {
+  const grid = $('#grid');
+  const first = Math.max(0, Math.floor(grid.scrollTop / ROW_H));
+  const last = Math.min(matched, first + Math.ceil(grid.clientHeight / ROW_H) + 1);
+  if (!matched) {
+    $('#body').innerHTML = '<div id="empty">조건에 맞는 줄이 없어요</div>';
+    return;
+  }
+  const covered = cache.ver === qVer && first >= cache.start && last <= cache.start + cache.rows.length;
+  if (!covered) {
+    if (fetching) return;
+    fetching = true;
+    const ver = qVer;
+    const start = Math.max(0, first - 100), end = Math.min(matched, last + 100);
+    try {
+      const res = await call('rows', { start, end });
+      if (ver === qVer) cache = { ver, start: res.start, rows: res.rows };
+    } finally { fetching = false; }
+    return paint();
+  }
+  let html = '';
+  for (let i = first; i < last; i++) {
+    const r = cache.rows[i - cache.start];
+    if (!r) continue;
+    html += '<div class="r" style="top:' + (i * ROW_H) + 'px"><div class="c src" title="' + esc(r[1]) + ' › ' + esc(r[2]) + ' (' + r[3] + '행)">' + esc(r[2]) + '</div>';
+    for (let j = 0; j < cols.length; j++) {
+      const v = r[4 + j];
+      html += '<div class="c' + (numeric[j] ? ' num' : '') + '" title="' + esc(v) + '">' + esc(v) + '</div>';
+    }
+    html += '</div>';
+  }
+  $('#body').innerHTML = html;
+}
+
+// ---- 이벤트 ----
+let debounce = 0;
+function requery() { clearTimeout(debounce); debounce = setTimeout(runQuery, 220); }
+
+$('#search').addEventListener('input', e => { state.search = e.target.value; requery(); });
+$('#srcSel').addEventListener('change', e => { state.src = e.target.value ? JSON.parse(e.target.value) : null; runQuery(); });
+$('#head').addEventListener('input', e => {
+  if (!e.target.matches('input')) return;
+  const i = e.target.dataset.i;
+  if (e.target.value.trim()) state.filters[i] = e.target.value; else delete state.filters[i];
+  updateSortArrows();
+  requery();
+});
+$('#head').addEventListener('click', e => {
+  const t = e.target.closest('.t');
+  const hc = e.target.closest('.hc[data-i]');
+  if (!t || !hc) return;
+  const i = Number(hc.dataset.i);
+  if (!state.sort || state.sort.col !== i) state.sort = { col: i, dir: 'asc' };
+  else if (state.sort.dir === 'asc') state.sort.dir = 'desc';
+  else state.sort = null;
+  updateSortArrows();
+  runQuery();
+});
+$('#clearBtn').addEventListener('click', () => {
+  state = { search: '', filters: {}, src: null, sort: null };
+  $('#search').value = '';
+  $('#srcSel').value = '';
+  document.querySelectorAll('.hc input').forEach(inp => { inp.value = ''; });
+  updateSortArrows();
+  runQuery();
+});
+$('#grid').addEventListener('scroll', schedulePaint);
+window.addEventListener('resize', () => { if (!$('#view').hidden) { measureHead(); schedulePaint(); } });
+
+$('#drop').addEventListener('click', () => $('#fileInput').click());
+$('#addMoreBtn').addEventListener('click', () => $('#fileInput').click());
+$('#fileInput').addEventListener('change', e => { if (e.target.files.length) addFiles(e.target.files); e.target.value = ''; });
+$('#sampleBtn').addEventListener('click', runSample);
+$('#resetBtn').addEventListener('click', async () => {
+  if (!confirm('모은 데이터를 지우고 처음 화면으로 돌아갈까요? (원본 파일은 그대로예요)')) return;
+  await call('reset');
+  cols = []; total = 0; matched = 0; loadLog = []; lastLoad = null;
+  state = { search: '', filters: {}, src: null, sort: null };
+  $('#search').value = '';
+  show('#intro');
+});
+
+// 화면 어디에 떨어뜨려도 받기(조회 중에 파일을 더 넣을 때도)
+let dragDepth = 0;
+window.addEventListener('dragenter', e => { e.preventDefault(); dragDepth++; document.body.classList.add('dragging'); });
+window.addEventListener('dragleave', () => { if (--dragDepth <= 0) { dragDepth = 0; document.body.classList.remove('dragging'); } });
+window.addEventListener('dragover', e => e.preventDefault());
+window.addEventListener('drop', e => {
+  e.preventDefault();
+  dragDepth = 0;
+  document.body.classList.remove('dragging');
+  if (e.dataTransfer.files.length && $('#progress').hidden) addFiles(e.dataTransfer.files);
+});
+
+if (!BUNDLES_OK) {
+  $('#drop').innerHTML = '<strong>필요한 파일(vendor 폴더)을 찾지 못했어요</strong><span>압축을 푼 폴더 안에서 이 파일을 열어 주세요.</span>';
+  $('#sampleBtn').disabled = true;
+} else {
+  startWorker();
+}
+</script>
+</body>
+</html>
