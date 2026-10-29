@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" href="style.css">
+<style>
+  /* 엑셀 탭 줄 그림 */
+  .sheetbar { margin: 40px 0 36px; background: #fff; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+  .sheetbar .cells { height: 130px; background:
+    linear-gradient(#eceef3 1px, transparent 1px) 0 0 / 100% 26px,
+    linear-gradient(90deg, #eceef3 1px, transparent 1px) 0 0 / 92px 100%; }
+  .sheetbar .tabs { display: flex; gap: 2px; padding: 0 12px; background: #f2f3f6; border-top: 1px solid var(--line); overflow: hidden; }
+  .sheetbar .tabs span { flex: none; font-size: 15px; font-weight: 600; color: var(--sub); padding: 10px 14px; }
+  .sheetbar .tabs span.on { background: #fff; color: #1e7e4f; border-bottom: 3px solid #21a366; }
+  .sheetbar .tabs span.more { color: var(--faint); }
+  .pains { display: grid; gap: 16px; }
+  .pain { display: flex; gap: 20px; align-items: flex-start; padding: 26px 28px; }
+  .pain .ic { flex: none; width: 52px; height: 52px; border-radius: 14px; background: #fff1ec; color: var(--warn); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; }
+  .pain h3 { font-size: 23px; font-weight: 800; margin-bottom: 6px; }
+  .pain p { font-size: 18px; line-height: 1.6; color: var(--sub); }
+  .next { margin-top: 40px; text-align: center; font-size: 26px; font-weight: 800; }
+  .next em { font-style: normal; color: var(--accent); }
+</style></head>
+<body><div class="page">
+  <span class="eyebrow">이런 적 있으신가요?</span>
+  <h1>찾을 때마다<br>탭을 <em>하나씩</em> 넘기고 계신가요?</h1>
+  <p class="lead">데이터가 쌓이면 보통 월별 탭, 연도별 파일로 나눠 두죠.<br>정리는 되지만, 막상 찾으려면 여기저기 열어 봐야 합니다.</p>
+
+  <div class="sheetbar">
+    <div class="cells"></div>
+    <div class="tabs"><span>2101</span><span>2102</span><span>2103</span><span>2104</span><span>2105</span><span class="on">2106</span><span>2107</span><span>2108</span><span>2109</span><span class="more">… 60개</span></div>
+  </div>
+
+  <div class="pains">
+    <div class="card pain"><div class="ic">1</div><div><h3>작년 거래 하나 찾는데 탭을 수십 번</h3><p>몇 월이었는지 모르면 처음부터 하나씩 넘겨 봐야 해요.</p></div></div>
+    <div class="card pain"><div class="ic">2</div><div><h3>파일이 나뉘어 있어 몇 년치를 한 번에 못 봐요</h3><p>2016~2020년 파일 따로, 최근 파일 따로. 비교하려면 둘 다 열어야 하죠.</p></div></div>
+    <div class="card pain"><div class="ic">3</div><div><h3>합치자니 엑셀이 버거워해요</h3><p>한 시트에 수십만 줄이 넘어가면 필터 한 번에 한참 걸리고, 104만 줄이 넘으면 아예 못 넣어요.</p></div></div>
+    <div class="card pain"><div class="ic">4</div><div><h3>Ctrl+F는 단어 하나만 찾아요</h3><p>"담당자 A, 2024년, 반품"처럼 조건을 같이 걸어 표로 보는 건 안 돼요.</p></div></div>
+  </div>
+
+  <p class="next">그래서 <em>"모아서, 바로 찾는"</em> 화면을 만들었습니다</p>
+</div></body></html>

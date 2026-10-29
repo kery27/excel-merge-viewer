@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" href="style.css">
+<style>
+  table.cmp { width: 100%; border-collapse: separate; border-spacing: 0; margin: 40px 0 0; background: #fff; border: 1px solid var(--line); border-radius: 18px; overflow: hidden; font-size: 18px; }
+  .cmp th, .cmp td { padding: 18px 18px; border-bottom: 1px solid var(--line); text-align: center; }
+  .cmp tr:last-child td { border-bottom: 0; }
+  .cmp th { background: #f6f7fb; font-size: 17px; color: var(--sub); }
+  .cmp th.me { background: var(--accent); color: #fff; }
+  .cmp td:first-child { text-align: left; font-weight: 700; }
+  .cmp td.me { background: #f6f7ff; font-weight: 800; color: var(--accent); }
+  .x { color: #c2c7d2; font-weight: 800; }
+  .tri { color: #d29a3a; font-weight: 800; }
+  .cmp small { display: block; font-size: 13px; color: var(--faint); font-weight: 500; margin-top: 3px; }
+  h2 { font-size: 32px; font-weight: 800; margin: 64px 0 22px; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .stat { padding: 26px 22px; text-align: center; }
+  .stat .k { font-size: 17px; color: var(--sub); font-weight: 600; }
+  .stat .v { font-size: 46px; font-weight: 800; color: var(--accent); margin: 8px 0 2px; letter-spacing: -0.03em; }
+  .stat .v small { font-size: 22px; }
+  .stat .d { font-size: 15px; color: var(--faint); }
+  .fine { margin-top: 18px; font-size: 15px; color: var(--faint); line-height: 1.6; }
+</style></head>
+<body><div class="page">
+  <span class="eyebrow">엑셀 기능과 비교</span>
+  <h1>엑셀 찾기·파워쿼리와<br><em>뭐가 다른가요?</em></h1>
+  <p class="lead">단어 하나 찾는 정도라면 엑셀로 충분합니다.<br>조건을 걸어 몇 년치를 한 번에 봐야 할 때 차이가 납니다.</p>
+
+  <table class="cmp">
+    <tr><th style="text-align:left">할 수 있는 일</th><th>엑셀 찾기<br>(Ctrl+F)</th><th>파워쿼리</th><th class="me">엑셀 모아보기</th></tr>
+    <tr><td>단어 하나 찾기</td><td>○</td><td>○</td><td class="me">○</td></tr>
+    <tr><td>조건 여러 개 같이 걸기</td><td class="x">✕</td><td>○</td><td class="me">○</td></tr>
+    <tr><td>여러 파일을 하나로 합치기</td><td class="x">✕</td><td>○<small>설정 방법을 익혀야 함</small></td><td class="me">○<small>끌어다 놓기만</small></td></tr>
+    <tr><td>탭마다 칸 순서가 달라도</td><td class="x">✕</td><td class="tri">△<small>직접 맞춤</small></td><td class="me">○<small>자동으로 맞춤</small></td></tr>
+    <tr><td>수십만 줄에서 바로 필터</td><td class="tri">△</td><td class="tri">△<small>시트에 올리면 다시 느려짐</small></td><td class="me">○</td></tr>
+    <tr><td>104만 줄 넘는 데이터</td><td class="x">✕</td><td class="tri">△</td><td class="me">○</td></tr>
+  </table>
+
+  <h2>실제로 재 본 속도</h2>
+  <div class="stats">
+    <div class="card stat"><div class="k">파일 2개 · 탭 62개<br>읽어서 합치기</div><div class="v">15<small>초</small></div><div class="d">50만 건</div></div>
+    <div class="card stat"><div class="k">검색어 3개 +<br>칸 필터</div><div class="v">0.13<small>초</small></div><div class="d">50만 건 중</div></div>
+    <div class="card stat"><div class="k">전체<br>정렬</div><div class="v">0.5<small>초</small></div><div class="d">50만 건</div></div>
+  </div>
+  <p class="fine">※ 칸 11개짜리 가짜 데이터, 일반 사무용 PC·크롬 기준 실측입니다. 칸 수와 파일 구성에 따라 달라질 수 있어요.<br>※ 합치기는 파일을 넣을 때 한 번만, 그다음 찾기는 매번 바로 됩니다.</p>
+</div></body></html>

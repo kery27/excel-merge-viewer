@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" href="style.css">
+<style>
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 40px 0 34px; }
+  .step { padding: 24px 22px; }
+  .step .no { display: inline-flex; width: 36px; height: 36px; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 800; font-size: 18px; align-items: center; justify-content: center; }
+  .step h3 { font-size: 21px; font-weight: 800; margin: 14px 0 8px; line-height: 1.35; }
+  .step p { font-size: 16px; line-height: 1.6; color: var(--sub); }
+  .shot { position: relative; }
+  .shot .app { transform: none; }
+  .callout { position: absolute; background: var(--navy); color: #fff; font-size: 15px; font-weight: 700; padding: 9px 14px; border-radius: 10px; box-shadow: 0 8px 20px rgba(18, 23, 53, 0.25); }
+  .callout::after { content: ""; position: absolute; width: 10px; height: 10px; background: var(--navy); transform: rotate(45deg); }
+  .c1 { right: 24px; top: -22px; } .c1::after { right: 60px; bottom: -5px; }
+  .c2 { left: 0; bottom: -54px; } .c2::after { left: 30px; top: -5px; }
+  .note { margin-top: 86px; font-size: 17px; color: var(--sub); line-height: 1.7; }
+  .note b { color: var(--ink); }
+</style></head>
+<body><div class="page">
+  <span class="eyebrow">이렇게 동작해요</span>
+  <h1>끌어다 놓으면,<br><em>하나로 모아</em> 바로 찾아요</h1>
+  <p class="lead">설치도, 변환해서 저장하는 단계도 없습니다.</p>
+
+  <div class="steps">
+    <div class="card step"><span class="no">1</span><h3>파일 여러 개를<br>한꺼번에 끌어다 놓기</h3><p>엑셀(.xlsx/.xls), CSV 모두 가능. 탭이 60개여도 그대로 넣으세요.</p></div>
+    <div class="card step"><span class="no">2</span><h3>같은 구조끼리<br>알아서 합치기</h3><p>제목 줄이 같은 탭은 하나로. 칸 순서가 달라도 맞춰 넣고, 메모 탭은 빼고 알려 드려요.</p></div>
+    <div class="card step"><span class="no">3</span><h3>조건으로<br>바로 찾기</h3><p>전체 검색 + 칸별 필터 + 정렬. 파일별·탭별로만 골라 볼 수도 있어요.</p></div>
+  </div>
+
+  <div class="shot">
+    <div class="app">
+      <div class="bar"><span class="logo">▦</span>엑셀 모아보기</div>
+      <div class="sum">파일 <b>2개</b> · 탭 <b>61개</b>에서 <b>500,000건</b>을 하나로 모았어요 · <span style="color:#c0662f">합치지 않은 탭 2개 ▸</span></div>
+      <div class="tools"><div class="in">경기 모니터 카드</div><div class="sel">전체 (500,000건) ▾</div><div class="cnt"><b>1,445건</b> / 전체 500,000건 · 0.13초</div></div>
+      <table>
+        <tr><th>출처 (탭)</th><th>주문일<span class="f">포함</span></th><th>지역<span class="f">포함</span></th><th>상품명<span class="f">포함</span></th><th>금액<span class="f">포함</span></th><th>결제수단<span class="f">포함</span></th><th>배송상태<span class="f">포함</span></th></tr>
+        <tr><td class="src">2016-2020</td><td>2017-03-14</td><td>경기</td><td>27인치 모니터</td><td class="n">518000</td><td>카드</td><td>배송완료</td></tr>
+        <tr><td class="src">2016-2020</td><td>2019-08-02</td><td>경기</td><td>모니터 받침대</td><td class="n">27000</td><td>카드</td><td>취소</td></tr>
+        <tr><td class="src">2203</td><td>2022-03-21</td><td>경기</td><td>27인치 모니터</td><td class="n">259000</td><td>카드</td><td>배송완료</td></tr>
+        <tr><td class="src">2311</td><td>2023-11-09</td><td>경기</td><td>27인치 모니터</td><td class="n">777000</td><td>카드</td><td>배송중</td></tr>
+        <tr><td class="src">2408</td><td>2024-08-27</td><td>경기</td><td>모니터 받침대</td><td class="n">54000</td><td>카드</td><td>배송완료</td></tr>
+        <tr><td class="src">2512</td><td>2025-12-05</td><td>경기</td><td>27인치 모니터</td><td class="n">1036000</td><td>카드</td><td>반품</td></tr>
+      </table>
+    </div>
+    <div class="callout c1">50만 건에서 0.13초</div>
+    <div class="callout c2">어느 파일·탭에서 온 줄인지 표시</div>
+  </div>
+
+  <p class="note">※ 화면은 <b>가짜 샘플 데이터</b>로 만든 예시입니다. 칸 이름과 구성은 의뢰인 데이터에 맞춰 바뀌어요.</p>
+</div></body></html>

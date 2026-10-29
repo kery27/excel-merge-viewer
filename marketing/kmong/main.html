@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" href="style.css">
+<style>
+  body { width: 652px; height: 488px; background: radial-gradient(120% 90% at 100% 0%, #2b3590 0%, var(--navy) 55%); color: #fff; }
+  .wrap { position: relative; height: 100%; padding: 44px 40px; }
+  .tag { display: inline-block; font-size: 15px; font-weight: 700; color: #cfd5ff; border: 1px solid rgba(207, 213, 255, 0.35); padding: 6px 13px; border-radius: 999px; }
+  h1 { font-size: 50px; line-height: 1.22; margin: 18px 0 12px; color: #fff; letter-spacing: -0.04em; }
+  h1 em { color: #8fa0ff; }
+  .sub { font-size: 19px; color: #c4c9e6; line-height: 1.5; }
+  .stat { position: absolute; left: 40px; bottom: 40px; display: flex; align-items: baseline; gap: 10px; background: #fff; color: var(--ink); padding: 12px 18px; border-radius: 14px; }
+  .stat b { font-size: 30px; color: var(--accent); font-weight: 800; }
+  .stat span { font-size: 16px; font-weight: 700; }
+
+  /* 오른쪽: 파일 묶음 → 표 하나 */
+  .viz { position: absolute; right: 30px; top: 232px; width: 314px; height: 220px; }
+  .file { position: absolute; width: 150px; background: #fff; color: var(--ink); border-radius: 10px; padding: 10px 11px; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3); font-size: 12px; font-weight: 700; }
+  .file i { display: inline-block; width: 16px; height: 16px; border-radius: 4px; background: #21a366; vertical-align: -3px; margin-right: 6px; }
+  .file .tabs { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 8px; }
+  .file .tabs s { text-decoration: none; font-size: 9.5px; font-weight: 600; color: var(--sub); background: var(--bg); border-radius: 3px; padding: 2px 4px; }
+  .f1 { left: 0; top: 0; transform: rotate(-5deg); }
+  .f2 { left: 18px; top: 46px; transform: rotate(2deg); z-index: 1; }
+  .f3 { left: 4px; top: 142px; transform: rotate(-3deg); z-index: 2; }
+  .arrow { position: absolute; left: 172px; top: 78px; font-size: 40px; color: #8fa0ff; font-weight: 800; }
+  .grid { position: absolute; left: 200px; top: 14px; width: 114px; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35); }
+  .grid .h { background: var(--accent); height: 18px; }
+  .grid .r { height: 13px; border-bottom: 1px solid #edf0f6; display: flex; gap: 5px; padding: 4px 6px; }
+  .grid .r u { display: block; height: 5px; border-radius: 3px; background: #dfe3ee; }
+  .grid .r.hit { background: var(--soft); }
+  .grid .r.hit u { background: var(--accent2); }
+</style></head>
+<body><div class="wrap">
+  <span class="tag">엑셀·CSV 여러 개 → 하나로</span>
+  <h1>흩어진 엑셀,<br><em>한 번에</em> 모아 찾기</h1>
+  <p class="sub">월별 탭 60개, 연도별 파일도<br>끌어다 놓으면 끝</p>
+  <div class="stat"><b>50만 건</b><span>검색 0.1초대</span></div>
+
+  <div class="viz">
+    <div class="file f1"><i></i>2016-2020.xlsx</div>
+    <div class="file f2"><i></i>월별주문.xlsx
+      <div class="tabs"><s>2101</s><s>2102</s><s>2103</s><s>2104</s><s>…</s><s>2512</s></div></div>
+    <div class="file f3"><i></i>2026_주문.csv</div>
+    <div class="arrow">›</div>
+    <div class="grid"><div class="h"></div>
+      <div class="r"><u style="width:30%"></u><u style="width:45%"></u></div>
+      <div class="r hit"><u style="width:38%"></u><u style="width:35%"></u></div>
+      <div class="r"><u style="width:25%"></u><u style="width:50%"></u></div>
+      <div class="r hit"><u style="width:34%"></u><u style="width:40%"></u></div>
+      <div class="r"><u style="width:28%"></u><u style="width:44%"></u></div>
+      <div class="r"><u style="width:36%"></u><u style="width:30%"></u></div>
+      <div class="r hit"><u style="width:30%"></u><u style="width:46%"></u></div>
+      <div class="r"><u style="width:40%"></u><u style="width:28%"></u></div>
+      <div class="r"><u style="width:26%"></u><u style="width:42%"></u></div>
+      <div class="r"><u style="width:33%"></u><u style="width:38%"></u></div>
+    </div>
+  </div>
+</div></body></html>

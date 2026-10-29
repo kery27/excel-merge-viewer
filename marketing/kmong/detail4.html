@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" href="style.css">
+<style>
+  .safe { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 40px 0 0; }
+  .safe .card { padding: 26px 22px; }
+  .safe svg { width: 44px; height: 44px; color: var(--mint); }
+  .safe h3 { font-size: 20px; font-weight: 800; margin: 14px 0 8px; }
+  .safe p { font-size: 16px; line-height: 1.6; color: var(--sub); }
+  h2 { font-size: 30px; font-weight: 800; margin: 60px 0 8px; }
+  h2 + p { font-size: 18px; color: var(--sub); margin-bottom: 20px; }
+  .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .opt { padding: 20px 22px; display: flex; gap: 14px; align-items: center; font-size: 18px; font-weight: 700; }
+  .opt i { flex: none; width: 34px; height: 34px; border-radius: 10px; background: var(--soft); color: var(--accent); display: flex; align-items: center; justify-content: center; font-style: normal; font-weight: 800; }
+  .opt small { display: block; font-size: 14px; color: var(--sub); font-weight: 500; margin-top: 2px; }
+  .flow { display: flex; gap: 10px; align-items: stretch; }
+  .flow .card { flex: 1; padding: 20px 16px; text-align: center; }
+  .flow b { display: block; font-size: 15px; color: var(--accent); margin-bottom: 6px; }
+  .flow span { font-size: 17px; font-weight: 700; line-height: 1.45; }
+  .flow .ar { flex: none; align-self: center; color: var(--faint); font-size: 22px; font-weight: 800; }
+  .ask { margin-top: 26px; background: var(--navy); color: #fff; border-radius: 18px; padding: 24px 28px; font-size: 18px; line-height: 1.65; }
+  .ask b { color: #a9b5ff; }
+</style></head>
+<body><div class="page">
+  <span class="eyebrow">안심하고 쓰세요</span>
+  <h1>데이터는 <em>내 PC 밖으로</em><br>나가지 않아요</h1>
+  <p class="lead">서버에 올리지 않고, 브라우저 안에서만 읽고 찾습니다.<br>고객 정보가 담긴 파일도 걱정 없이 넣으세요.</p>
+
+  <div class="safe">
+    <div class="card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg><h3>설치 없이</h3><p>프로그램 설치 없이 파일을 열어 크롬에서 바로 써요.</p></div>
+    <div class="card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.5a15 15 0 0 1 20 0M5 12a10 10 0 0 1 14 0M8.5 15.5a5 5 0 0 1 7 0"/><path d="M3 3l18 18"/></svg><h3>인터넷 없이</h3><p>인터넷이 끊겨 있어도, 회사 방화벽이 막혀 있어도 동작해요.</p></div>
+    <div class="card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><h3>외부 전송 없음</h3><p>파일 내용이 어디로도 보내지지 않아요. 저도 받을 필요가 없어요.</p></div>
+  </div>
+
+  <h2>필요하면 더할 수 있어요</h2>
+  <p>업무에 맞춰 골라서 추가하는 옵션입니다.</p>
+  <div class="opts">
+    <div class="card opt"><i>A</i><div>직원별로 볼 범위 나누기<small>담당자마다 자기 데이터만 보이게</small></div></div>
+    <div class="card opt"><i>B</i><div>파일 비밀번호<small>나눠 준 파일을 아무나 못 열게</small></div></div>
+    <div class="card opt"><i>C</i><div>셀 색깔로 거르기<small>엑셀에 칠해 둔 표시 그대로 활용</small></div></div>
+    <div class="card opt"><i>D</i><div>다음에 빨리 열기<small>매번 합치지 않고 바로 열리게 저장</small></div></div>
+  </div>
+
+  <h2>진행 순서</h2>
+  <p>평균 5일 안팎 (옵션에 따라 달라져요)</p>
+  <div class="flow">
+    <div class="card"><b>1</b><span>문의 ·<br>구조 확인</span></div><div class="ar">›</div>
+    <div class="card"><b>2</b><span>내 데이터에<br>맞게 제작</span></div><div class="ar">›</div>
+    <div class="card"><b>3</b><span>써 보시고<br>수정</span></div><div class="ar">›</div>
+    <div class="card"><b>4</b><span>납품 ·<br>사용법 안내</span></div>
+  </div>
+  <div class="ask">문의하실 땐 <b>엑셀의 제목 줄(칸 이름)</b>과 <b>가짜로 채운 몇 줄</b>, 대략적인 건수·파일 수만 알려 주세요.<br>실제 고객 데이터는 보내지 않으셔도 됩니다.</div>
+</div></body></html>
