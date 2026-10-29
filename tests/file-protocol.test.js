@@ -204,6 +204,79 @@ async function main() {
   await page.waitForSelector('#resume:not([hidden])');
   await page.click('#resumeDel');
   await page.waitForSelector('#resume', { state: 'hidden' });
+
+  // 직원용 파일: 직원마다 고른 줄·칸만 담은 저장본. 뺀 칸·다른 직원 줄은 파일 바이트에도 없어야 함
+  await page.selectOption('#sampleSize', '10000');
+  await page.click('#sampleBtn');
+  await page.waitForSelector('#view:not([hidden])', { timeout: 60000 });
+  await page.click('#staffBtn');
+  await page.waitForSelector('#staffPanel:not([hidden])');
+  await page.selectOption('#roleCol', '담당자');
+  const r1 = page.locator('.role').nth(0);
+  await r1.locator('.rname').fill('김테스트');
+  await r1.locator('input[data-f="pw"]').fill('staff1');
+  await r1.locator('input[data-kind="v"][value="샘플담당자A"]').check();
+  await r1.locator('input[data-kind="c"][value="고객명"]').uncheck();
+  assert.match(await r1.locator('.sum').textContent(), /칸 10개 · 비밀번호 있음/);
+  await page.click('#roleAdd');
+  const r2 = page.locator('.role').nth(1);
+  await r2.locator('.rname').fill('이샘플');
+  await r2.locator('.vfind').fill('B');
+  await r2.locator('button[data-act="vall"]').click(); // 찾기로 좁힌 값만 모두 선택
+  await r2.locator('button[data-act="cnone"]').click();
+  for (const c of ['주문일', '금액', '배송상태', '담당자']) await r2.locator('input[data-kind="c"][value="' + c + '"]').check();
+  assert.match(await r2.locator('.sum').textContent(), /칸 4개 · 비밀번호 없음/);
+  const [zdl] = await Promise.all([page.waitForEvent('download'), page.click('#roleZip')]);
+  assert.match(zdl.suggestedFilename(), /^직원용파일_.*\.zip$/);
+  const zipBytes = fs.readFileSync(await zdl.path());
+  // 압축 없는 zip이라 파일 이름 뒤에 내용이 그대로 — 이름(UTF-8 표시)과 내용을 직접 꺼냄
+  const unzip = buf => {
+    const out = {};
+    for (let p = 0; buf.readUInt32LE(p) === 0x04034b50;) {
+      assert.equal(buf.readUInt16LE(p + 6) & 0x800, 0x800); // 한글 이름 = UTF-8
+      const size = buf.readUInt32LE(p + 18), nlen = buf.readUInt16LE(p + 26);
+      const name = buf.slice(p + 30, p + 30 + nlen).toString('utf8');
+      out[name] = buf.slice(p + 30 + nlen, p + 30 + nlen + size);
+      p += 30 + nlen + size;
+    }
+    return out;
+  };
+  const staffFiles = unzip(zipBytes);
+  const names = Object.keys(staffFiles);
+  assert.equal(names.length, 2);
+  const kim = names.find(n => n.includes('김테스트')), lee = names.find(n => n.includes('이샘플'));
+  assert.equal(staffFiles[kim].slice(0, 13).toString(), 'EXCELMOA-ENC1'); // 비밀번호 → 통째로 암호화
+  const leeBytes = staffFiles[lee];
+  assert.equal(leeBytes.slice(0, 15).toString(), 'SQLite format 3');
+  for (const leak of ['테스트고객', 'ORD-', '샘플담당자A', '샘플담당자C', '카드']) assert.ok(!leeBytes.includes(Buffer.from(leak)), '직원 파일에 빠져야 할 값이 있음: ' + leak);
+  // 설정은 다시 열어도 기억
+  await page.click('#staffClose');
+  await page.click('#staffBtn');
+  assert.deepEqual(await page.$$eval('.role .rname', x => x.map(e => e.value)), ['김테스트', '이샘플']);
+  // 직원이 자기 파일을 열면: 정해진 줄·칸만, 직원용 파일 표시, [직원용 파일] 버튼 없음
+  fs.writeFileSync(path.join(tmp, 'kim.db'), staffFiles[kim]);
+  fs.writeFileSync(path.join(tmp, 'lee.db'), leeBytes);
+  await page.goto(url(path.join(ROOT, 'index.html')));
+  await page.setInputFiles('#fileInput', path.join(tmp, 'kim.db'));
+  await page.waitForSelector('#pwDlg:not([hidden])');
+  await page.fill('#pwIn', 'staff1'); await page.click('#pwOk');
+  await page.waitForSelector('#view:not([hidden])');
+  await settle();
+  assert.match(await text('#summary'), /직원용 파일 김테스트/);
+  assert.equal(await page.isVisible('#staffBtn'), false);
+  assert.ok(!(await page.$$eval('#head .hc .t', x => x.map(e => e.textContent))).includes('고객명'));
+  await page.fill('#search', '샘플담당자B'); await settle();
+  assert.equal(await count(), 0);
+  await page.goto(url(path.join(ROOT, 'index.html')));
+  await page.setInputFiles('#fileInput', path.join(tmp, 'lee.db'));
+  await page.waitForSelector('#view:not([hidden])');
+  await settle();
+  assert.match(await text('#summary'), /직원용 파일 이샘플/);
+  assert.equal(await page.$$eval('#head .hc[data-i]', x => x.length), 4);
+  assert.equal(await page.$$eval('.cbtn', x => x.length), 2); // 남긴 칸(금액·배송상태)의 색은 그대로
+  await page.fill('#search', '테스트고객'); await settle();
+  assert.equal(await count(), 0);
+
   fs.rmSync(tmp, { recursive: true, force: true });
   assert.deepEqual(errors, []);
 

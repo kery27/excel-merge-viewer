@@ -124,7 +124,7 @@
   #resume { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 14px; padding: 12px 16px; background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 10px; font-size: 13px; color: var(--ink); }
   #resume .what { flex: 1; min-width: 200px; line-height: 1.6; }
   #resume .what span { color: var(--sub); }
-  #savePanel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px 28px; font-size: 13px; }
+  #savePanel { flex: none; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px 28px; font-size: 13px; }
   #savePanel h3 { margin: 0 0 4px; font-size: 14px; }
   #savePanel p { margin: 0 0 8px; color: var(--sub); line-height: 1.6; }
   #savePanel .small { font-size: 12px; color: var(--faint); }
@@ -132,6 +132,26 @@
   #savePanel .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   #saveMsg { grid-column: 1 / -1; color: var(--ink); min-height: 1em; }
   #saveMsg.err { color: var(--warn); }
+  #staffPanel { flex: none; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; font-size: 13px; display: flex; flex-direction: column; gap: 12px; max-height: 62vh; overflow: auto; } /* flex: none — 아래 표에 밀려 납작해지지 않게 */
+  #staffPanel > p { margin: 0; color: var(--sub); line-height: 1.6; }
+  #staffPanel .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  #staffPanel select, #staffPanel input[type=text], #staffPanel input[type=password] { padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--field); color: var(--ink); }
+  .role { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; }
+  .role .head { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .role .head .rname { font-weight: 700; flex: 1; min-width: 140px; }
+  .role h4 { margin: 0 0 4px; font-size: 12px; color: var(--sub); }
+  .role .list { max-height: 150px; overflow: auto; border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; background: var(--field); }
+  .role .list label { display: flex; gap: 6px; align-items: center; padding: 1px 0; }
+  .role .list .n { margin-left: auto; color: var(--faint); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .role .tools { display: flex; gap: 6px; margin-bottom: 4px; flex-wrap: wrap; }
+  .role .tools button { padding: 1px 8px; font-size: 12px; }
+  .role .tools input { flex: 1; min-width: 80px; padding: 3px 6px !important; font-size: 12px; }
+  .role .foot { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .role .sum { color: var(--ink); font-weight: 700; margin-right: auto; }
+  .role .sum.zero { color: var(--warn); }
+  #staffMsg { min-height: 1em; }
+  #staffMsg.err { color: var(--warn); }
+  .roleBanner { margin-top: 4px; color: var(--ink); }
   #pwDlg { position: fixed; inset: 0; z-index: 30; background: rgba(10,12,20,.45); display: flex; align-items: center; justify-content: center; padding: 16px; }
   #pwDlg .box { background: var(--panel); color: var(--ink); border-radius: 12px; padding: 18px 20px; width: 100%; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,.3); font-size: 13px; line-height: 1.6; }
   #pwDlg h3 { margin: 0 0 6px; font-size: 15px; }
@@ -144,6 +164,7 @@
     #intro h1 { font-size: 20px; }
     #count { margin-left: 0; width: 100%; }
     #savePanel { grid-template-columns: 1fr; }
+    .role { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -153,6 +174,7 @@
   <div class="topActions" id="topActions" hidden>
     <button id="addMoreBtn">파일 더 넣기</button>
     <button id="saveBtn" class="ghost">저장</button>
+    <button id="staffBtn" class="ghost">직원용 파일</button>
     <button id="resetBtn" class="ghost">처음부터</button>
   </div>
   <div class="confirmBar" id="resetConfirm" hidden>
@@ -219,6 +241,22 @@
         <div class="row"><button id="saveLocal">브라우저에 저장</button><button id="saveClose" class="ghost">닫기</button></div>
       </div>
       <div id="saveMsg"></div>
+    </div>
+    <div id="staffPanel" hidden>
+      <p><b>직원용 파일 만들기</b> — 직원마다 볼 수 있는 줄·칸만 담은 저장본(.db)을 따로 만들어요. 직원은 받은 파일을 이 화면에 끌어다 놓아 봐요.
+        파일에 안 넣은 줄·칸은 그 파일로는 볼 방법이 없어요(화면에서 숨기는 게 아니라 아예 빼고 만듦). 다만 볼 수 있게 한 내용을 직원이 캡처하거나 옮기는 것까지는 막을 수 없어요.</p>
+      <div class="row">줄을 나눌 칸
+        <select id="roleCol"></select>
+        <span style="color:var(--faint)">예: 담당자 칸 → 직원마다 자기 이름 줄만</span>
+      </div>
+      <div id="roles"></div>
+      <div class="row">
+        <button id="roleAdd" class="ghost">+ 직원 추가</button>
+        <button id="roleZip">모두 한 번에 내려받기(zip)</button>
+        <button id="staffClose" class="ghost">닫기</button>
+        <span id="staffMsg"></span>
+      </div>
+      <p style="font-size:12px;color:var(--faint)">설정(직원 이름·고른 값·칸·비밀번호)은 이 PC의 이 브라우저에만 기억돼요. 다음 달에 새 엑셀을 넣고 다시 내려받으면 같은 설정으로 만들어져요.</p>
     </div>
     <div id="summary"></div>
     <div class="toolbar">
@@ -657,7 +695,71 @@ function workerMain() {
     colorCols.clear(); (meta.colorCols || []).forEach(i => colorCols.add(i));
     Object.keys(numericCols).forEach(k => delete numericCols[k]);
     const total = db.exec('SELECT COUNT(*) FROM data')[0].values[0][0];
-    return { cols, total, loadLog: meta.loadLog || [], savedAt: meta.savedAt, ms: performance.now() - t0 };
+    return { cols, total, loadLog: meta.loadLog || [], savedAt: meta.savedAt, role: meta.role || null, ms: performance.now() - t0 };
+  }
+
+  // 칸 하나에 들어 있는 값과 줄 수(직원용 파일의 줄 고르기 목록) — 많은 순 2000개까지
+  function distinctValues(i) {
+    if (!db) return [];
+    const r = db.exec('SELECT c' + Number(i) + ', COUNT(*) FROM data GROUP BY 1 ORDER BY 2 DESC LIMIT 2000');
+    return r.length ? r[0].values : [];
+  }
+
+  // 직원용 파일: 고른 줄·칸만 새 DB에 옮겨 담는다. 원본 DB를 지워서 만들면 지운 내용이 파일의 빈 공간에 남을 수 있어
+  // 항상 새 DB에 필요한 것만 넣는다. 전체 검색용 _all도 남긴 칸만으로 다시 만든다(뺀 칸 값이 검색으로 새지 않게).
+  function splitDb(spec) {
+    if (!db) throw new Error('데이터가 없어요.');
+    const keep = spec.cols.map(Number).filter(i => i >= 0 && i < cols.length).sort((a, b) => a - b);
+    if (!keep.length) throw new Error('볼 수 있는 칸을 하나 이상 골라 주세요.');
+    const k = keep.length;
+    const out = new SQL.Database();
+    out.run('CREATE TABLE data (id INTEGER PRIMARY KEY, src_file TEXT, src_sheet TEXT, src_row INTEGER, _all TEXT, ' +
+      keep.map((_, j) => 'c' + j + ' TEXT').join(', ') + ', ' + keep.map((_, j) => 'b' + j + ' TEXT, f' + j + ' TEXT').join(', ') + ')');
+    const where = [], args = [];
+    if (spec.rowCol != null) {
+      const vals = spec.values || [];
+      if (!vals.length) where.push('0');
+      else { where.push('c' + Number(spec.rowCol) + ' IN (' + vals.map(() => '?').join(',') + ')'); args.push(...vals); }
+    }
+    const withColor = colorCols.size > 0;
+    const sel = ['src_file', 'src_sheet', 'src_row'].concat(keep.map(i => 'c' + i), withColor ? keep.map(i => 'b' + i).concat(keep.map(i => 'f' + i)) : []);
+    const names = ['src_file', 'src_sheet', 'src_row', '_all'].concat(keep.map((_, j) => 'c' + j), withColor ? keep.map((_, j) => 'b' + j).concat(keep.map((_, j) => 'f' + j)) : []);
+    const ins = out.prepare('INSERT INTO data (' + names.join(', ') + ') VALUES (' + names.map(() => '?').join(', ') + ')');
+    const st = db.prepare('SELECT ' + sel.join(', ') + ' FROM data' + (where.length ? ' WHERE ' + where.join(' AND ') : '') + ' ORDER BY id');
+    st.bind(args);
+    const newColor = new Set();
+    const perSheet = new Map(); // "파일\t탭" → [줄 수, 색칠된 칸 수]
+    let total = 0;
+    out.run('BEGIN');
+    try {
+      while (st.step()) {
+        const r = st.get();
+        const vals = r.slice(3, 3 + k);
+        let colored = 0;
+        if (withColor) for (let j = 0; j < k; j++) if (r[3 + k + j] || r[3 + 2 * k + j]) { newColor.add(j); colored++; }
+        ins.run([r[0], r[1], r[2], vals.join('\t').toLowerCase()].concat(r.slice(3)));
+        const key = r[0] + '\t' + r[1];
+        const c = perSheet.get(key) || [0, 0];
+        c[0]++; c[1] += colored;
+        perSheet.set(key, c);
+        total++;
+      }
+    } finally { st.free(); ins.free(); out.run('COMMIT'); }
+    // 넣은 파일 요약도 이 파일 내용 기준으로 새로(뺀 탭·뺀 칸 이름 같은 원본 정보는 넣지 않음)
+    const files = new Map();
+    perSheet.forEach(([rows, colorCells], key) => {
+      const [file, sheet] = key.split('\t');
+      if (!files.has(file)) files.set(file, { name: file, sheets: [] });
+      files.get(file).sheets.push({ sheet, status: 'ok', rows, colorCells });
+    });
+    const meta = { app: SAVE_APP, version: SAVE_VERSION, cols: keep.map(i => cols[i]), colorCols: Array.from(newColor),
+      loadLog: Array.from(files.values()), savedAt: new Date().toISOString(),
+      role: { name: spec.name, rowCol: spec.rowCol != null ? cols[spec.rowCol] : null, rows: total, cols: k } };
+    out.run('CREATE TABLE meta (k TEXT PRIMARY KEY, v TEXT)');
+    out.run('INSERT INTO meta VALUES (?, ?)', ['state', JSON.stringify(meta)]);
+    const bytes = out.export();
+    out.close();
+    return { bytes, rows: total };
   }
 
   function sampleRows() {
@@ -787,6 +889,12 @@ function workerMain() {
         return;
       }
       else if (cmd === 'open') result = await openDb(e.data.buffer);
+      else if (cmd === 'distinct') result = distinctValues(e.data.col);
+      else if (cmd === 'split') {
+        const r = splitDb(e.data.spec);
+        self.postMessage({ type: 'reply', id, result: { buffer: r.bytes.buffer, rows: r.rows } }, [r.bytes.buffer]);
+        return;
+      }
       else if (cmd === 'reset') { if (db) db.close(); db = null; cols = null; ids = new Int32Array(0); colorCols.clear(); result = true; }
       self.postMessage({ type: 'reply', id, result });
     } catch (err) {
@@ -829,6 +937,7 @@ function call(cmd, data, transfer) {
 let cols = [];
 let total = 0, matched = 0;
 let state = { search: '', filters: {}, colors: {}, src: null, sort: null };
+let roleInfo = null;       // 직원용 파일을 열었을 때 그 파일의 이름·범위
 let colorInfo = {};        // 칸 번호 → { b: [[색, 줄 수]…], f: […] } (색이 들어간 칸만)
 let qVer = 0;              // 조건이 바뀔 때마다 증가 — 늦게 도착한 옛 결과는 버림
 let cache = { ver: -1, start: 0, rows: [] };
@@ -844,7 +953,7 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&am
 function show(id) {
   ['#intro', '#progress', '#view'].forEach(s => { $(s).hidden = s !== id; });
   if (id === '#intro') refreshResume();
-  if (id !== '#view') $('#savePanel').hidden = true;
+  if (id !== '#view') { $('#savePanel').hidden = true; $('#staffPanel').hidden = true; }
   $('#topActions').hidden = id !== '#view';
   $('#resetConfirm').hidden = true;
 }
@@ -928,6 +1037,8 @@ async function afterLoad(res) {
 async function afterOpen(res, from) {
   lastLoad = { ms: res.ms, opened: from, savedAt: res.savedAt };
   loadLog = res.loadLog;
+  roleInfo = res.role;
+  $('#staffBtn').hidden = !!roleInfo; // 직원용 파일에서 또 직원용 파일을 만들 일은 없음
   total = res.total;
   state = { search: '', filters: {}, colors: {}, src: null, sort: null };
   $('#search').value = '';
@@ -964,7 +1075,8 @@ function renderSummary() {
   if (lastLoad && lastLoad.opened) {
     html += ' · ' + esc(lastLoad.opened) + ' 연 시간 <b>' + sec(lastLoad.ms) + '</b>';
     if (lastLoad.savedAt) html += ' <span style="color:var(--faint)">(' + esc(when(lastLoad.savedAt)) + ' 저장)</span>';
-  } else if (lastLoad) {
+  }
+  if (roleInfo) html += '<div class="roleBanner">직원용 파일 <b>' + esc(roleInfo.name || '') + '</b> — 볼 수 있게 정해진 줄 ' + fmt(roleInfo.rows || 0) + '건 · 칸 ' + (roleInfo.cols || 0) + '개만 들어 있어요</div>'; else if (lastLoad) {
     html += ' · 방금 읽은 시간 <b>' + sec(lastLoad.ms) + '</b>';
     if (lastLoad.genMs != null) html += ' <span style="color:var(--faint)">(가짜 파일 만드는 데 ' + sec(lastLoad.genMs) + ' 별도)</span>';
   }
@@ -1220,6 +1332,219 @@ $('#resumeDel').addEventListener('click', async () => {
   refreshResume();
 });
 
+// ---- 직원용 파일 ----
+// 설정은 칸 '이름'으로 기억한다(칸 번호는 파일마다 달라질 수 있음). 직원은 uid로 구분(이름은 바뀔 수 있음).
+const ROLE_KEY = 'emv_staff_v1';
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+let roleCfg = { rowCol: '', roles: [] };
+let roleValues = [];   // 줄을 나눌 칸의 [값, 줄 수] 목록
+function loadRoles() {
+  try { const v = JSON.parse(localStorage.getItem(ROLE_KEY) || 'null'); if (v && Array.isArray(v.roles)) roleCfg = v; } catch (e) {}
+}
+function saveRoles() { try { localStorage.setItem(ROLE_KEY, JSON.stringify(roleCfg)); } catch (e) {} }
+const rowColIndex = () => roleCfg.rowCol ? cols.indexOf(roleCfg.rowCol) : -1;
+const roleById = id => roleCfg.roles.find(r => r.id === id);
+// 지금 데이터에 있는 칸만(설정에 남은 옛 칸 이름은 무시)
+const roleColIdx = r => (r.cols || []).map(n => cols.indexOf(n)).filter(i => i >= 0);
+function roleRows(r) {
+  if (rowColIndex() < 0) return total;
+  const set = new Set(r.values || []);
+  return roleValues.reduce((a, [v, n]) => a + (set.has(String(v)) ? n : 0), 0);
+}
+function roleSummary(r) {
+  const n = roleRows(r), c = roleColIdx(r).length;
+  return { text: '→ ' + fmt(n) + '건 · 칸 ' + c + '개' + (r.pw ? ' · 비밀번호 있음' : ' · 비밀번호 없음'), zero: !n || !c };
+}
+
+async function openStaffPanel() {
+  loadRoles();
+  let html = '<option value="">나누지 않음 (모든 줄)</option>';
+  cols.forEach(c => { html += '<option value="' + esc(c) + '">' + esc(c) + '</option>'; });
+  $('#roleCol').innerHTML = html;
+  if (roleCfg.rowCol && cols.indexOf(roleCfg.rowCol) < 0) roleCfg.rowCol = '';
+  $('#roleCol').value = roleCfg.rowCol;
+  await loadRoleValues();
+  if (!roleCfg.roles.length) addRole();
+  renderRoles();
+  $('#staffPanel').hidden = false;
+  setStaffMsg('');
+}
+async function loadRoleValues() {
+  const i = rowColIndex();
+  roleValues = i < 0 ? [] : (await call('distinct', { col: i })).map(([v, n]) => [String(v == null ? '' : v), n]);
+}
+function addRole() {
+  roleCfg.roles.push({ id: uid(), name: '직원 ' + (roleCfg.roles.length + 1), values: [], cols: cols.slice(), pw: '' });
+  saveRoles();
+}
+function renderRoles() {
+  const ri = rowColIndex();
+  let html = '';
+  roleCfg.roles.forEach(r => {
+    const sum = roleSummary(r), set = new Set(r.values || []), cset = new Set(r.cols || []);
+    html += '<div class="role" data-id="' + r.id + '">';
+    html += '<div class="head"><input type="text" class="rname" data-f="name" value="' + esc(r.name) + '" placeholder="직원 이름 (파일 이름에 들어가요)">' +
+      '<input type="password" data-f="pw" value="' + esc(r.pw || '') + '" placeholder="비밀번호 (4글자 이상, 비우면 없이)" autocomplete="new-password"></div>';
+    html += '<div><h4>볼 수 있는 줄' + (ri >= 0 ? ' — "' + esc(roleCfg.rowCol) + '" 칸 값이' : '') + '</h4>';
+    if (ri < 0) html += '<div style="color:var(--sub)">모든 줄 (위에서 줄을 나눌 칸을 고르면 직원마다 다르게 정할 수 있어요)</div>';
+    else {
+      html += '<div class="tools"><input type="text" class="vfind" placeholder="값 찾기"><button class="ghost" data-act="vall">모두</button><button class="ghost" data-act="vnone">없음</button></div><div class="list vlist">';
+      roleValues.forEach(([v, n]) => {
+        html += '<label data-v="' + esc(v.toLowerCase()) + '"><input type="checkbox" data-kind="v" value="' + esc(v) + '"' + (set.has(v) ? ' checked' : '') + '>' +
+          (v === '' ? '<i style="color:var(--faint)">(빈 칸)</i>' : esc(v)) + '<span class="n">' + fmt(n) + '</span></label>';
+      });
+      html += '</div>';
+      if (roleValues.length >= 2000) html += '<div style="font-size:12px;color:var(--faint)">값이 많아 많은 순 2,000개만 보여요.</div>';
+    }
+    html += '</div><div><h4>볼 수 있는 칸</h4><div class="tools"><button class="ghost" data-act="call">모두</button><button class="ghost" data-act="cnone">없음</button></div><div class="list">';
+    cols.forEach(c => { html += '<label><input type="checkbox" data-kind="c" value="' + esc(c) + '"' + (cset.has(c) ? ' checked' : '') + '>' + esc(c) + '</label>'; });
+    html += '</div></div>';
+    html += '<div class="foot"><span class="sum' + (sum.zero ? ' zero' : '') + '">' + esc(sum.text) + '</span>' +
+      '<button data-act="one">이 직원 파일 내려받기</button><button class="ghost" data-act="del">삭제</button></div></div>';
+  });
+  $('#roles').innerHTML = html || '<div style="color:var(--sub)">직원을 추가해 주세요.</div>';
+}
+function refreshRoleSum(card) {
+  const r = roleById(card.dataset.id), sum = roleSummary(r), el = card.querySelector('.sum');
+  el.textContent = sum.text; el.classList.toggle('zero', sum.zero);
+}
+function setStaffMsg(t, err) { $('#staffMsg').textContent = t; $('#staffMsg').classList.toggle('err', !!err); }
+const safeName = s => String(s || '').replace(/[\\/:*?"<>|\s]+/g, '_').replace(/^_+|_+$/g, '') || '직원';
+const today = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); };
+
+// 직원 한 명 파일 만들기 → { name, data(ArrayBuffer), rows }
+async function buildRoleFile(r) {
+  const ci = roleColIdx(r);
+  if (!ci.length) throw new Error('"' + r.name + '": 볼 수 있는 칸을 하나 이상 골라 주세요.');
+  if (r.pw && r.pw.length < 4) throw new Error('"' + r.name + '": 비밀번호는 4글자 이상으로 정해 주세요(비우면 비밀번호 없이 만들어요).');
+  const ri = rowColIndex();
+  const res = await call('split', { spec: { name: r.name, rowCol: ri < 0 ? null : ri, values: r.values || [], cols: ci } });
+  let data = res.buffer;
+  if (r.pw) data = await Crypt.encrypt(data, r.pw);
+  return { name: '직원용_' + safeName(r.name) + '_' + today() + '.db', data, rows: res.rows };
+}
+function downloadBlob(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+// 압축 없는 zip(저장만). SheetJS의 zip은 한글 파일 이름을 깨뜨려서(UTF-8 표시를 안 함) 직접 만든다.
+const CRC_TABLE = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(u) { let c = 0xFFFFFFFF; for (let i = 0; i < u.length; i++) c = CRC_TABLE[(c ^ u[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function makeZip(files) {
+  const parts = [], central = [];
+  let offset = 0;
+  const d = new Date();
+  const time = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
+  const date = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+  files.forEach(f => {
+    const name = new TextEncoder().encode(f.name), data = new Uint8Array(f.data), crc = crc32(data);
+    const h = new DataView(new ArrayBuffer(30));
+    h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, 0, true);
+    h.setUint16(10, time, true); h.setUint16(12, date, true); h.setUint32(14, crc, true);
+    h.setUint32(18, data.length, true); h.setUint32(22, data.length, true); h.setUint16(26, name.length, true); h.setUint16(28, 0, true);
+    parts.push(h.buffer, name, data);
+    const c = new DataView(new ArrayBuffer(46));
+    c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(10, 0, true);
+    c.setUint16(12, time, true); c.setUint16(14, date, true); c.setUint32(16, crc, true);
+    c.setUint32(20, data.length, true); c.setUint32(24, data.length, true); c.setUint16(28, name.length, true);
+    c.setUint32(42, offset, true);
+    central.push(c.buffer, name);
+    offset += 30 + name.length + data.length;
+  });
+  const cdSize = central.reduce((a, b) => a + b.byteLength, 0);
+  const e = new DataView(new ArrayBuffer(22));
+  e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true);
+  e.setUint32(12, cdSize, true); e.setUint32(16, offset, true);
+  return new Blob(parts.concat(central, [e.buffer]), { type: 'application/zip' });
+}
+
+$('#staffBtn').addEventListener('click', async () => {
+  if (!$('#staffPanel').hidden) { $('#staffPanel').hidden = true; return; }
+  $('#savePanel').hidden = true;
+  await openStaffPanel();
+});
+$('#saveBtn').addEventListener('click', () => { $('#staffPanel').hidden = true; });
+$('#staffClose').addEventListener('click', () => { $('#staffPanel').hidden = true; schedulePaint(); });
+$('#roleCol').addEventListener('change', async e => {
+  roleCfg.rowCol = e.target.value;
+  roleCfg.roles.forEach(r => { r.values = []; }); // 다른 칸으로 바꾸면 고른 값은 처음부터
+  saveRoles();
+  await loadRoleValues();
+  renderRoles();
+});
+$('#roleAdd').addEventListener('click', () => { addRole(); renderRoles(); });
+$('#roles').addEventListener('input', e => {
+  const card = e.target.closest('.role');
+  if (!card) return;
+  const r = roleById(card.dataset.id);
+  if (e.target.classList.contains('vfind')) {
+    const q = e.target.value.trim().toLowerCase();
+    card.querySelectorAll('.vlist label').forEach(l => { l.hidden = !!q && !l.dataset.v.includes(q); });
+    return;
+  }
+  if (e.target.dataset.f) { r[e.target.dataset.f] = e.target.value; saveRoles(); refreshRoleSum(card); }
+});
+$('#roles').addEventListener('change', e => {
+  const card = e.target.closest('.role');
+  if (!card || !e.target.dataset.kind) return;
+  const r = roleById(card.dataset.id);
+  const pick = kind => Array.from(card.querySelectorAll('input[data-kind="' + kind + '"]:checked')).map(x => x.value);
+  if (e.target.dataset.kind === 'v') {
+    // 찾기로 가려진 값도 체크 상태는 그대로 유지(목록에 다 그려져 있음)
+    r.values = pick('v');
+  } else r.cols = pick('c');
+  saveRoles();
+  refreshRoleSum(card);
+});
+$('#roles').addEventListener('click', async e => {
+  const b = e.target.closest('button[data-act]');
+  if (!b) return;
+  const card = b.closest('.role'), r = roleById(card.dataset.id), act = b.dataset.act;
+  if (act === 'del') { roleCfg.roles = roleCfg.roles.filter(x => x !== r); saveRoles(); renderRoles(); return; }
+  if (act === 'vall' || act === 'vnone' || act === 'call' || act === 'cnone') {
+    const kind = act[0] === 'v' ? 'v' : 'c', on = act.endsWith('all');
+    card.querySelectorAll('input[data-kind="' + kind + '"]').forEach(x => {
+      if (kind === 'v' && x.closest('label').hidden) return; // 찾기로 좁혔으면 보이는 값만
+      x.checked = on;
+    });
+    card.querySelector('input[data-kind="' + kind + '"]') && card.querySelector('input[data-kind="' + kind + '"]').dispatchEvent(new Event('change', { bubbles: true }));
+    return;
+  }
+  if (act === 'one') {
+    b.disabled = true;
+    setStaffMsg('"' + r.name + '" 파일을 만드는 중이에요…');
+    try {
+      const f = await buildRoleFile(r);
+      downloadBlob(new Blob([f.data], { type: 'application/octet-stream' }), f.name);
+      setStaffMsg('"' + f.name + '"(' + fmt(f.rows) + '건 · ' + mb(f.data.byteLength) + ')을 내려받았어요.');
+    } catch (err) { setStaffMsg(err.message, true); }
+    finally { b.disabled = false; }
+  }
+});
+$('#roleZip').addEventListener('click', async () => {
+  if (!roleCfg.roles.length) { setStaffMsg('직원을 먼저 추가해 주세요.', true); return; }
+  const btn = $('#roleZip');
+  btn.disabled = true;
+  try {
+    const files = [];
+    for (const r of roleCfg.roles) {
+      setStaffMsg('"' + r.name + '" 파일을 만드는 중이에요… (' + (files.length + 1) + '/' + roleCfg.roles.length + ')');
+      files.push(await buildRoleFile(r));
+    }
+    const names = new Set();
+    files.forEach(f => { let n = f.name, k = 2; while (names.has(n)) n = f.name.replace(/\.db$/, '_' + k++ + '.db'); names.add(n); f.name = n; }); // 이름 같은 직원
+    const zip = makeZip(files);
+    const name = '직원용파일_' + today() + '.zip';
+    downloadBlob(zip, name);
+    setStaffMsg('"' + name + '"(직원 ' + files.length + '명 · ' + mb(zip.size) + ')을 내려받았어요. 압축을 풀어 직원마다 자기 파일을 전해 주세요.');
+  } catch (err) { setStaffMsg(err.message, true); }
+  finally { btn.disabled = false; }
+});
+
 // ---- 표 ----
 function textWidth(s) {
   let w = 0;
@@ -1435,7 +1760,8 @@ $('#resetNo').addEventListener('click', () => {
 });
 $('#resetYes').addEventListener('click', async () => {
   await call('reset');
-  cols = []; total = 0; matched = 0; loadLog = []; lastLoad = null; colorInfo = {};
+  cols = []; total = 0; matched = 0; loadLog = []; lastLoad = null; colorInfo = {}; roleInfo = null;
+  $('#staffBtn').hidden = false;
   state = { search: '', filters: {}, colors: {}, src: null, sort: null };
   closeColorPop();
   $('#search').value = '';
