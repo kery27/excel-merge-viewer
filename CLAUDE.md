@@ -39,3 +39,15 @@
   `scripts/row-cleanup.js`, `scripts/file-crypto.js`, `scripts/make-vendor-bundles.sh`, `viewer/sqlite-viewer.html`.
 - projectA의 개인정보 규칙은 여기서도 그대로 지킨다: 테스트·데모에는 누가 봐도 가짜인 데이터만 쓰고,
   사용자가 실제 엑셀을 주면 내용을 채팅에 옮기거나 저장소·스크래치패드에 복사하지 않는다.
+
+## 사업 본부 연동 (kery27/hq)
+
+이 프로젝트는 가르시아의 사업 본부 저장소 `kery27/hq`와 연결되어 있다.
+
+- 세션을 시작할 때: `kery27/hq`를 세션에 추가하고 `STRATEGY.md`, `DECISIONS.md` 최근 항목,
+  `projects/excel-merge-viewer.md`를 읽는다. 지금 방향과 어긋나는 작업이면 먼저 말한다.
+- 작업을 마칠 때 (의미 있는 진척이 있었을 때만):
+  - `projects/excel-merge-viewer.md`의 "현재 상태"와 "남은 일"을 갱신한다.
+  - 사업 방향에 영향을 주는 결정(범위·가격·고객·중단/재개)은 `DECISIONS.md` 맨 위에 추가한다.
+  - 커밋 메시지는 `[excel-merge-viewer] 무엇을` 형식으로 hq에 푸시한다.
+- 고객 실데이터·개인정보·비밀번호는 hq에 절대 쓰지 않는다.
