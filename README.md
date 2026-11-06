@@ -11,6 +11,13 @@
 
 `bash scripts/make-web.sh` → `dist/web/`(웹 페이지용 사본: 바깥 틀 태그를 빼고, SheetJS 번들의 제어 문자를 `\uXXXX`로 바꿈)을 claude.ai 페이지로 올린다. 올린 페이지 안에서는 `alert`/`confirm` 창이 안 뜨므로 알림·확인은 화면 안에서 한다.
 
+## 홈페이지 공개 체험판
+
+`bash scripts/make-site.sh` → `dist/site/`(index.html + vendor/)를 홈페이지 저장소(`johnsongarage/johnsongarage.github.io`)의 `excel/` 폴더에 그대로 복사 → https://johnsongarage.github.io/excel/
+- 바꾸는 것은 제목·검색/공유 설명과 맨 위 "체험판" 띠(문의 링크)뿐. 기능 코드는 index.html 그대로.
+- `?sample=1`을 붙이면 들어오자마자 가짜 데이터(약 1만 건)가 열림(예: `.../excel/?sample=1`). `?sample=100000`처럼 목록에 있는 건수도 됨.
+- 공개 페이지라 코드도 누구나 볼 수 있다(브라우저에서 소스 보기).
+
 ## 실측 (가짜 데이터 11칸, 2026-10-29)
 
 | | 10만 건 | 50만 건 |

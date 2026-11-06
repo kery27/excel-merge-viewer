@@ -1786,6 +1786,13 @@ if (!BUNDLES_OK) {
 } else {
   startWorker();
   refreshResume();
+  // 링크로 바로 체험: ?sample=1 → 약 1만 건, ?sample=100000처럼 목록에 있는 건수면 그만큼
+  const sp = new URLSearchParams(location.search).get('sample');
+  if (sp) {
+    const opt = Array.from($('#sampleSize').options).find(o => o.value === sp);
+    $('#sampleSize').value = opt ? sp : '10000';
+    runSample();
+  }
 }
 </script>
 </body>
