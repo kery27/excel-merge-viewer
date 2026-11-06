@@ -79,42 +79,11 @@
   .toolbar input, .toolbar select { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--field); color: var(--ink); }
   .toolbar input:focus, .toolbar select:focus, #head input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--focus); }
   #search { flex: 1; min-width: 200px; }
+  .toolbar #search:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--focus); }
   #srcSel { max-width: 260px; }
   #count { margin-left: auto; color: var(--sub); font-size: 13px; white-space: nowrap; }
   #count b { color: var(--ink); }
 
-  #grid { flex: 1; min-height: 240px; overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; position: relative; }
-  #head { position: sticky; top: 0; z-index: 2; display: grid; grid-template-columns: var(--cols); background: var(--head-bg); border-bottom: 1px solid var(--line); }
-  .hc { padding: 6px 6px 7px; border-right: 1px solid var(--line); min-width: 0; }
-  .hc .t { display: flex; align-items: center; gap: 4px; font-weight: 700; font-size: 12px; padding: 2px 2px 5px; cursor: pointer; user-select: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .hc .t .arrow { color: var(--accent); font-size: 10px; }
-  .hc .fl { display: flex; gap: 4px; }
-  .hc .fl input { flex: 1; min-width: 0; }
-  .cbtn { flex: none; padding: 0 6px; border-radius: 5px; font-size: 11px; background: var(--field); color: var(--sub); border: 1px solid var(--line); }
-  .cbtn.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 700; }
-  #colorPop { position: fixed; z-index: 20; width: 240px; max-height: min(420px, 70vh); overflow: auto; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 28px rgba(0,0,0,.18); padding: 10px 12px; font-size: 13px; }
-  #colorPop h4 { margin: 8px 0 4px; font-size: 12px; color: var(--sub); font-weight: 700; }
-  #colorPop h4:first-child { margin-top: 0; }
-  #colorPop label { display: flex; align-items: center; gap: 8px; padding: 3px 2px; cursor: pointer; border-radius: 5px; }
-  #colorPop label:hover { background: var(--row-hover); }
-  #colorPop .n { margin-left: auto; color: var(--faint); font-size: 12px; font-variant-numeric: tabular-nums; }
-  .sw { width: 22px; height: 16px; border-radius: 4px; border: 1px solid var(--line); flex: none; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; background: var(--field); }
-  .sw.fc { background: #ffffff; } /* 글자색 견본은 엑셀 칸처럼 흰 바탕에 */
-  .c.fc { filter: var(--fc-filter); }
-  .sw.none { background: repeating-linear-gradient(45deg, var(--field) 0 4px, var(--line) 4px 6px); }
-  #colorPop .foot { display: flex; justify-content: flex-end; margin-top: 8px; }
-  #colorPop .foot button { padding: 3px 10px; font-size: 12px; }
-  .hc input { width: 100%; padding: 4px 6px; border: 1px solid var(--line); border-radius: 5px; font-size: 12px; background: var(--field); color: var(--ink); }
-  .hc input.on { border-color: var(--accent); background: var(--accent-soft); }
-  .hc.src .t { cursor: default; color: var(--sub); }
-  #body { position: relative; }
-  .r { position: absolute; left: 0; height: 30px; display: grid; grid-template-columns: var(--cols); border-bottom: 1px solid var(--line-soft); }
-  .r:nth-child(even) { background: var(--row-alt); }
-  .r:hover { background: var(--row-hover); }
-  .c { padding: 0 8px; line-height: 29px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-right: 1px solid var(--line-soft); font-size: 13px; }
-  .c.src { color: var(--faint); font-size: 12px; }
-  .c.num { text-align: right; font-variant-numeric: tabular-nums; }
-  #empty { position: absolute; left: 0; right: 0; top: 120px; text-align: center; color: var(--faint); }
 
   #notice { display: flex; align-items: flex-start; gap: 10px; background: var(--warn-soft); color: var(--ink); border: 1px solid var(--warn); border-radius: 10px; padding: 10px 14px; font-size: 13px; line-height: 1.6; }
   #notice span { flex: 1; min-width: 0; }
@@ -164,9 +133,100 @@
     #intro h1 { font-size: 20px; }
     #count { margin-left: 0; width: 100%; }
     #savePanel { grid-template-columns: 1fr; }
+    .top { flex-wrap: wrap; gap: 8px; padding: 10px 16px; }
+    .topActions { flex-wrap: wrap; gap: 6px; }
+    .topActions button { padding: 5px 10px; font-size: 13px; white-space: nowrap; }
     .role { grid-template-columns: 1fr; }
   }
-</style>
+
+  /* ---- 표 (projectA 조회 화면 구조: 머리줄 고정 + 보이는 줄만 그리는 윈도잉) ---- */
+  #gridWrap { flex: 1; min-height: 240px; overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; position: relative; }
+  #head { display: flex; width: max-content; background: var(--head-bg); color: var(--ink); font-size: 12px; font-weight: 700; position: sticky; top: 0; z-index: 2; border-bottom: 1px solid var(--line); }
+  .headCell { position: relative; display: flex; align-items: center; padding: 0 4px 0 10px; white-space: nowrap; border-right: 1px solid var(--line); flex-shrink: 0; height: 36px; }
+  .headCell.filtered { background: var(--accent-soft); }
+  .headLabel { cursor: pointer; overflow: hidden; text-overflow: ellipsis; padding: 8px 2px; flex: 1; user-select: none; }
+  .headLabel.src { cursor: default; color: var(--sub); }
+  .sortArrow { flex-shrink: 0; display: inline-flex; align-items: center; color: var(--accent); }
+  .sortArrow svg { display: block; }
+  .sortArrow.sortArrowUp svg { transform: rotate(180deg); }
+  .filterBtn { cursor: pointer; border: 1px solid var(--line); background: var(--field); color: var(--sub); border-radius: 5px; padding: 3px 5px; margin-left: 4px; flex-shrink: 0; display: inline-flex; align-items: center; }
+  .filterBtn:hover { border-color: var(--accent); color: var(--accent); }
+  .headCell.filtered .filterBtn { background: var(--accent); border-color: var(--accent); color: var(--on-accent); } /* 필터 걸린 칸은 단추를 강조색으로 */
+  .colResizeHandle { position: absolute; right: -3px; top: 0; width: 7px; height: 100%; cursor: col-resize; z-index: 3; }
+  .colResizeHandle:hover, .colResizeHandle:active { background: var(--focus); }
+  #spacer { position: absolute; left: 0; width: 1px; }
+  #rowsEl { position: absolute; top: 36px; left: 0; }
+  .trow { position: absolute; top: 0; left: 0; height: 30px; display: flex; font-size: 13px; border-bottom: 1px solid var(--line-soft); white-space: nowrap; cursor: pointer; }
+  .trow.alt { background: var(--row-alt); }
+  .trow:hover { background: var(--row-hover); }
+  .trow > div { padding: 0 8px; flex-shrink: 0; line-height: 29px; overflow: hidden; text-overflow: ellipsis; border-right: 1px solid var(--line-soft); }
+  .trow > div.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .trow > div.src { color: var(--faint); font-size: 12px; }
+  .trow > div.fc { filter: var(--fc-filter); }
+  .trow.rowLoading > div::after { content: ''; display: inline-block; height: 8px; width: 60%; background: var(--line-soft); border-radius: 4px; }
+  #empty { position: absolute; left: 0; right: 0; top: 80px; width: 100%; text-align: center; color: var(--faint); font-size: 14px; }
+  #activeFiltersBar { display: flex; flex-wrap: wrap; gap: 6px; }
+  .filterChip { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-soft); color: var(--ink); border-radius: 999px; padding: 4px 6px 4px 12px; font-size: 12px; font-weight: 600; }
+  .chipRemove { border: none; background: var(--focus); color: var(--ink); width: 18px; height: 18px; border-radius: 50%; font-size: 12px; line-height: 1; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+
+  /* ---- 칸 필터 패널 (값·조건·범위·배경색·글자색) ---- */
+  #filterPanel { position: fixed; z-index: 50; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 28px rgba(0,0,0,.18);
+    width: 260px; min-width: 220px; max-width: 560px; max-height: 360px; overflow: hidden; display: flex; flex-direction: column; resize: horizontal; font-size: 12px; }
+  .fpDragHandle { padding: 7px 10px; font-weight: 700; color: var(--sub); background: var(--head-bg); border-bottom: 1px solid var(--line); cursor: move; user-select: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fpModeTabs { display: flex; border-bottom: 1px solid var(--line); flex-shrink: 0; }
+  .fpModeTab { flex: 1; padding: 7px 2px; border: none; border-radius: 0; background: var(--head-bg); color: var(--sub); font-size: 12px; }
+  .fpModeTab.active { background: var(--panel); color: var(--accent); font-weight: 700; box-shadow: inset 0 -2px 0 var(--accent); }
+  .fpModeTab.hasFilter::after { content: '●'; font-size: 7px; color: var(--accent); margin-left: 3px; vertical-align: middle; }
+  .fpSearch { padding: 8px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
+  .fpSearch input, .fpForm input, .fpForm select { width: 100%; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--field); color: var(--ink); font-size: 12px; }
+  .fpForm { padding: 12px; display: flex; flex-direction: column; gap: 4px; }
+  .fpForm label { color: var(--sub); margin-top: 6px; }
+  .fpActions { display: flex; justify-content: space-between; padding: 6px 10px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
+  .fpActions button { background: none; border: none; color: var(--accent); padding: 0; text-decoration: underline; font-size: 12px; }
+  .fpList { overflow-y: auto; flex: 1; padding: 4px 0; }
+  .fpItem { display: flex; align-items: center; gap: 6px; padding: 4px 10px; cursor: pointer; }
+  .fpItem:hover { background: var(--row-hover); }
+  .fpItem span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fpNote { padding: 8px 10px; color: var(--faint); }
+  .fpFooter { display: flex; gap: 6px; padding: 8px; border-top: 1px solid var(--line); flex-shrink: 0; }
+  .fpFooter button { flex: 1; padding: 6px; font-size: 12px; }
+  .sw { width: 20px; height: 14px; border-radius: 3px; border: 1px solid var(--line); flex: none; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; background: var(--field); }
+  .sw.fc { background: #ffffff; } /* 글자색 견본은 엑셀 칸처럼 흰 바탕에 */
+  .sw.none { background: repeating-linear-gradient(45deg, var(--field) 0 4px, var(--line) 4px 6px); }
+
+  /* ---- 줄 상세보기 ---- */
+  #detailOverlay { position: fixed; inset: 0; background: rgba(10,12,20,.4); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 16px; }
+  #detailPanel { background: var(--panel); color: var(--ink); border-radius: 12px; width: 520px; max-width: 100%; max-height: 82vh; display: flex; flex-direction: column; box-shadow: 0 12px 32px rgba(0,0,0,.3); }
+  #detailHeader { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+  #detailHeader h3 { margin: 0; font-size: 15px; }
+  #detailBody { overflow-y: auto; padding: 4px 0 8px; }
+  .detailSource { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 16px 10px; background: var(--accent-soft); font-size: 12.5px; }
+  .detailSource b { word-break: break-all; }
+  .detailCopyBtn { padding: 2px 10px; font-size: 12px; }
+  .detailRow { display: flex; padding: 6px 16px; font-size: 13px; border-bottom: 1px solid var(--line-soft); }
+  .detailLabel { width: 150px; flex-shrink: 0; color: var(--sub); }
+  .detailValue { flex: 1; word-break: break-all; padding: 1px 6px; border-radius: 4px; }
+
+  /* ---- 넣기 전 확인(제목 맞추기) ---- */
+  #confirm { max-width: 860px; margin: 24px auto 0; width: 100%; }
+  #confirmBox { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; font-size: 13px; }
+  #confirmBox h2 { font-size: 17px; margin: 0 0 4px; }
+  .sub { color: var(--sub); font-size: 12px; }
+  .miniTable { border-collapse: collapse; font-size: 12.5px; margin-top: 8px; max-width: 100%; }
+  .miniTable th, .miniTable td { border-bottom: 1px solid var(--line-soft); padding: 6px 8px; text-align: left; vertical-align: top; }
+  .miniTable th { color: var(--sub); font-weight: 700; background: var(--head-bg); }
+  .miniTable td.num, .miniTable th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .miniTable tr.needPick td { background: var(--warn-soft); }
+  .miniTable select { padding: 3px 6px; border: 1px solid var(--line); border-radius: 5px; background: var(--field); color: var(--ink); max-width: 280px; }
+  .tagNew { color: var(--accent); font-weight: 700; }
+  .tagReplace { color: var(--warn); font-weight: 700; }
+  .ingestInfo { margin-top: 8px; color: var(--sub); line-height: 1.7; }
+  #confirmBox .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .linkBtn { background: none; border: none; color: var(--accent); text-decoration: underline; padding: 0; font-size: 12px; }
+  .roleBanner { margin-top: 4px; color: var(--ink); }
+  #savePanel .wide { grid-column: 1 / -1; border-top: 1px solid var(--line-soft); padding-top: 10px; }
+
+</style></style>
 </head>
 <body>
 <header class="top">
@@ -210,7 +270,7 @@
     </div>
     <ul class="rules">
       <li><b>같은 구조</b>끼리 합쳐요 — 첫 줄(제목 줄)의 칸 이름이 같은 탭·파일. 칸 순서는 달라도 괜찮아요.</li>
-      <li>제목이 다른 탭(메모·요약 탭 등)은 빼고, 무엇을 뺐는지 알려 드려요.</li>
+      <li>제목이 몇 칸만 다르면(오타·새 칸) 어떻게 맞출지 물어보고 합쳐요. 제목이 아예 다른 탭(메모·요약 탭 등)은 빼고, 무엇을 뺐는지 알려 드려요.</li>
       <li>같은 이름의 파일을 다시 넣으면 새 파일 내용으로 바꿔요.</li>
     </ul>
   </section>
@@ -220,6 +280,8 @@
     <div id="progText">준비 중…</div>
     <div class="bar"><i id="progBar"></i></div>
   </section>
+
+  <section id="confirm" hidden><div id="confirmBox"></div></section>
 
   <section id="view" hidden>
     <div id="savePanel" hidden>
@@ -239,6 +301,11 @@
         <p>다음에 이 화면을 열면 [이어서 보기]로 바로 열려요. 이 PC의 이 브라우저에서만 보이고, 한 번에 하나만 저장돼요(전에 저장한 것은 바뀜).</p>
         <p class="small">여러 사람이 같이 쓰는 PC라면 파일로 저장하고 비밀번호를 거는 쪽이 안전해요.</p>
         <div class="row"><button id="saveLocal">브라우저에 저장</button><button id="saveClose" class="ghost">닫기</button></div>
+      </div>
+      <div class="wide">
+        <h3>걸러 본 줄만 파일로</h3>
+        <p>지금 검색·필터로 걸러 본 줄만 따로 .db 파일로 내려받아요(칸은 전부). 위에서 비밀번호를 걸면 이 파일에도 걸려요.</p>
+        <button id="exportFiltered" class="ghost">걸러 본 줄만 내려받기</button>
       </div>
       <div id="saveMsg"></div>
     </div>
@@ -265,10 +332,30 @@
       <button id="clearBtn" class="ghost">조건 지우기</button>
       <span id="count"></span>
     </div>
-    <div id="grid"><div id="head"></div><div id="body"></div></div>
+    <div id="activeFiltersBar" hidden></div>
+    <div id="gridWrap"><div id="head"></div><div id="spacer"></div><div id="rowsEl"></div></div>
   </section>
 </main>
-<div id="colorPop" hidden></div>
+<div id="filterPanel" hidden>
+  <div class="fpDragHandle" id="fpDragHandle">거르기</div>
+  <div class="fpModeTabs" id="fpModeTabs">
+    <button type="button" class="fpModeTab active" data-mode="values">값</button>
+    <button type="button" class="fpModeTab" data-mode="condition">조건</button>
+    <button type="button" class="fpModeTab" data-mode="range">범위</button>
+    <button type="button" class="fpModeTab" data-mode="bgcolor">배경색</button>
+    <button type="button" class="fpModeTab" data-mode="fontcolor">글자색</button>
+  </div>
+  <div class="fpSearch"><input type="text" placeholder="값 찾기…" id="fpSearchInput"></div>
+  <div class="fpActions"><button id="fpSelectAll" type="button">모두 고르기</button><button id="fpSelectNone" type="button">모두 빼기</button></div>
+  <div class="fpList" id="fpList"></div>
+  <div class="fpFooter"><button class="ghost" id="fpCancelBtn" type="button">취소</button><button id="fpApplyBtn" type="button">적용</button></div>
+</div>
+<div id="detailOverlay" hidden>
+  <div id="detailPanel" role="dialog" aria-labelledby="detailTitle">
+    <div id="detailHeader"><h3 id="detailTitle">줄 자세히 보기</h3><button id="detailClose" class="ghost">닫기</button></div>
+    <div id="detailBody"></div>
+  </div>
+</div>
 <div id="pwDlg" hidden>
   <div class="box" role="dialog" aria-labelledby="pwTitle">
     <h3 id="pwTitle">비밀번호가 걸린 파일이에요</h3>
@@ -281,21 +368,45 @@
 <input type="file" id="fileInput" multiple accept=".xlsx,.xlsm,.xls,.csv,.db" hidden>
 
 <script>
-// ===== Worker: 엑셀 읽기 · 합치기(SQLite, 메모리) · 조회 =====
+// ===== Worker: 엑셀 읽기 · 합치기(SQLite, 메모리) · 조회 · 저장본 · 직원용 파일 =====
 // 화면이 멈추지 않도록 무거운 일은 전부 여기서 한다. 메인 화면과는 {id, cmd} 요청 / {type:'reply'} 응답으로 주고받음.
+// 표 구조는 projectA(admin/data-converter.html)와 같은 방식 — 엑셀 제목 이름이 그대로 SQLite 칸 이름.
+// 출처·검색용·색 칸은 이름 앞이나 뒤에 \u0001을 붙인다(엑셀 제목에 들어갈 수 없는 글자라 사용자 칸과 겹치지 않음).
 function workerMain() {
   let SQL = null, db = null;
-  let cols = null;              // 기준 구조(처음 넣은 데이터 탭의 제목 줄)
-  let ids = new Int32Array(0);  // 현재 조건에 맞는 행 id 목록(정렬 순서대로)
-  const numericCols = {};       // 숫자 칸인지(정렬용) 캐시
-  const colorCols = new Set();  // 색이 한 번이라도 들어간 칸 번호(색 필터 후보)
   const ready = initSqlJs({ wasmBinary: sqljsWasmBinary() }).then(s => { SQL = s; });
+  const T = 'data';
+  const FILE = '\u0001파일', SHEET = '\u0001탭', ROWNO = '\u0001행', ALL = '\u0001all';
+  const BG = '\u0001배경', FC = '\u0001글자'; // 칸 이름 + BG = 그 칸의 배경색('#rrggbb' 또는 NULL)
+  const q = n => '"' + String(n).replace(/"/g, '""') + '"';
+  const SAVE_APP = 'excel-merge-viewer', SAVE_VERSION = 2;
 
   function progress(data) { self.postMessage(Object.assign({ type: 'progress' }, data)); }
 
-  // 제목 줄 만들기: 앞뒤 공백만 정리, 끝쪽 빈 제목은 버림, 가운데 빈 제목·중복 제목은 이름을 붙여 구분
+  function tableCols(d) {
+    d = d || db;
+    if (!d) return [];
+    const r = d.exec('PRAGMA table_info(' + q(T) + ')');
+    return r.length ? r[0].values.map(v => v[1]) : [];
+  }
+  const isMeta = c => c.charCodeAt(0) === 1;
+  const isComp = c => c.endsWith(BG) || c.endsWith(FC);
+  function dataCols(d) { return tableCols(d).filter(c => !isMeta(c) && !isComp(c)); }
+  function count(d) { d = d || db; return d && tableCols(d).length ? d.exec('SELECT COUNT(*) FROM ' + q(T))[0].values[0][0] : 0; }
+  function createTable(d) {
+    d.run('CREATE TABLE ' + q(T) + ' (' + q(FILE) + ' TEXT, ' + q(SHEET) + ' TEXT, ' + q(ROWNO) + ' INTEGER, ' + q(ALL) + ' TEXT)');
+    d.run('CREATE INDEX ' + q('idx_file') + ' ON ' + q(T) + ' (' + q(FILE) + ')'); // 같은 이름 파일 교체·빼기 때 그 몫을 찾는 용도
+  }
+  function ensureCols(names) {
+    const have = new Set(tableCols());
+    names.forEach(n => { if (!have.has(n)) { db.run('ALTER TABLE ' + q(T) + ' ADD COLUMN ' + q(n) + ' TEXT'); have.add(n); } });
+  }
+
+  // 제목 칸 글자 — 칸 안 줄바꿈(CRLF/CR)은 LF 하나로, 앞뒤 공백 정리(projectA normTitle과 같은 이유: 엑셀이 저장할 때 CRLF로 다시 씀)
+  function normTitle(v) { return String(v == null ? '' : v).replace(/\r\n?/g, '\n').trim(); }
+  // 제목 줄 만들기: 끝쪽 빈 제목은 버림, 가운데 빈 제목·중복 제목은 이름을 붙여 구분
   function makeHeader(row) {
-    const names = row.map(v => String(v == null ? '' : v).trim());
+    const names = (row || []).map(normTitle);
     while (names.length && names[names.length - 1] === '') names.pop();
     const seen = {};
     return names.map((n, i) => {
@@ -304,35 +415,30 @@ function workerMain() {
       return name;
     });
   }
-
-  function setBase(header) {
-    cols = header;
-    db = new SQL.Database();
-    db.run('CREATE TABLE data (id INTEGER PRIMARY KEY, src_file TEXT, src_sheet TEXT, src_row INTEGER, _all TEXT, ' +
-      cols.map((_, i) => 'c' + i + ' TEXT').join(', ') + ', ' +
-      cols.map((_, i) => 'b' + i + ' TEXT, f' + i + ' TEXT').join(', ') + ')'); // b = 배경색, f = 글자색('#rrggbb' 또는 NULL)
+  const blank = v => v === undefined || v === null || (typeof v === 'string' && v.replace(/[​ ﻿]/g, '').trim() === '');
+  // 제목 줄 = 위에서 50줄 안의 첫 번째 비어 있지 않은 줄
+  function headerRow(rows) {
+    for (let i = 0; i < rows.length && i < 50; i++) if ((rows[i] || []).some(v => !blank(v))) return i;
+    return -1;
   }
 
-  // 같은 구조인지: 제목 이름의 집합이 같으면 OK(순서 무관). perm[j] = 이 탭 j번째 칸이 기준의 몇 번째 칸인지
-  function matchHeader(header) {
-    const pos = {};
-    cols.forEach((n, i) => { pos[n] = i; });
-    const extra = header.filter(n => !(n in pos));
-    const missing = cols.filter(n => header.indexOf(n) < 0);
-    if (extra.length || missing.length) return { ok: false, extra, missing };
-    return { ok: true, perm: header.map(n => pos[n]) };
-  }
-
-  function readBook(f) {
+  function readBook(f, head) {
     if (/\.csv$/i.test(f.name)) {
       // CSV는 UTF-8이 아니면 한국 엑셀 기본(EUC-KR)으로 다시 읽는다
       let text;
       try { text = new TextDecoder('utf-8', { fatal: true }).decode(f.buffer); }
       catch (e) { text = new TextDecoder('euc-kr').decode(f.buffer); }
-      return XLSX.read(text.replace(/^﻿/, ''), { type: 'string', raw: true, dense: true });
+      return XLSX.read(text.replace(/^﻿/, ''), Object.assign({ type: 'string', raw: true, dense: true }, head ? { sheetRows: 52 } : {}));
     }
-    // bookFiles: 압축을 푼 파일 내용도 같이 받아 색 읽기에 씀(압축을 두 번 풀지 않게)
-    return XLSX.read(f.buffer, { type: 'array', dense: true, bookFiles: true });
+    if (head) return XLSX.read(f.buffer, { type: 'array', dense: true, sheetRows: 52 });
+    // 날짜: 엑셀 일련번호 그대로 받고(cellDates:false) 서식이 날짜인 칸만 'YYYY-MM-DD'로 바꾼다(projectA 2026-09-30 —
+    // cellDates:true는 SheetJS 0.18.5에서 날짜가 하루 빠르게 나옴). bookFiles: 압축을 푼 내용을 색 읽기에 재사용.
+    return XLSX.read(f.buffer, { type: 'array', dense: true, cellDates: false, cellNF: true, bookFiles: true });
+  }
+  function serialToISODate(serial, date1904) {
+    const p = XLSX.SSF.parse_date_code(serial, { date1904: !!date1904 });
+    if (!p) return serial;
+    return p.y + '-' + String(p.m).padStart(2, '0') + '-' + String(p.d).padStart(2, '0');
   }
 
   // ---- 셀 색깔(배경색·글자색) 읽기 — xlsx/xlsm만 ----
@@ -492,190 +598,169 @@ function workerMain() {
   }
 
 
-  function processSheet(fileName, sheetName, ws, sc, st) {
-    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '', dateNF: 'yyyy-mm-dd', blankrows: true });
-    let r0 = 0, c0 = 0;
-    try { const rg = XLSX.utils.decode_range(ws['!ref']); r0 = rg.s.r; c0 = rg.s.c; } catch (e) {}
-    const cf = !!(sc && sc.cf);
-    let h = -1;
-    for (let i = 0; i < rows.length && i < 50; i++) {
-      if (rows[i].some(v => String(v).trim() !== '')) { h = i; break; }
-    }
-    if (h < 0) return { sheet: sheetName, status: 'empty', rows: 0 };
-    const header = makeHeader(rows[h]);
-    if (!header.length) return { sheet: sheetName, status: 'empty', rows: 0 };
-    const withColor = !!(sc && sc.n);
-    if (!cols) setBase(header);
-    const m = matchHeader(header);
-    if (!m.ok) return { sheet: sheetName, status: 'diff', rows: 0, missing: m.missing, extra: m.extra };
 
-    const n = cols.length;
-    const colNames = cols.map((_, i) => 'c' + i).concat(withColor ? cols.map((_, i) => 'b' + i).concat(cols.map((_, i) => 'f' + i)) : []);
-    const stmt = db.prepare('INSERT INTO data (src_file, src_sheet, src_row, _all, ' + colNames.join(', ') +
-      ') VALUES (?, ?, ?, ?, ' + colNames.map(() => '?').join(', ') + ')');
-    let count = 0, colorCells = 0, k = 0;
-    db.run('BEGIN'); // 탭 하나 = 트랜잭션 하나(줄마다 커밋하면 수십 배 느림)
-    try {
-      for (let i = h + 1; i < rows.length; i++) {
-        const row = rows[i];
-        const vals = new Array(n).fill('');
-        let any = false;
-        for (let j = 0; j < header.length; j++) {
-          const v = row[j];
-          if (v == null || v === '') continue;
-          const s = String(v);
-          vals[m.perm[j]] = s;
-          if (!any && s.trim() !== '') any = true;
-        }
-        if (!any) continue; // 빈 줄은 건너뜀
-        const rowNum = r0 + i + 1;
-        let args = [fileName, sheetName, rowNum, vals.join('\t').toLowerCase()].concat(vals);
-        if (withColor) {
-          // 칸 위치 목록은 행 순서대로라 커서 하나로 따라간다
-          const bg = new Array(n).fill(null), fc = new Array(n).fill(null);
-          while (k < sc.n && sc.R[k] < rowNum) k++;
-          for (; k < sc.n && sc.R[k] === rowNum; k++) {
-            const j = sc.C[k] - c0;
-            if (j < 0 || j >= header.length) continue;
-            const t = m.perm[j];
-            if (vals[t] === '') continue; // 서식만 남은 빈 칸은 색 없음으로(값을 지워도 칠은 남아 있는 경우가 많음)
-            bg[t] = st.xfBg[sc.X[k]]; fc[t] = st.xfFc[sc.X[k]];
-            if (bg[t] || fc[t]) { colorCols.add(t); colorCells++; }
-          }
-          args = args.concat(bg, fc);
-        }
-        stmt.run(args);
-        count++;
-      }
-    } finally { stmt.free(); db.run('COMMIT'); }
-    if (!count) return { sheet: sheetName, status: 'empty', rows: 0 };
-    return { sheet: sheetName, status: 'ok', rows: count, colorCells, cf };
-  }
-
-  async function addFiles(files) {
-    await ready;
-    const t0 = performance.now();
-    // 진행률 표시용: 탭 개수를 먼저 알 수 없으니 파일 단위 + 파일 안 탭 단위로 알린다
-    const result = [];
+  // ---- 미리보기: 파일마다 탭 이름과 제목 줄만 읽는다(데이터는 안 읽음, DB 안 건드림) ----
+  // 어느 탭을 합칠지·제목을 어떻게 맞출지는 화면이 이 결과로 정하고(planSheets), 그 결정을 ingest에 넘긴다.
+  // 엑셀은 여기서 한 번만 다 읽어 두고(pending) 넣을 때 그대로 쓴다 — 미리보기와 넣기가 따로 읽으면 50만 건에서 10초가 더 들었음.
+  let pending = new Map(); // 파일 이름 → 읽어 둔 통합 문서
+  function preview(files) {
+    pending = new Map();
+    const out = [];
     for (let fi = 0; fi < files.length; fi++) {
       const f = files[fi];
       progress({ file: f.name, fileIndex: fi, fileCount: files.length, phase: 'open' });
       let wb;
-      try { wb = readBook(f); }
-      catch (e) { result.push({ name: f.name, error: '읽을 수 없는 파일이에요 (' + (e && e.message || e) + ')', sheets: [] }); continue; }
+      try { wb = readBook(f, false); }
+      catch (e) { out.push({ name: f.name, openError: String((e && e.message) || e), sheets: [] }); continue; }
       f.buffer = null;
-      const isZip = /\.(xlsx|xlsm)$/i.test(f.name);
-      let st = null;
-      if (isZip) { try { st = bookStyles(wb); } catch (e) { st = null; } } // 색을 못 읽어도 값은 그대로 넣는다
-      let replaced = 0;
-      if (db) {
-        db.run('DELETE FROM data WHERE src_file = ?', [f.name]);
-        replaced = db.getRowsModified();
-      }
-      const sheets = [];
-      wb.SheetNames.forEach((sn, si) => {
-        progress({ file: f.name, fileIndex: fi, fileCount: files.length, phase: 'sheet', sheet: sn, sheetIndex: si, sheetCount: wb.SheetNames.length });
-        let sc = null;
-        if (isZip) { try { sc = sheetColors(wb, st, sn); } catch (e) { sc = null; } }
-        sheets.push(processSheet(f.name, sn, wb.Sheets[sn], sc, st));
-        wb.Sheets[sn] = null; // 메모리 바로 풀기
+      pending.set(f.name, wb);
+      const sheets = wb.SheetNames.map(sn => {
+        // 제목 줄 찾기용으로 위쪽 52줄만 글자로 풀어 본다
+        const ws = wb.Sheets[sn];
+        let range = null;
+        try { range = XLSX.utils.decode_range(ws['!ref']); } catch (e) {}
+        if (!range) return { sheet: sn, titles: [], hasData: false };
+        const top = { s: range.s, e: { r: Math.min(range.e.r, range.s.r + 51), c: range.e.c } };
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '', blankrows: true, range: top });
+        const h = headerRow(rows);
+        if (h < 0) return { sheet: sn, titles: [], hasData: false };
+        const titles = makeHeader(rows[h]);
+        const hasData = rows.slice(h + 1).some(r => (r || []).some(v => !blank(v))) || range.e.r > top.e.r;
+        return { sheet: sn, titles, hasData };
       });
-      wb = null;
-      result.push({ name: f.name, replaced, sheets, noColor: /\.xls$/i.test(f.name) });
+      out.push({ name: f.name, sheets });
     }
-    Object.keys(numericCols).forEach(k => delete numericCols[k]);
-    return { files: result, cols, ms: performance.now() - t0, total: db ? db.exec('SELECT COUNT(*) FROM data')[0].values[0][0] : 0 };
+    return { files: out, tableTitles: count() ? dataCols() : null };
   }
 
-  function isNumericCol(i) {
-    if (i in numericCols) return numericCols[i];
-    const res = db.exec('SELECT c' + i + " FROM data WHERE c" + i + " <> '' LIMIT 300");
-    const vals = res.length ? res[0].values.map(r => r[0]) : [];
-    return (numericCols[i] = vals.length > 0 && vals.every(v => /^-?[\d,]+(\.\d+)?$/.test(v)));
-  }
-
-  function query(q) {
+  // ---- 넣기: plan = { 파일 이름: [넣을 탭 이름…] }, map = { 원래 제목: 맞출 제목 | '__new__' | '__drop__' } ----
+  // 같은 이름의 파일이 이미 있으면 그 파일 몫을 통째로 지우고 새로 넣는다(교체). 전부 한 트랜잭션 — 중간에 실패하면 그대로.
+  async function ingest(files, plan, map) {
+    await ready;
     const t0 = performance.now();
-    if (!db) { ids = new Int32Array(0); return { count: 0, ms: 0 }; }
-    const where = [], args = [];
-    if (q.src) {
-      where.push('src_file = ?'); args.push(q.src.file);
-      if (q.src.sheet != null) { where.push('src_sheet = ?'); args.push(q.src.sheet); }
+    if (!db) { db = new SQL.Database(); createTable(db); }
+    map = map || {};
+    const result = [];
+    db.run('BEGIN');
+    try {
+      for (let fi = 0; fi < files.length; fi++) {
+        const f = files[fi];
+        const want = plan[f.name] || [];
+        progress({ file: f.name, fileIndex: fi, fileCount: files.length, phase: 'open' });
+        let wb = pending.get(f.name);
+        pending.delete(f.name);
+        if (!wb) { result.push({ name: f.name, error: '읽어 둔 내용이 없어요. 파일을 다시 넣어 주세요.', sheets: [] }); continue; }
+        const isZip = /\.(xlsx|xlsm)$/i.test(f.name);
+        let st = null;
+        if (isZip) { try { st = bookStyles(wb); } catch (e) { st = null; } } // 색을 못 읽어도 값은 그대로 넣는다
+        const date1904 = !!(wb.Workbook && wb.Workbook.WBProps && wb.Workbook.WBProps.date1904);
+        const had = db.exec('SELECT COUNT(*) FROM ' + q(T) + ' WHERE ' + q(FILE) + ' = ?', [f.name])[0].values[0][0];
+        if (had) db.run('DELETE FROM ' + q(T) + ' WHERE ' + q(FILE) + ' = ?', [f.name]);
+        const sheets = [];
+        const names = wb.SheetNames.filter(sn => want.includes(sn));
+        names.forEach((sn, si) => {
+          progress({ file: f.name, fileIndex: fi, fileCount: files.length, phase: 'sheet', sheet: sn, sheetIndex: si, sheetCount: names.length });
+          let sc = null;
+          if (isZip) { try { sc = sheetColors(wb, st, sn); } catch (e) { sc = null; } }
+          sheets.push(ingestSheet(f.name, sn, wb.Sheets[sn], sc, st, map, date1904));
+          wb.Sheets[sn] = null; // 메모리 바로 풀기
+        });
+        wb = null;
+        result.push({ name: f.name, replaced: had, sheets, noColor: /\.xls$/i.test(f.name) });
+      }
+      db.run('COMMIT');
+    } catch (e) {
+      try { db.run('ROLLBACK'); } catch (e2) { /* 이미 끝난 트랜잭션이면 무시 */ }
+      throw e;
     }
-    String(q.search || '').toLowerCase().split(/\s+/).filter(Boolean).forEach(t => { where.push('instr(_all, ?) > 0'); args.push(t); });
-    Object.keys(q.filters || {}).forEach(k => {
-      const v = String(q.filters[k]).trim().toLowerCase();
-      if (v) { where.push('instr(lower(c' + Number(k) + '), ?) > 0'); args.push(v); }
+    return { files: result, ms: performance.now() - t0, total: count() };
+  }
+
+  function ingestSheet(fileName, sheetName, ws, sc, st, map, date1904) {
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '', blankrows: true });
+    let r0 = 0, c0 = 0;
+    try { const rg = XLSX.utils.decode_range(ws['!ref']); r0 = rg.s.r; c0 = rg.s.c; } catch (e) {}
+    const h = headerRow(rows);
+    if (h < 0) return { sheet: sheetName, status: 'empty', rows: 0 };
+    // 제목 맞추기 적용: '__drop__'은 읽지 않음, 맞출 제목이 있으면 그 이름으로, '__new__'·그대로면 원래 제목
+    const raw = makeHeader(rows[h]);
+    const targets = [], srcIdx = [], jToK = new Array(raw.length).fill(-1);
+    raw.forEach((t, j) => {
+      const to = map[t];
+      if (to === '__drop__') return;
+      jToK[j] = targets.length;
+      targets.push(to && to !== '__new__' ? to : t);
+      srcIdx.push(j);
     });
-    // 색 필터: { 칸번호: { b: ['#ff0000', ''], f: [...] } } — '' = 색 없음. 같은 칸 안에서는 고른 색 중 하나(OR), 칸끼리는 AND
-    Object.keys(q.colors || {}).forEach(k => {
-      ['b', 'f'].forEach(kind => {
-        const list = (q.colors[k] || {})[kind];
-        if (!list || !list.length) return;
-        const c = kind + Number(k), parts = [];
-        const hexes = list.filter(Boolean);
-        if (hexes.length) { parts.push(c + ' IN (' + hexes.map(() => '?').join(',') + ')'); args.push(...hexes); }
-        if (list.includes('')) parts.push(c + ' IS NULL');
-        where.push('(' + parts.join(' OR ') + ')');
-      });
-    });
-    let order = 'id';
-    if (q.sort && q.sort.col != null) {
-      const c = 'c' + Number(q.sort.col);
-      const dir = q.sort.dir === 'desc' ? 'DESC' : 'ASC';
-      order = (isNumericCol(q.sort.col) ? "CAST(REPLACE(" + c + ", ',', '') AS REAL)" : c) + ' ' + dir + ', id';
+    if (!targets.length) return { sheet: sheetName, status: 'empty', rows: 0 };
+    // 색이 실제로 들어간 칸만 배경/글자 동반 칸을 만든다
+    const bgCol = new Array(targets.length).fill(false), fcCol = new Array(targets.length).fill(false);
+    if (sc && sc.n) {
+      for (let k = 0; k < sc.n; k++) {
+        const j = sc.C[k] - c0;
+        if (j < 0 || j >= raw.length || jToK[j] < 0 || sc.R[k] <= r0 + h + 1) continue;
+        if (st.xfBg[sc.X[k]]) bgCol[jToK[j]] = true;
+        if (st.xfFc[sc.X[k]]) fcCol[jToK[j]] = true;
+      }
     }
-    const st = db.prepare('SELECT id FROM data' + (where.length ? ' WHERE ' + where.join(' AND ') : '') + ' ORDER BY ' + order);
-    st.bind(args);
-    const out = [];
-    while (st.step()) out.push(st.get()[0]);
-    st.free();
-    ids = Int32Array.from(out);
-    return { count: ids.length, ms: performance.now() - t0 };
-  }
-
-  function rows(r) {
-    const slice = Array.from(ids.subarray(r.start, r.end));
-    if (!slice.length) return { start: r.start, rows: [] };
-    // 색이 있으면 [id, 파일, 탭, 행, 값 n개, 배경색 n개, 글자색 n개], 없으면 값까지만
-    const sel = cols.map((_, i) => 'c' + i).concat(colorCols.size ? cols.map((_, i) => 'b' + i).concat(cols.map((_, i) => 'f' + i)) : []);
-    const res = db.exec('SELECT id, src_file, src_sheet, src_row, ' + sel.join(', ') +
-      ' FROM data WHERE id IN (' + slice.join(',') + ')');
-    const byId = {};
-    if (res.length) res[0].values.forEach(v => { byId[v[0]] = v; });
-    return { start: r.start, rows: slice.map(id => byId[id]) };
-  }
-
-  function sources() {
-    if (!db) return [];
-    const res = db.exec('SELECT src_file, src_sheet, COUNT(*) FROM data GROUP BY src_file, src_sheet ORDER BY MIN(id)');
-    return res.length ? res[0].values : [];
-  }
-
-  // 칸마다 쓰인 색과 줄 수(많은 순, 30개까지) — 색 필터 목록용
-  function colorStats() {
-    const out = {};
-    if (!db) return out;
-    Array.from(colorCols).sort((a, b) => a - b).forEach(i => {
-      const one = c => {
-        const r = db.exec('SELECT ' + c + ', COUNT(*) FROM data WHERE ' + c + ' IS NOT NULL GROUP BY 1 ORDER BY 2 DESC LIMIT 30');
-        return r.length ? r[0].values : [];
-      };
-      const b = one('b' + i), f = one('f' + i);
-      if (b.length || f.length) out[i] = { b, f };
-    });
-    return out;
+    const comps = [];
+    targets.forEach((t, k) => { if (bgCol[k]) comps.push([k, t + BG, 'b']); if (fcCol[k]) comps.push([k, t + FC, 'f']); });
+    ensureCols(targets.concat(comps.map(x => x[1])));
+    const colNames = [FILE, SHEET, ROWNO, ALL].concat(targets, comps.map(x => x[1]));
+    const stmt = db.prepare('INSERT INTO ' + q(T) + ' (' + colNames.map(q).join(', ') + ') VALUES (' + colNames.map(() => '?').join(', ') + ')');
+    const n = targets.length;
+    let cnt = 0, colorCells = 0, blankSkipped = 0, kk = 0;
+    try {
+      for (let i = h + 1; i < rows.length; i++) {
+        const row = rows[i] || [];
+        const R = r0 + i + 1; // 엑셀 행 번호
+        const srcRow = ws[r0 + i] || [];
+        const vals = new Array(n);
+        let any = false;
+        for (let k = 0; k < n; k++) {
+          let v = row[srcIdx[k]];
+          if (v === undefined || v === null) v = '';
+          else if (typeof v === 'number') {
+            const cell = srcRow[c0 + srcIdx[k]];
+            if (cell && cell.t === 'n' && cell.z && XLSX.SSF.is_date(cell.z)) v = serialToISODate(v, date1904);
+          } else if (typeof v === 'boolean') v = v ? 'TRUE' : 'FALSE';
+          vals[k] = v;
+          if (!any && !blank(v)) any = true;
+        }
+        if (!any) { blankSkipped++; continue; } // 완전히 빈 줄은 넣지 않음
+        const bg = comps.length ? new Array(n).fill(null) : null, fc = bg ? new Array(n).fill(null) : null;
+        if (bg) {
+          // 색 칸 위치 목록은 행 순서대로라 커서 하나로 따라간다
+          while (kk < sc.n && sc.R[kk] < R) kk++;
+          for (; kk < sc.n && sc.R[kk] === R; kk++) {
+            const j = sc.C[kk] - c0;
+            if (j < 0 || j >= raw.length || jToK[j] < 0) continue;
+            const k = jToK[j];
+            if (blank(vals[k])) continue; // 서식만 남은 빈 칸은 색 없음으로
+            bg[k] = st.xfBg[sc.X[kk]]; fc[k] = st.xfFc[sc.X[kk]];
+            if (bg[k] || fc[k]) colorCells++;
+          }
+        }
+        const args = [fileName, sheetName, R, vals.join('\t').toLowerCase()].concat(vals);
+        comps.forEach(([k, , kind]) => args.push(kind === 'b' ? bg[k] : fc[k]));
+        stmt.run(args);
+        cnt++;
+      }
+    } finally { stmt.free(); }
+    if (!cnt) return { sheet: sheetName, status: 'empty', rows: 0 };
+    return { sheet: sheetName, status: 'ok', rows: cnt, colorCells, cf: !!(sc && sc.cf), blankSkipped, titles: targets };
   }
 
   // ---- 저장본(.db): 모은 데이터 DB를 통째로. 다시 열 때 엑셀을 읽지 않아 몇십~몇백 밀리초면 열린다 ----
-  // 화면 복원에 필요한 것(제목 줄, 넣은 파일 요약, 색 있는 칸)은 DB 안 meta 표에 JSON으로 같이 넣는다.
-  const SAVE_APP = 'excel-merge-viewer', SAVE_VERSION = 1;
+  // 화면 복원에 필요한 것(넣은 파일 요약)은 DB 안 meta 표에 JSON으로 같이 넣는다.
+  function writeMeta(d, meta) {
+    d.run('CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT)');
+    d.run('INSERT OR REPLACE INTO meta VALUES (?, ?)', ['state', JSON.stringify(Object.assign({ app: SAVE_APP, version: SAVE_VERSION, savedAt: new Date().toISOString() }, meta))]);
+  }
   function exportDb(loadLog) {
-    if (!db) throw new Error('저장할 데이터가 없어요.');
-    const meta = { app: SAVE_APP, version: SAVE_VERSION, cols, colorCols: Array.from(colorCols), loadLog, savedAt: new Date().toISOString() };
-    db.run('CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT)');
-    db.run('INSERT OR REPLACE INTO meta VALUES (?, ?)', ['state', JSON.stringify(meta)]);
-    return db.export(); // 전체 SQLite 파일 바이트
+    if (!db || !count()) throw new Error('저장할 데이터가 없어요.');
+    writeMeta(db, { loadLog });
+    return db.export();
   }
   async function openDb(buffer) {
     await ready;
@@ -685,66 +770,66 @@ function workerMain() {
     catch (e) { throw new Error('저장본을 열 수 없어요. 파일이 손상된 것 같아요.'); }
     let meta = null;
     try { meta = JSON.parse(next.exec("SELECT v FROM meta WHERE k = 'state'")[0].values[0][0]); } catch (e) {}
-    if (!meta || meta.app !== SAVE_APP || !Array.isArray(meta.cols)) {
+    if (!meta || meta.app !== SAVE_APP || !tableCols(next).includes(FILE)) {
       next.close();
+      if (meta && meta.app === SAVE_APP && meta.version < SAVE_VERSION) throw new Error('예전 시제품에서 저장한 파일이라 열 수 없어요. 원본 엑셀을 다시 넣어 주세요.');
       throw new Error('엑셀 모아보기에서 저장한 파일이 아니에요.');
     }
     if (meta.version > SAVE_VERSION) { next.close(); throw new Error('더 새로운 버전에서 저장한 파일이에요. 이 화면을 새 버전으로 바꿔 주세요.'); }
     if (db) db.close();
-    db = next; cols = meta.cols; ids = new Int32Array(0);
-    colorCols.clear(); (meta.colorCols || []).forEach(i => colorCols.add(i));
-    Object.keys(numericCols).forEach(k => delete numericCols[k]);
-    const total = db.exec('SELECT COUNT(*) FROM data')[0].values[0][0];
-    return { cols, total, loadLog: meta.loadLog || [], savedAt: meta.savedAt, role: meta.role || null, ms: performance.now() - t0 };
+    db = next;
+    return { total: count(), loadLog: meta.loadLog || [], savedAt: meta.savedAt, role: meta.role || null, kind: meta.kind || null, ms: performance.now() - t0 };
   }
 
-  // 칸 하나에 들어 있는 값과 줄 수(직원용 파일의 줄 고르기 목록) — 많은 순 2000개까지
-  function distinctValues(i) {
-    if (!db) return [];
-    const r = db.exec('SELECT c' + Number(i) + ', COUNT(*) FROM data GROUP BY 1 ORDER BY 2 DESC LIMIT 2000');
-    return r.length ? r[0].values : [];
-  }
-
-  // 직원용 파일: 고른 줄·칸만 새 DB에 옮겨 담는다. 원본 DB를 지워서 만들면 지운 내용이 파일의 빈 공간에 남을 수 있어
-  // 항상 새 DB에 필요한 것만 넣는다. 전체 검색용 _all도 남긴 칸만으로 다시 만든다(뺀 칸 값이 검색으로 새지 않게).
+  // ---- 직원용 파일 · 필터 결과 내보내기: 고른 줄·칸만 새 DB에 옮겨 담는다 ----
+  // 원본 DB에서 지워서 만들면 지운 내용이 파일의 빈 공간에 남을 수 있어 항상 새 DB에 필요한 것만 넣는다.
+  // 전체 검색용 글자(ALL)도 남긴 칸만으로 다시 만든다(뺀 칸 값이 검색으로 새지 않게). 색은 그 줄들에 실제로 있는 칸만.
+  // spec: { name, rowCol, values, cols, where, kind: 'staff' | 'filtered' }
   function splitDb(spec) {
     if (!db) throw new Error('데이터가 없어요.');
-    const keep = spec.cols.map(Number).filter(i => i >= 0 && i < cols.length).sort((a, b) => a - b);
+    const all = tableCols();
+    const want = new Set(spec.cols || []);
+    const keep = dataCols().filter(c => want.has(c));
     if (!keep.length) throw new Error('볼 수 있는 칸을 하나 이상 골라 주세요.');
-    const k = keep.length;
-    const out = new SQL.Database();
-    out.run('CREATE TABLE data (id INTEGER PRIMARY KEY, src_file TEXT, src_sheet TEXT, src_row INTEGER, _all TEXT, ' +
-      keep.map((_, j) => 'c' + j + ' TEXT').join(', ') + ', ' + keep.map((_, j) => 'b' + j + ' TEXT, f' + j + ' TEXT').join(', ') + ')');
     const where = [], args = [];
-    if (spec.rowCol != null) {
+    if (spec.rowCol) {
       const vals = spec.values || [];
       if (!vals.length) where.push('0');
-      else { where.push('c' + Number(spec.rowCol) + ' IN (' + vals.map(() => '?').join(',') + ')'); args.push(...vals); }
+      else { where.push(q(spec.rowCol) + ' IN (' + vals.map(() => '?').join(',') + ')'); args.push(...vals); }
     }
-    const withColor = colorCols.size > 0;
-    const sel = ['src_file', 'src_sheet', 'src_row'].concat(keep.map(i => 'c' + i), withColor ? keep.map(i => 'b' + i).concat(keep.map(i => 'f' + i)) : []);
-    const names = ['src_file', 'src_sheet', 'src_row', '_all'].concat(keep.map((_, j) => 'c' + j), withColor ? keep.map((_, j) => 'b' + j).concat(keep.map((_, j) => 'f' + j)) : []);
-    const ins = out.prepare('INSERT INTO data (' + names.join(', ') + ') VALUES (' + names.map(() => '?').join(', ') + ')');
-    const st = db.prepare('SELECT ' + sel.join(', ') + ' FROM data' + (where.length ? ' WHERE ' + where.join(' AND ') : '') + ' ORDER BY id');
-    st.bind(args);
-    const newColor = new Set();
-    const perSheet = new Map(); // "파일\t탭" → [줄 수, 색칠된 칸 수]
+    if (spec.where) where.push('(' + spec.where + ')');
+    const whereSql = where.length ? ' WHERE ' + where.join(' AND ') : '';
+    const comps = [];
+    keep.forEach(c => [BG, FC].forEach(s => {
+      if (!all.includes(c + s)) return;
+      const hit = db.exec('SELECT 1 FROM ' + q(T) + (whereSql ? whereSql + ' AND ' : ' WHERE ') + q(c + s) + ' IS NOT NULL LIMIT 1', args);
+      if (hit.length) comps.push(c + s);
+    }));
+    const out = new SQL.Database();
+    createTable(out);
+    keep.concat(comps).forEach(c => out.run('ALTER TABLE ' + q(T) + ' ADD COLUMN ' + q(c) + ' TEXT'));
+    const names = [FILE, SHEET, ROWNO, ALL].concat(keep, comps);
+    const ins = out.prepare('INSERT INTO ' + q(T) + ' (' + names.map(q).join(', ') + ') VALUES (' + names.map(() => '?').join(', ') + ')');
+    const sel = db.prepare('SELECT ' + [FILE, SHEET, ROWNO].concat(keep, comps).map(q).join(', ') + ' FROM ' + q(T) + whereSql + ' ORDER BY rowid');
+    sel.bind(args);
+    const k = keep.length;
+    const perSheet = new Map();
     let total = 0;
     out.run('BEGIN');
     try {
-      while (st.step()) {
-        const r = st.get();
+      while (sel.step()) {
+        const r = sel.get();
         const vals = r.slice(3, 3 + k);
         let colored = 0;
-        if (withColor) for (let j = 0; j < k; j++) if (r[3 + k + j] || r[3 + 2 * k + j]) { newColor.add(j); colored++; }
-        ins.run([r[0], r[1], r[2], vals.join('\t').toLowerCase()].concat(r.slice(3)));
+        for (let j = 3 + k; j < r.length; j++) if (r[j]) colored++;
+        ins.run([r[0], r[1], r[2], vals.map(v => v == null ? '' : v).join('\t').toLowerCase()].concat(r.slice(3)));
         const key = r[0] + '\t' + r[1];
         const c = perSheet.get(key) || [0, 0];
         c[0]++; c[1] += colored;
         perSheet.set(key, c);
         total++;
       }
-    } finally { st.free(); ins.free(); out.run('COMMIT'); }
+    } finally { sel.free(); ins.free(); out.run('COMMIT'); }
     // 넣은 파일 요약도 이 파일 내용 기준으로 새로(뺀 탭·뺀 칸 이름 같은 원본 정보는 넣지 않음)
     const files = new Map();
     perSheet.forEach(([rows, colorCells], key) => {
@@ -752,19 +837,11 @@ function workerMain() {
       if (!files.has(file)) files.set(file, { name: file, sheets: [] });
       files.get(file).sheets.push({ sheet, status: 'ok', rows, colorCells });
     });
-    const meta = { app: SAVE_APP, version: SAVE_VERSION, cols: keep.map(i => cols[i]), colorCols: Array.from(newColor),
-      loadLog: Array.from(files.values()), savedAt: new Date().toISOString(),
-      role: { name: spec.name, rowCol: spec.rowCol != null ? cols[spec.rowCol] : null, rows: total, cols: k } };
-    out.run('CREATE TABLE meta (k TEXT PRIMARY KEY, v TEXT)');
-    out.run('INSERT INTO meta VALUES (?, ?)', ['state', JSON.stringify(meta)]);
+    writeMeta(out, { loadLog: Array.from(files.values()), kind: spec.kind,
+      role: spec.kind === 'staff' ? { name: spec.name, rowCol: spec.rowCol || null, rows: total, cols: k } : null });
     const bytes = out.export();
     out.close();
     return { bytes, rows: total };
-  }
-
-  function sampleRows() {
-    const res = db.exec('SELECT ' + cols.map((_, i) => 'c' + i).join(', ') + ' FROM data LIMIT 200');
-    return res.length ? res[0].values : [];
   }
 
   // ---- 체험용 가짜 데이터: 실제 엑셀 파일(xlsx)을 메모리에서 만들어, 사용자가 넣은 파일과 똑같은 과정으로 읽는다 ----
@@ -864,39 +941,51 @@ function workerMain() {
     return [{ name: '주문내역_2016-2020.xlsx', buffer: paint(toBuf(wb1), marks1) }, { name: '주문내역_월별_2021-2025.xlsx', buffer: paint(toBuf(wb2), marks2) }];
   }
 
+
   self.onmessage = async e => {
     const { id, cmd } = e.data;
     try {
-      let result;
-      if (cmd === 'add') result = await addFiles(e.data.files);
+      await ready;
+      let result, transfer = [];
+      if (cmd === 'preview') result = preview(e.data.files);
+      else if (cmd === 'ingest') { result = await ingest(e.data.files, e.data.plan, e.data.map); pending = new Map(); }
+      else if (cmd === 'dropPending') { pending = new Map(); result = true; }
+      else if (cmd === 'exec') result = db ? db.exec(e.data.sql, e.data.params || []) : [];
+      else if (cmd === 'rowids') {
+        // 조건에 맞는 rowid만 정렬 순서대로 숫자 배열로(projectA 윈도잉 1단계와 같음) — 화면은 보이는 구간만 따로 불러온다
+        const stmt = db.prepare(e.data.sql);
+        let buf = new Float64Array(65536), n = 0;
+        try {
+          if (e.data.params) stmt.bind(e.data.params);
+          while (stmt.step()) {
+            if (n === buf.length) { const nb = new Float64Array(buf.length * 2); nb.set(buf); buf = nb; }
+            buf[n++] = stmt.get()[0];
+          }
+        } finally { stmt.free(); }
+        result = buf.slice(0, n);
+        transfer = [result.buffer];
+      }
+      else if (cmd === 'info') {
+        // 색 칸은 실제로 색이 하나라도 남아 있는 것만(값 없는 칸에만 칠했거나, 그 파일을 뺐으면 비어 있을 수 있음)
+        const comps = tableCols().filter(c => isComp(c) && db.exec('SELECT 1 FROM ' + q(T) + ' WHERE ' + q(c) + ' IS NOT NULL LIMIT 1').length);
+        result = { cols: dataCols(), all: comps, total: count() };
+      }
+      else if (cmd === 'remove') {
+        const had = db.exec('SELECT COUNT(*) FROM ' + q(T) + ' WHERE ' + q(FILE) + ' = ?', [e.data.name])[0].values[0][0];
+        db.run('DELETE FROM ' + q(T) + ' WHERE ' + q(FILE) + ' = ?', [e.data.name]);
+        result = { removed: had, total: count() };
+      }
+      else if (cmd === 'export') { const b = exportDb(e.data.loadLog); result = b.buffer; transfer = [result]; }
+      else if (cmd === 'open') result = await openDb(e.data.buffer);
+      else if (cmd === 'split') { const r = splitDb(e.data.spec); result = { buffer: r.bytes.buffer, rows: r.rows }; transfer = [result.buffer]; }
       else if (cmd === 'sample') {
-        await ready;
-        progress({ phase: 'gen' });
         const t0 = performance.now();
         const files = makeSample(e.data.total);
-        const genMs = performance.now() - t0;
-        result = await addFiles(files);
-        result.genMs = genMs;
+        result = { files, genMs: performance.now() - t0 };
+        transfer = files.map(f => f.buffer.buffer || f.buffer);
       }
-      else if (cmd === 'query') result = query(e.data.q);
-      else if (cmd === 'rows') result = rows(e.data);
-      else if (cmd === 'sources') result = sources();
-      else if (cmd === 'sample-rows') result = sampleRows();
-      else if (cmd === 'colors') result = colorStats();
-      else if (cmd === 'export') {
-        const bytes = exportDb(e.data.loadLog);
-        self.postMessage({ type: 'reply', id, result: bytes.buffer }, [bytes.buffer]); // 복사 없이 넘김
-        return;
-      }
-      else if (cmd === 'open') result = await openDb(e.data.buffer);
-      else if (cmd === 'distinct') result = distinctValues(e.data.col);
-      else if (cmd === 'split') {
-        const r = splitDb(e.data.spec);
-        self.postMessage({ type: 'reply', id, result: { buffer: r.bytes.buffer, rows: r.rows } }, [r.bytes.buffer]);
-        return;
-      }
-      else if (cmd === 'reset') { if (db) db.close(); db = null; cols = null; ids = new Int32Array(0); colorCols.clear(); result = true; }
-      self.postMessage({ type: 'reply', id, result });
+      else if (cmd === 'reset') { if (db) db.close(); db = null; result = true; }
+      self.postMessage({ type: 'reply', id, result }, transfer);
     } catch (err) {
       self.postMessage({ type: 'reply', id, error: String(err && err.message || err) });
     }
@@ -904,9 +993,15 @@ function workerMain() {
 }
 
 // ===== 메인 화면 =====
+// 표·칸 필터 패널·필터 칩·칸 너비·상세보기·제목 맞추기는 projectA(admin/data-converter.html)의 조회 부분을 가져와 범용으로 다듬은 것.
+// 한 회사 전용이던 것(고정 칸 이름, 특정 칸 기준 나누기, 월 탭 규칙, 따로 있던 권한 설정 화면, 빈칸 기본값)은 뺐다.
 const $ = s => document.querySelector(s);
 const BUNDLES_OK = typeof __xlsxFactory === 'function' && typeof __sqljsFactory === 'function';
 const ROW_H = 30;
+const T = 'data';
+const FILE = '\u0001파일', SHEET = '\u0001탭', ROWNO = '\u0001행', ALL = '\u0001all';
+const BG = '\u0001배경', FC = '\u0001글자';
+const SRC = '\u0001src'; // 표 맨 앞 "출처" 칸(진짜 칸이 아니라 파일·탭으로 그림)
 
 let worker = null, reqId = 0;
 const waiting = {};
@@ -932,38 +1027,127 @@ function call(cmd, data, transfer) {
     worker.postMessage(Object.assign({ id, cmd }, data || {}), transfer || []);
   });
 }
+const workerExec = (sql, params) => call('exec', { sql, params });
 
 // ---- 상태 ----
-let cols = [];
-let total = 0, matched = 0;
-let state = { search: '', filters: {}, colors: {}, src: null, sort: null };
-let roleInfo = null;       // 직원용 파일을 열었을 때 그 파일의 이름·범위
-let colorInfo = {};        // 칸 번호 → { b: [[색, 줄 수]…], f: […] } (색이 들어간 칸만)
-let qVer = 0;              // 조건이 바뀔 때마다 증가 — 늦게 도착한 옛 결과는 버림
-let cache = { ver: -1, start: 0, rows: [] };
-let fetching = false;
-let numeric = [];
+let columns = [];          // 엑셀 제목 칸(표에 보이는 순서)
+let coloredColumns = [];   // 배경색이 들어간 칸
+let fontColoredColumns = []; // 글자색이 들어간 칸
+let numericColumns = [], dateColumns = [];
+let total = 0;
 let loadLog = [];          // 지금까지 넣은 파일 결과(요약 표시용)
 let lastLoad = null;
+let roleInfo = null;       // 직원용 파일을 열었을 때 그 파일의 이름·범위
+let dbOpened = false;
+let srcFilter = null;      // 전체/파일별/탭별 보기 { file, sheet? }
 
 const fmt = n => Number(n).toLocaleString('ko-KR');
 const sec = ms => (ms / 1000).toFixed(ms < 1000 ? 2 : 1) + '초';
-const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+// 화면에 들어가는 데이터 값은 전부 이걸 거친다(속성값에도 쓰여서 따옴표까지) — projectA 2026-10-19 XSS 수정과 같은 이유
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const qi = name => '"' + String(name).replace(/"/g, '""') + '"';
+const sqlStr = v => "'" + String(v).replace(/'/g, "''") + "'";
+// 색 값은 '#rrggbb' 꼴만 화면에 넣는다 — 누가 조작한 .db 저장본의 색 칸에 코드를 넣어도 style 속성을 깨고 실행되지 않게
+function safeColor(v) { return typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v) ? v : null; }
+function inkOn(hex) {
+  const v = parseInt(hex.slice(1), 16), r = v >> 16 & 255, g = v >> 8 & 255, b = v & 255;
+  return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#1d2433' : '#ffffff';
+}
 
 function show(id) {
-  ['#intro', '#progress', '#view'].forEach(s => { $(s).hidden = s !== id; });
-  if (id === '#intro') refreshResume();
-  if (id !== '#view') { $('#savePanel').hidden = true; $('#staffPanel').hidden = true; }
+  ['#intro', '#progress', '#confirm', '#view'].forEach(s => { $(s).hidden = s !== id; });
   $('#topActions').hidden = id !== '#view';
   $('#resetConfirm').hidden = true;
+  if (id === '#intro') refreshResume();
+  if (id !== '#view') { $('#savePanel').hidden = true; $('#staffPanel').hidden = true; closeFilterPanel(); }
 }
 // alert() 대신 화면 안에 알림 — 웹에 올린 페이지(iframe)에서는 alert/confirm 창이 안 뜰 수 있음
 function notify(msg) {
   $('#noticeText').textContent = msg;
   $('#notice').hidden = false;
 }
+function setProgress(text, ratio) {
+  $('#progText').textContent = text;
+  $('#progBar').style.width = Math.round(ratio * 100) + '%';
+}
+function onProgress(m) {
+  const base = m.fileIndex / m.fileCount;
+  if (m.phase === 'open') setProgress('"' + m.file + '" 여는 중… (' + (m.fileIndex + 1) + '/' + m.fileCount + ')', base);
+  else setProgress('"' + m.file + '" › 탭 "' + m.sheet + '" 합치는 중 (' + (m.sheetIndex + 1) + '/' + m.sheetCount + ')',
+    base + (m.sheetIndex + 1) / m.sheetCount / m.fileCount);
+}
 
-// ---- 파일 넣기 ----
+// ---- 어느 탭을 합칠지 · 제목 맞추기 ----
+// 기준 제목: 이미 데이터가 있으면 그 제목, 없으면 넣는 탭들 중 가장 많은 탭이 쓰는 제목 구성(오타 난 탭 하나가 기준이 되지 않게 —
+// projectA checkUnitHeaders와 같은 판단). 탭마다 기준 제목과 겹치는 게 절반 미만이면 "다른 표"(메모·요약 탭)로 보고 뺀다.
+// 절반 이상이면 합치고, 기준에 없는 제목은 "어느 제목으로 맞출지 / 새 칸으로 추가 / 읽지 않기"를 고르게 한다(map).
+const HEADER_MAP_KEY = 'emv_header_map_v1';
+function loadHeaderMemory() { try { return JSON.parse(localStorage.getItem(HEADER_MAP_KEY) || '{}') || {}; } catch (e) { return {}; } }
+function saveHeaderMemory(choices) { try { localStorage.setItem(HEADER_MAP_KEY, JSON.stringify(Object.assign(loadHeaderMemory(), choices))); } catch (e) {} }
+function looseTitleKey(t) { return String(t).toLowerCase().replace(/[\s_\-.()[\]（）]/g, ''); }
+function editDistance(a, b) {
+  const dp = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    let prev = dp[0];
+    dp[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const tmp = dp[j];
+      dp[j] = Math.min(dp[j] + 1, dp[j - 1] + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1));
+      prev = tmp;
+    }
+  }
+  return dp[b.length];
+}
+// 비슷한 제목(띄어쓰기·괄호만 다르거나 한두 글자 오타)이면 추천
+function suggestTitle(raw, candidates) {
+  const k = looseTitleKey(raw);
+  const same = candidates.find(c => looseTitleKey(c) === k);
+  if (same) return same;
+  let best = null, bestD = Infinity;
+  candidates.forEach(c => {
+    const d = editDistance(k, looseTitleKey(c));
+    const limit = Math.min(c.length, raw.length) <= 4 ? 1 : 2;
+    if (d <= limit && d < bestD) { best = c; bestD = d; }
+  });
+  return best;
+}
+const mapTitle = (t, map) => { const to = map[t]; return to === '__drop__' ? null : (to && to !== '__new__' ? to : t); };
+function planSheets(pv, map) {
+  const sheets = [];
+  pv.files.forEach(f => (f.sheets || []).forEach(s => sheets.push(Object.assign({ file: f.name }, s))));
+  const live = sheets.filter(s => s.hasData && s.titles.length);
+  let base = pv.tableTitles && pv.tableTitles.length ? pv.tableTitles : null;
+  if (!base && live.length) {
+    const cnt = {};
+    let best = null;
+    live.forEach(s => {
+      const k = JSON.stringify(s.titles.slice().sort());
+      cnt[k] = (cnt[k] || 0) + 1;
+      if (!best || cnt[k] > cnt[best.k]) best = { k, s };
+    });
+    base = best.s.titles.map(t => mapTitle(t, map)).filter(Boolean);
+  }
+  const baseSet = new Set(base || []);
+  const units = [], skipped = [], unresolved = new Set(), missingBy = {};
+  sheets.forEach(s => {
+    if (!s.hasData || !s.titles.length) { skipped.push({ file: s.file, sheet: s.sheet, status: 'empty' }); return; }
+    const raw = s.titles;
+    const hit = raw.filter(t => baseSet.has(t) || baseSet.has(map[t])).length;
+    if (hit < Math.max(1, baseSet.size / 2)) {
+      skipped.push({ file: s.file, sheet: s.sheet, status: 'diff', missing: base.filter(b => !raw.includes(b)), extra: raw.filter(t => !baseSet.has(t)) });
+      return;
+    }
+    const mapped = raw.map(t => mapTitle(t, map)).filter(Boolean);
+    raw.forEach(t => { if (!baseSet.has(t) && map[t] === undefined) unresolved.add(t); });
+    base.filter(b => !mapped.includes(b)).forEach(b => { (missingBy[b] = missingBy[b] || []).push(s.file + ' › ' + s.sheet); });
+    units.push({ file: s.file, sheet: s.sheet, titles: raw });
+  });
+  return { base: base || [], units, skipped, unresolved, missingBy };
+}
+
+
+// ---- 파일 넣기: 미리보기(탭·제목만) → 합칠 탭·제목 맞추기 결정 → (고를 게 있으면 확인창) → 넣기 ----
+let staged = null; // { payload, pv, map, auto, genMs }
 async function addFiles(fileList) {
   $('#notice').hidden = true;
   const all = Array.from(fileList);
@@ -979,18 +1163,133 @@ async function addFiles(fileList) {
     if (!saved.length) notify('엑셀(.xlsx/.xls), CSV, 또는 저장해 둔 .db 파일만 넣을 수 있어요.');
     return;
   }
-  show('#progress');
-  $('#progTitle').textContent = '파일 ' + files.length + '개를 읽는 중이에요';
-  setProgress('파일 여는 중…', 0);
   const payload = [];
   for (const f of files) payload.push({ name: f.name, buffer: await f.arrayBuffer() });
-  try {
-    const res = await call('add', { files: payload }, payload.map(p => p.buffer));
-    await afterLoad(res);
-  } catch (e) {
-    notify('읽는 중 문제가 생겼어요: ' + e.message);
+  await stageFiles(payload);
+}
+
+async function stageFiles(payload, genMs) {
+  // 같은 이름 파일이 이번에 두 번 들어오면 뒤의 것만
+  const byName = new Map();
+  payload.forEach(p => byName.set(p.name, p));
+  payload = Array.from(byName.values());
+  show('#progress');
+  $('#progTitle').textContent = '파일 ' + payload.length + '개를 확인하는 중이에요';
+  setProgress('탭과 제목 줄을 읽는 중…', 0.05);
+  let pv;
+  const t0 = performance.now();
+  // 버퍼는 넘겨 버린다(워커가 한 번 읽어 두고 넣을 때 그대로 씀)
+  const names = payload.map(p => ({ name: p.name }));
+  try { pv = await call('preview', { files: payload }, payload.map(p => p.buffer)); }
+  catch (e) { notify('파일을 확인하는 중 문제가 생겼어요: ' + e.message); show(total ? '#view' : '#intro'); return; }
+  const broken = pv.files.filter(f => f.openError);
+  if (broken.length) notify(broken.map(f => '"' + f.name + '"을(를) 열지 못했어요. 엑셀에서 열어 같은 이름으로 다시 저장한 뒤 넣어 주세요.').join(' '));
+  // 기준에 없는 제목: 지난번 고른 것(이 브라우저에 기억) → 비슷한 제목 추천 순으로 미리 고름
+  const map = {}, auto = {};
+  const memory = loadHeaderMemory();
+  let plan = planSheets(pv, map);
+  const baseSet = new Set(plan.base);
+  plan.unresolved.forEach(t => {
+    const mem = memory[t];
+    if (mem === '__new__' || mem === '__drop__' || (mem && baseSet.has(mem))) { map[t] = mem; auto[t] = 'memory'; return; }
+    const s = suggestTitle(t, plan.base.filter(b => b !== t));
+    if (s) { map[t] = s; auto[t] = 'suggest'; }
+  });
+  // 읽은 시간에는 미리보기(탭·제목 읽기)도 넣는다 — 확인창에서 고르는 동안은 뺌
+  staged = { payload: names.filter(p => !broken.some(b => b.name === p.name)), pv, map, auto, genMs, previewMs: performance.now() - t0 };
+  plan = planSheets(pv, map);
+  // 고를 게 없으면(제목이 다 같거나 지난번 고른 대로) 확인 없이 바로 넣는다 — "던지면 바로 조회"
+  if (!plan.unresolved.size && !Object.values(auto).includes('suggest')) return applyStaged();
+  renderConfirm();
+}
+
+function renderConfirm() {
+  const { pv, map, auto } = staged;
+  const plan = planSheets(pv, map);
+  const existing = new Set(loadLog.map(f => f.name));
+  const unitRows = [];
+  const byFile = {};
+  plan.units.forEach(u => { (byFile[u.file] = byFile[u.file] || []).push(u.sheet); });
+  Object.keys(byFile).forEach(f => unitRows.push('<tr><td>' + esc(f) + '</td><td>탭 ' + byFile[f].length + '개</td><td>' +
+    (existing.has(f) ? '<span class="tagReplace">교체</span>' : '<span class="tagNew">새로 추가</span>') + '</td></tr>'));
+  // 기준에 없는 제목마다 넣는 방법 고르기
+  const titles = new Set();
+  plan.units.forEach(u => u.titles.forEach(t => { if (!plan.base.includes(t)) titles.add(t); }));
+  const opt = (cur, v, label) => '<option value="' + esc(v) + '"' + (cur === v ? ' selected' : '') + '>' + esc(label) + '</option>';
+  const mapRows = Array.from(titles).map(t => {
+    const where = plan.units.filter(u => u.titles.includes(t));
+    const cur = map[t] || '';
+    const opts = [opt(cur, '', '— 골라 주세요 —')].concat(plan.base.map(b => opt(cur, b, '"' + b + '"(으)로 맞추기')),
+      [opt(cur, '__new__', '새 칸으로 추가'), opt(cur, '__drop__', '이 칸은 읽지 않기')]);
+    const why = auto[t] === 'memory' ? '지난번에 고른 대로 미리 골라 뒀어요.' : auto[t] === 'suggest' ? '비슷한 제목이라 미리 골라 뒀어요. 맞는지 확인해 주세요.' : '';
+    return '<tr' + (plan.unresolved.has(t) ? ' class="needPick"' : '') + '><td><b>"' + esc(t) + '"</b><div class="sub">' +
+      esc(where[0].file + ' › ' + where[0].sheet) + (where.length > 1 ? ' 외 ' + (where.length - 1) + '곳' : '') + '</div></td>' +
+      '<td><select class="titleMapSel" data-raw="' + esc(t) + '">' + opts.join('') + '</select>' + (why ? '<div class="sub">' + why + '</div>' : '') + '</td></tr>';
+  });
+  const info = [];
+  Object.keys(plan.missingBy).forEach(t => info.push('"' + esc(t) + '" 칸이 없는 탭 ' + plan.missingBy[t].length + '곳 — 그 줄들은 이 칸이 빈칸으로 들어가요.'));
+  if (plan.skipped.length) info.push('합치지 않는 탭 ' + plan.skipped.length + '개(제목이 다르거나 비어 있음) — 넣은 뒤 요약에서 볼 수 있어요.');
+  const blocked = plan.unresolved.size > 0 || !plan.units.length;
+  $('#confirmBox').innerHTML = '<h2>넣기 전에 확인해 주세요</h2>' +
+    '<p class="sub">기준 제목(' + esc(pv.tableTitles ? '지금 모아 둔 데이터' : '가장 많은 탭이 쓰는 제목') + ')과 다른 칸이 있어요. 어떻게 넣을지 고르면 바로 합쳐요. 아직 아무것도 바뀌지 않았어요.</p>' +
+    (mapRows.length ? '<table class="miniTable"><tr><th>엑셀 제목</th><th>넣는 방법</th></tr>' + mapRows.join('') + '</table>' : '') +
+    '<p class="sub" style="margin-top:8px">한 번 고르면 이 브라우저에 기억해 두고, 다음에 같은 제목이 오면 똑같이 골라 둬요.</p>' +
+    '<table class="miniTable"><tr><th>파일</th><th>넣을 탭</th><th>처리</th></tr>' + unitRows.join('') + '</table>' +
+    (info.length ? '<div class="ingestInfo">' + info.map(t => '<div>· ' + t + '</div>').join('') + '</div>' : '') +
+    '<div class="row" style="margin-top:12px"><button id="confirmApply"' + (blocked ? ' disabled' : '') + '>이대로 합치기</button>' +
+    '<button id="confirmCancel" class="ghost">취소</button>' +
+    (plan.unresolved.size ? '<span class="sub">노란 줄의 넣는 방법을 골라야 합칠 수 있어요.</span>' : '') + '</div>';
+  show('#confirm');
+}
+$('#confirmBox').addEventListener('change', e => {
+  const sel = e.target.closest('select.titleMapSel');
+  if (!sel) return;
+  if (sel.value) staged.map[sel.dataset.raw] = sel.value; else delete staged.map[sel.dataset.raw];
+  delete staged.auto[sel.dataset.raw];
+  renderConfirm();
+});
+$('#confirmBox').addEventListener('click', e => {
+  if (e.target.id === 'confirmApply') applyStaged();
+  if (e.target.id === 'confirmCancel') { staged = null; call('dropPending'); show(total ? '#view' : '#intro'); notify('취소했어요. 아무것도 바뀌지 않았어요.'); }
+});
+
+async function applyStaged() {
+  const { payload, pv, map, genMs, previewMs } = staged;
+  staged = null;
+  const plan = planSheets(pv, map);
+  saveHeaderMemory(map);
+  const want = {};
+  plan.units.forEach(u => { (want[u.file] = want[u.file] || []).push(u.sheet); });
+  const files = payload.filter(p => want[p.name]);
+  if (!files.length) {
+    call('dropPending');
     show(total ? '#view' : '#intro');
+    notify('합칠 탭이 없어요. 탭이 비어 있거나 제목 줄이 서로 달라요.' + (plan.skipped.length ? ' (' + plan.skipped.slice(0, 3).map(s => s.file + ' › ' + s.sheet).join(', ') + ')' : ''));
+    return;
   }
+  show('#progress');
+  $('#progTitle').textContent = '파일 ' + files.length + '개를 합치는 중이에요';
+  setProgress('파일 여는 중…', 0);
+  let res;
+  try { res = await call('ingest', { files, plan: want, map }); }
+  catch (e) { notify('합치는 중 문제가 생겼어요. 아무것도 바뀌지 않았어요: ' + e.message); show(total ? '#view' : '#intro'); return; }
+  // 넣은 파일 요약 = 넣은 탭(워커 결과) + 합치지 않은 탭(이번 결정)
+  res.files.forEach(f => {
+    plan.skipped.filter(s => s.file === f.name).forEach(s => f.sheets.push(s));
+    f.mapped = Object.keys(map).filter(t => plan.units.some(u => u.file === f.name && u.titles.includes(t))).map(t => [t, map[t]]);
+    loadLog = loadLog.filter(x => x.name !== f.name);
+    loadLog.push(f);
+  });
+  // 미리보기에서 열지 못한 파일, 넣을 탭이 하나도 없던 파일도 요약에 남긴다
+  pv.files.forEach(f => {
+    if (res.files.some(x => x.name === f.name)) return;
+    if (f.openError) { loadLog = loadLog.filter(x => x.name !== f.name); loadLog.push({ name: f.name, error: '읽을 수 없는 파일이에요', sheets: [] }); }
+    else if (!want[f.name]) { loadLog = loadLog.filter(x => x.name !== f.name || x.sheets.some(s => s.status === 'ok')); if (!loadLog.some(x => x.name === f.name)) loadLog.push({ name: f.name, sheets: plan.skipped.filter(s => s.file === f.name) }); }
+  });
+  lastLoad = { ms: res.ms + (previewMs || 0), genMs };
+  total = res.total;
+  if (!total) { show('#intro'); notify('넣은 파일에서 데이터가 있는 탭을 찾지 못했어요.'); return; }
+  await showData(true);
 }
 
 async function runSample() {
@@ -998,65 +1297,44 @@ async function runSample() {
   $('#progTitle').textContent = '가짜 데이터로 체험 준비 중이에요';
   setProgress('가짜 엑셀 파일 2개를 만드는 중… (실제 파일과 똑같이 다시 읽어서 시간을 잽니다)', 0);
   try {
-    const res = await call('sample', { total: Number($('#sampleSize').value) });
-    await afterLoad(res);
+    const r = await call('sample', { total: Number($('#sampleSize').value) });
+    const files = r.files.map(f => ({ name: f.name, buffer: f.buffer.buffer ? f.buffer.buffer.slice(f.buffer.byteOffset, f.buffer.byteOffset + f.buffer.byteLength) : f.buffer }));
+    await stageFiles(files, r.genMs);
   } catch (e) {
     notify('체험 데이터를 만드는 중 문제가 생겼어요: ' + e.message);
     show('#intro');
   }
 }
 
-function setProgress(text, ratio) {
-  $('#progText').textContent = text;
-  $('#progBar').style.width = Math.round(ratio * 100) + '%';
-}
-function onProgress(m) {
-  if (m.phase === 'gen') return;
-  const base = m.fileIndex / m.fileCount;
-  if (m.phase === 'open') setProgress('"' + m.file + '" 여는 중… (' + (m.fileIndex + 1) + '/' + m.fileCount + ')', base);
-  else setProgress('"' + m.file + '" › 탭 "' + m.sheet + '" 합치는 중 (' + (m.sheetIndex + 1) + '/' + m.sheetCount + ')',
-    base + (m.sheetIndex + 1) / m.sheetCount / m.fileCount);
-}
-
-async function afterLoad(res) {
-  lastLoad = res;
-  res.files.forEach(f => {
-    loadLog = loadLog.filter(x => x.name !== f.name);
-    loadLog.push(f);
-  });
-  total = res.total;
-  if (!res.cols) {
-    show('#intro');
-    notify('넣은 파일에서 데이터가 있는 탭을 찾지 못했어요.');
-    return;
-  }
-  await showData(res.cols);
-}
-
 // 저장본을 열었을 때: 넣은 파일 요약은 저장본에 든 것으로 바꿈
 async function afterOpen(res, from) {
   lastLoad = { ms: res.ms, opened: from, savedAt: res.savedAt };
   loadLog = res.loadLog;
+  total = res.total;
   roleInfo = res.role;
   $('#staffBtn').hidden = !!roleInfo; // 직원용 파일에서 또 직원용 파일을 만들 일은 없음
-  total = res.total;
-  state = { search: '', filters: {}, colors: {}, src: null, sort: null };
-  $('#search').value = '';
-  await showData(res.cols);
+  await showData(true);
 }
 
-async function showData(newCols) {
-  cols = newCols;
-  const sample = await call('sample-rows');
-  numeric = cols.map((_, i) => sample.length > 0 && sample.filter(r => r[i] !== '').length > 0 &&
-    sample.every(r => r[i] === '' || /^-?[\d,]+(\.\d+)?$/.test(r[i])));
-  colorInfo = await call('colors');
-  Object.keys(state.colors).forEach(i => { if (!colorInfo[i]) delete state.colors[i]; }); // 파일을 바꿔 색이 없어진 칸
-  setupColumns(sample);
+// 데이터가 바뀐 뒤 공통: 칸 목록·색 칸·숫자/날짜 칸을 다시 읽고 표를 새로 그린다
+async function showData(resetFilters) {
+  const info = await call('info');
+  total = info.total;
+  columns = info.cols;
+  coloredColumns = info.all.filter(c => c.endsWith(BG)).map(c => c.slice(0, -BG.length));
+  fontColoredColumns = info.all.filter(c => c.endsWith(FC)).map(c => c.slice(0, -FC.length));
+  ({ numericColumns, dateColumns } = await detectColumnTypes(columns));
+  if (resetFilters) {
+    for (const k in activeColumnFilters) if (!columns.includes(k)) delete activeColumnFilters[k];
+    if (sortKey && !columns.includes(sortKey)) sortKey = null;
+  }
+  dbOpened = true;
   await fillSources();
   show('#view');
   renderSummary();
-  measureHead();
+  buildHead();
+  renderActiveFiltersBar();
+  gridWrap.scrollTop = 0;
   await runQuery();
 }
 
@@ -1064,22 +1342,23 @@ function renderSummary() {
   const okSheets = [], skipped = [], errors = [];
   loadLog.forEach(f => {
     if (f.error) errors.push(f);
-    f.sheets.forEach(s => {
-      if (s.status === 'ok') okSheets.push(s);
-      else if (s.status === 'diff') skipped.push({ file: f.name, s });
-      else skipped.push({ file: f.name, s });
-    });
+    f.sheets.forEach(s => { if (s.status === 'ok') okSheets.push(s); else skipped.push({ file: f.name, s }); });
   });
-  const filesOk = loadLog.filter(f => f.sheets.some(s => s.status === 'ok')).length;
-  let html = '파일 <b>' + filesOk + '개</b> · 탭 <b>' + okSheets.length + '개</b>에서 <b>' + fmt(total) + '건</b>을 하나로 모았어요';
+  const filesOk = loadLog.filter(f => f.sheets.some(s => s.status === 'ok'));
+  let html = '파일 <b>' + filesOk.length + '개</b> · 탭 <b>' + okSheets.length + '개</b>에서 <b>' + fmt(total) + '건</b>을 하나로 모았어요';
   if (lastLoad && lastLoad.opened) {
     html += ' · ' + esc(lastLoad.opened) + ' 연 시간 <b>' + sec(lastLoad.ms) + '</b>';
     if (lastLoad.savedAt) html += ' <span style="color:var(--faint)">(' + esc(when(lastLoad.savedAt)) + ' 저장)</span>';
-  }
-  if (roleInfo) html += '<div class="roleBanner">직원용 파일 <b>' + esc(roleInfo.name || '') + '</b> — 볼 수 있게 정해진 줄 ' + fmt(roleInfo.rows || 0) + '건 · 칸 ' + (roleInfo.cols || 0) + '개만 들어 있어요</div>'; else if (lastLoad) {
+  } else if (lastLoad) {
     html += ' · 방금 읽은 시간 <b>' + sec(lastLoad.ms) + '</b>';
     if (lastLoad.genMs != null) html += ' <span style="color:var(--faint)">(가짜 파일 만드는 데 ' + sec(lastLoad.genMs) + ' 별도)</span>';
   }
+  if (roleInfo) html += '<div class="roleBanner">직원용 파일 <b>' + esc(roleInfo.name || '') + '</b> — 볼 수 있게 정해진 줄 ' + fmt(roleInfo.rows || 0) + '건 · 칸 ' + (roleInfo.cols || 0) + '개만 들어 있어요</div>';
+  // 넣은 파일 목록 + [빼기]
+  html += '<details><summary>넣은 파일 ' + filesOk.length + '개</summary><table class="miniTable"><tr><th>파일</th><th class="num">줄 수</th><th></th></tr>' +
+    filesOk.map(f => '<tr><td>' + esc(f.name) + ' <span class="sub">탭 ' + f.sheets.filter(s => s.status === 'ok').length + '개</span></td><td class="num">' +
+      fmt(f.sheets.reduce((n, s) => n + (s.rows || 0), 0)) + '</td><td><button class="linkBtn" data-remove="' + esc(f.name) + '">빼기</button></td></tr>').join('') +
+    '</table><div class="sub">고친 엑셀은 같은 파일 이름으로 다시 넣으면 그 파일 몫만 바뀌어요.</div></details>';
   const items = [];
   errors.forEach(f => items.push('<li>' + esc(f.name) + ' — ' + esc(f.error) + '</li>'));
   skipped.forEach(({ file, s }) => {
@@ -1087,13 +1366,18 @@ function renderSummary() {
     if (s.status === 'empty') why = '데이터가 없는 탭';
     else {
       const parts = [];
-      if (s.missing.length) parts.push('없는 칸: ' + esc(s.missing.slice(0, 3).join(', ')) + (s.missing.length > 3 ? ' 외 ' + (s.missing.length - 3) + '개' : ''));
-      if (s.extra.length) parts.push('더 있는 칸: ' + esc(s.extra.slice(0, 3).join(', ')) + (s.extra.length > 3 ? ' 외 ' + (s.extra.length - 3) + '개' : ''));
-      why = '제목 줄이 달라서 뺐어요 (' + parts.join(' / ') + ')';
+      if (s.missing && s.missing.length) parts.push('없는 칸: ' + esc(s.missing.slice(0, 3).join(', ')) + (s.missing.length > 3 ? ' 외 ' + (s.missing.length - 3) + '개' : ''));
+      if (s.extra && s.extra.length) parts.push('다른 칸: ' + esc(s.extra.slice(0, 3).join(', ')) + (s.extra.length > 3 ? ' 외 ' + (s.extra.length - 3) + '개' : ''));
+      why = '제목 줄이 많이 달라서 뺐어요 (' + parts.join(' / ') + ')';
     }
     items.push('<li>' + esc(file) + ' › ' + esc(s.sheet) + ' — ' + why + '</li>');
   });
   if (items.length) html += '<details><summary>합치지 않은 탭·파일 ' + items.length + '개</summary><ul>' + items.join('') + '</ul></details>';
+  // 제목을 맞춰 넣은 칸
+  const mapped = [];
+  loadLog.forEach(f => (f.mapped || []).forEach(([t, to]) => mapped.push('<li>' + esc(f.name) + ': "' + esc(t) + '" → ' +
+    (to === '__new__' ? '새 칸' : to === '__drop__' ? '읽지 않음' : '"' + esc(to) + '"') + '</li>')));
+  if (mapped.length) html += '<details><summary>제목을 맞춰 넣은 칸 ' + mapped.length + '개</summary><ul>' + mapped.join('') + '</ul></details>';
   // 색 정보: 읽은 칸 수, 읽지 못하는 경우(.xls·CSV, 조건부 서식)를 알림
   const colorCells = okSheets.reduce((n, x) => n + (x.colorCells || 0), 0);
   const colorNotes = [];
@@ -1101,18 +1385,26 @@ function renderSummary() {
     if (f.noColor && f.sheets.some(x => x.status === 'ok')) colorNotes.push('<li>' + esc(f.name) + ' — 옛 엑셀 형식(.xls)이라 칸 색은 못 읽었어요. .xlsx로 저장해서 넣으면 읽어요.</li>');
     f.sheets.forEach(x => { if (x.status === 'ok' && x.cf) colorNotes.push('<li>' + esc(f.name) + ' › ' + esc(x.sheet) + ' — 조건부 서식으로 칠해진 색은 못 읽어요(직접 칠한 색만 읽어요).</li>'); });
   });
-  if (colorCells) html += '<div style="margin-top:4px">색칠된 칸 <b>' + fmt(colorCells) + '개</b>를 같이 읽었어요 · 칸 제목 옆 <b>[색]</b>을 눌러 색으로 거를 수 있어요</div>';
+  if (colorCells) html += '<div style="margin-top:4px">색칠된 칸 <b>' + fmt(colorCells) + '개</b>를 같이 읽었어요 · 칸 제목 옆 ▾에서 배경색·글자색으로도 거를 수 있어요</div>';
   if (colorNotes.length) html += '<details><summary>색 정보 안내 ' + colorNotes.length + '개</summary><ul>' + colorNotes.join('') + '</ul></details>';
   $('#summary').innerHTML = html;
 }
+$('#summary').addEventListener('click', async e => {
+  const b = e.target.closest('button[data-remove]');
+  if (!b) return;
+  const name = b.dataset.remove;
+  const r = await call('remove', { name });
+  loadLog = loadLog.filter(f => f.name !== name);
+  notify('"' + name + '"의 ' + fmt(r.removed) + '줄을 뺐어요.');
+  if (!r.total) { await call('reset'); total = 0; dbOpened = false; show('#intro'); return; }
+  await showData(true);
+});
 
 async function fillSources() {
-  const list = await call('sources');
+  const r = await workerExec('SELECT ' + qi(FILE) + ', ' + qi(SHEET) + ', COUNT(*) FROM ' + qi(T) + ' GROUP BY 1, 2 ORDER BY MIN(rowid)');
+  const list = r.length ? r[0].values : [];
   const byFile = new Map();
-  list.forEach(([file, sheet, n]) => {
-    if (!byFile.has(file)) byFile.set(file, []);
-    byFile.get(file).push([sheet, n]);
-  });
+  list.forEach(([file, sheet, n]) => { if (!byFile.has(file)) byFile.set(file, []); byFile.get(file).push([sheet, n]); });
   let html = '<option value="">전체 (' + fmt(total) + '건)</option>';
   byFile.forEach((sheets, file) => {
     const sum = sheets.reduce((a, s) => a + s[1], 0);
@@ -1124,9 +1416,573 @@ async function fillSources() {
     html += '</optgroup>';
   });
   $('#srcSel').innerHTML = html;
-  $('#srcSel').value = state.src ? JSON.stringify(state.src) : '';
-  if ($('#srcSel').value === '' && state.src) state.src = null;
+  $('#srcSel').value = srcFilter ? JSON.stringify(srcFilter) : '';
+  if ($('#srcSel').value === '' && srcFilter) srcFilter = null;
 }
+$('#srcSel').addEventListener('change', e => { srcFilter = e.target.value ? JSON.parse(e.target.value) : null; runQuery(); });
+
+
+// ===================== 표 (projectA 조회 화면에서 가져옴: 칸 너비 조절·정렬·스크롤 연동 윈도잉·칸 필터 패널·칩·상세보기) =====================
+const gridWrap = $('#gridWrap'), headEl = $('#head'), spacerEl = $('#spacer'), rowsEl = $('#rowsEl'), qEl = $('#search'), countEl = $('#count');
+const activeColumnFilters = {}; // { 칸: { values?, condition?, range?, bgcolor?, fontcolor? } } — 같은 칸 안에서도, 칸끼리도 전부 AND
+const NO_COLOR_TOKEN = '__none__';
+let sortKey = null, sortAsc = true;
+const colWidths = {};
+const DEFAULT_COL_W = 150, MIN_COL_W = 60, SRC_W = 130;
+const COL_WIDTHS_KEY = 'emv_col_widths_v1';
+try { Object.assign(colWidths, JSON.parse(localStorage.getItem(COL_WIDTHS_KEY) || '{}')); } catch (e) {}
+function saveColWidths() { try { localStorage.setItem(COL_WIDTHS_KEY, JSON.stringify(colWidths)); } catch (e) {} }
+const HEADER_FONT = "700 12px Pretendard, -apple-system, 'Malgun Gothic', sans-serif";
+function measureHeaderTextWidth(text) {
+  const c = measureHeaderTextWidth._c || (measureHeaderTextWidth._c = document.createElement('canvas'));
+  const ctx = c.getContext('2d');
+  ctx.font = HEADER_FONT;
+  return ctx.measureText(text).width;
+}
+// 칸 이름이 "..."로 잘리지 않는 최소 너비(projectA 2026-10-19): 글자 폭 + 필터 단추·여백 + 정렬 화살표 자리
+function headerFitWidth(name) { return Math.ceil(measureHeaderTextWidth(name) + 44 + 18 + 6); }
+const dispCols = () => [SRC].concat(columns);
+const widthOf = c => c === SRC ? SRC_W : (colWidths[c] || DEFAULT_COL_W);
+
+const CHEVRON_DOWN_SVG = '<svg width="9" height="9" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const SORT_ARROW_SVG = '<svg width="12" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 3v14M12 17l5-5M12 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function buildHead() {
+  columns.forEach(c => { colWidths[c] = (c in colWidths) ? Math.max(colWidths[c], headerFitWidth(c)) : Math.max(DEFAULT_COL_W, headerFitWidth(c)); });
+  headEl.innerHTML = '<div class="headCell src" style="width:' + SRC_W + 'px"><span class="headLabel src">출처 (탭)</span></div>' + columns.map(c => {
+    const k = esc(c);
+    return '<div class="headCell" data-k="' + k + '" style="width:' + colWidths[c] + 'px;">' +
+      '<span class="headLabel" data-k="' + k + '" title="' + k + '">' + k + '</span>' +
+      '<span class="sortArrow" data-k="' + k + '"></span>' +
+      '<button class="filterBtn" data-k="' + k + '" title="거르기">' + CHEVRON_DOWN_SVG + '</button>' +
+      '<div class="colResizeHandle" data-k="' + k + '" title="끌어서 너비 조절 (두 번 누르면 기본값)"></div>' +
+    '</div>';
+  }).join('');
+  refreshRowWidths();
+  measureHead();
+  renderHeadFilterState();
+  renderSortIndicator();
+}
+let headHeight = 36;
+function measureHead() {
+  headHeight = headEl.offsetHeight || 36;
+  rowsEl.style.top = headHeight + 'px';
+  spacerEl.style.top = headHeight + 'px';
+}
+headEl.addEventListener('click', e => {
+  const btn = e.target.closest('.filterBtn');
+  if (btn) { e.stopPropagation(); openFilterPanel(btn.dataset.k, btn); return; }
+  const lab = e.target.closest('.headLabel');
+  if (!lab || !lab.dataset.k) return;
+  const k = lab.dataset.k;
+  // 오름차순 → 내림차순 → 정렬 없음
+  if (sortKey !== k) { sortKey = k; sortAsc = true; } else if (sortAsc) sortAsc = false; else { sortKey = null; sortAsc = true; }
+  renderSortIndicator();
+  runQuery();
+});
+function renderSortIndicator() {
+  headEl.querySelectorAll('.sortArrow').forEach(el => {
+    const active = el.dataset.k === sortKey;
+    el.innerHTML = active ? SORT_ARROW_SVG : '';
+    el.classList.toggle('sortArrowUp', active && sortAsc);
+  });
+}
+function renderHeadFilterState() {
+  headEl.querySelectorAll('.headCell[data-k]').forEach(cell => cell.classList.toggle('filtered', Object.prototype.hasOwnProperty.call(activeColumnFilters, cell.dataset.k)));
+}
+
+// 걸려 있는 필터를 칩으로 한눈에 보여 주고 ×로 그 축 하나만 해제
+const AXIS_LABEL = { values: '값', condition: '조건', range: '범위', bgcolor: '배경색', fontcolor: '글자색' };
+const CONDITION_OP_LABEL = { gt: '>', lt: '<', eq: '=', neq: '≠', contains: '포함', notcontains: '포함 안 함', startswith: '시작함', endswith: '끝남' };
+function filterChipText(col, axis, f) {
+  if (axis === 'range') return col + ': ' + (f.min != null ? f.min : '') + ' ~ ' + (f.max != null ? f.max : '');
+  if (axis === 'condition') return col + ': ' + (CONDITION_OP_LABEL[f.op] || f.op) + ' ' + f.val;
+  return col + ': ' + AXIS_LABEL[axis] + ' ' + f.set.size + '개';
+}
+function renderActiveFiltersBar() {
+  const chips = [];
+  for (const col in activeColumnFilters) for (const axis in activeColumnFilters[col]) chips.push({ col, axis, text: filterChipText(col, axis, activeColumnFilters[col][axis]) });
+  $('#activeFiltersBar').innerHTML = chips.map(({ col, axis, text }) => '<span class="filterChip">' + esc(text) +
+    '<button class="chipRemove" data-col="' + esc(col) + '" data-axis="' + axis + '" title="이 조건만 빼기">×</button></span>').join('');
+  $('#activeFiltersBar').hidden = !chips.length;
+}
+$('#activeFiltersBar').addEventListener('click', e => {
+  const btn = e.target.closest('.chipRemove');
+  if (!btn) return;
+  setColumnFilter(btn.dataset.col, btn.dataset.axis, null);
+  renderHeadFilterState();
+  renderActiveFiltersBar();
+  runQuery();
+});
+
+// 칸 너비 끌어서 조절
+function totalGridWidth() { return dispCols().reduce((s, c) => s + widthOf(c), 0); }
+function refreshRowWidths() { const w = totalGridWidth() + 'px'; rowsEl.style.width = w; headEl.style.width = w; }
+function applyColWidth(col) {
+  const cell = headEl.querySelector('.headCell[data-k="' + CSS.escape(col) + '"]');
+  if (cell) cell.style.width = colWidths[col] + 'px';
+  refreshRowWidths();
+  paintVisible();
+}
+let resizingCol = null, resizeStartX = 0, resizeStartW = 0;
+headEl.addEventListener('mousedown', e => {
+  const h = e.target.closest('.colResizeHandle');
+  if (!h) return;
+  resizingCol = h.dataset.k; resizeStartX = e.clientX; resizeStartW = colWidths[resizingCol] || DEFAULT_COL_W;
+  document.body.style.userSelect = 'none';
+});
+headEl.addEventListener('dblclick', e => {
+  const h = e.target.closest('.colResizeHandle');
+  if (!h) return;
+  colWidths[h.dataset.k] = Math.max(DEFAULT_COL_W, headerFitWidth(h.dataset.k));
+  applyColWidth(h.dataset.k);
+  saveColWidths();
+});
+document.addEventListener('mousemove', e => {
+  if (!resizingCol) return;
+  colWidths[resizingCol] = Math.max(MIN_COL_W, headerFitWidth(resizingCol), resizeStartW + e.clientX - resizeStartX);
+  applyColWidth(resizingCol);
+});
+document.addEventListener('mouseup', () => { if (!resizingCol) return; resizingCol = null; document.body.style.userSelect = ''; saveColWidths(); });
+
+/* ===================== 칸 필터 패널 (값·조건·범위·배경색·글자색) ===================== */
+const filterPanel = $('#filterPanel'), fpList = $('#fpList'), fpSearchInput = $('#fpSearchInput'), fpModeTabs = $('#fpModeTabs');
+let currentFilterCol = null, pendingSelection = null, currentFilterMode = null;
+// 패널이 열려 있는 동안 탭을 오가도 체크·입력이 사라지지 않게 탭별로 보관(projectA 2026-08-27)
+let pendingByMode = {};
+// 실제로 손댄 탭만 적용(손대지 않은 '값' 탭의 500개 목록이 필터로 걸리던 문제 — projectA 2026-08-31)
+let touchedModes = new Set();
+const VALUE_FETCH_LIMIT = 500;
+let filterPanelRequestId = 0; // 탭을 빠르게 바꿀 때 늦게 온 옛 결과가 화면을 덮지 않게
+async function fetchDistinctValues(col, term) {
+  term = (term || '').trim();
+  const where = term ? ' WHERE CAST(' + qi(col) + " AS TEXT) LIKE '%" + term.replace(/'/g, "''") + "%'" : '';
+  const res = await workerExec('SELECT DISTINCT ' + qi(col) + ' FROM ' + qi(T) + where + ' ORDER BY ' + qi(col) + ' LIMIT ' + (VALUE_FETCH_LIMIT + 1));
+  const vals = res.length ? res[0].values.map(v => v[0]) : [];
+  return { vals: vals.slice(0, VALUE_FETCH_LIMIT).map(v => (v === null || v === '' ? '(비어 있음)' : String(v))), capped: vals.length > VALUE_FETCH_LIMIT };
+}
+async function fetchDistinctColors(col, suffix) {
+  const res = await workerExec('SELECT ' + qi(col + suffix) + ', COUNT(*) FROM ' + qi(T) + ' WHERE ' + qi(col + suffix) + ' IS NOT NULL GROUP BY 1 ORDER BY 2 DESC');
+  return res.length ? res[0].values.map(v => v[0]).filter(safeColor) : [];
+}
+async function openFilterPanel(col, anchorEl) {
+  currentFilterCol = col;
+  pendingByMode = {};
+  touchedModes = new Set();
+  currentFilterMode = null;
+  pendingSelection = null;
+  const hasRange = numericColumns.includes(col) || dateColumns.includes(col);
+  fpModeTabs.querySelectorAll('.fpModeTab').forEach(btn => {
+    const m = btn.dataset.mode;
+    btn.hidden = (m === 'range' && !hasRange) || (m === 'bgcolor' && !coloredColumns.includes(col)) || (m === 'fontcolor' && !fontColoredColumns.includes(col));
+  });
+  await renderFilterPanelMode(col, 'values');
+  $('#fpDragHandle').textContent = col;
+  const rect = anchorEl.getBoundingClientRect();
+  filterPanel.hidden = false;
+  const pw = filterPanel.offsetWidth, ph = filterPanel.offsetHeight;
+  let left = Math.max(8, Math.min(rect.left, window.innerWidth - pw - 8));
+  const below = window.innerHeight - rect.bottom - 4, above = rect.top - 4;
+  let top = (ph <= below || below >= above) ? rect.bottom + 4 : rect.top - ph - 4;
+  top = Math.max(8, Math.min(top, window.innerHeight - ph - 8));
+  filterPanel.style.left = left + 'px';
+  filterPanel.style.top = top + 'px';
+}
+async function renderFilterPanelMode(col, mode) {
+  const requestId = ++filterPanelRequestId;
+  if (currentFilterMode && currentFilterMode !== mode) stashCurrentTab();
+  currentFilterMode = mode;
+  const searchBox = filterPanel.querySelector('.fpSearch'), actionsBox = filterPanel.querySelector('.fpActions');
+  const existing = activeColumnFilters[col];
+  fpModeTabs.querySelectorAll('.fpModeTab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === mode);
+    btn.classList.toggle('hasFilter', !!(existing && existing[btn.dataset.mode]));
+  });
+  if (mode === 'condition') {
+    searchBox.hidden = true; actionsBox.hidden = true;
+    const isDate = dateColumns.includes(col), isNum = numericColumns.includes(col);
+    const saved = pendingByMode.condition, ex = existing && existing.condition;
+    const op = saved ? saved.op : (ex ? ex.op : (isNum || isDate ? 'gt' : 'contains'));
+    const val = saved ? saved.val : (ex ? ex.val : '');
+    const ops = isNum || isDate
+      ? [['gt', '초과 (>)'], ['lt', '미만 (<)'], ['eq', '같음 (=)'], ['neq', '같지 않음 (≠)']]
+      : [['contains', '포함'], ['notcontains', '포함하지 않음'], ['startswith', '다음으로 시작함'], ['endswith', '다음으로 끝남'], ['eq', '정확히 일치'], ['neq', '일치하지 않음']];
+    fpList.innerHTML = '<div class="fpForm"><label>조건</label><select id="fpCondOp">' + ops.map(([v, l]) => '<option value="' + v + '"' + (v === op ? ' selected' : '') + '>' + l + '</option>').join('') + '</select>' +
+      '<label>값</label><input type="' + (isDate ? 'date' : isNum ? 'number' : 'text') + '" id="fpCondVal" value="' + esc(val) + '"></div>';
+  } else if (mode === 'range') {
+    searchBox.hidden = true; actionsBox.hidden = true;
+    const isDate = dateColumns.includes(col);
+    const saved = pendingByMode.range, ex = existing && existing.range;
+    const min = saved ? saved.min : (ex && ex.min != null ? ex.min : ''), max = saved ? saved.max : (ex && ex.max != null ? ex.max : '');
+    fpList.innerHTML = '<div class="fpForm"><label>' + (isDate ? '시작일' : '이상 (최소값)') + '</label><input type="' + (isDate ? 'date' : 'number') + '" id="fpRangeMin" value="' + esc(min) + '">' +
+      '<label>' + (isDate ? '종료일' : '이하 (최대값)') + '</label><input type="' + (isDate ? 'date' : 'number') + '" id="fpRangeMax" value="' + esc(max) + '"></div>';
+  } else if (mode === 'bgcolor' || mode === 'fontcolor') {
+    searchBox.hidden = true; actionsBox.hidden = false;
+    fpList.innerHTML = '<div class="fpNote">불러오는 중…</div>';
+    const colors = await fetchDistinctColors(col, mode === 'bgcolor' ? BG : FC);
+    if (requestId !== filterPanelRequestId) return;
+    const all = colors.concat([NO_COLOR_TOKEN]);
+    pendingSelection = pendingByMode[mode] ? new Set(pendingByMode[mode].selection) : (existing && existing[mode]) ? new Set(existing[mode].set) : new Set(all);
+    renderColorFpList(all, mode);
+  } else {
+    searchBox.hidden = false; actionsBox.hidden = false;
+    fpList.innerHTML = '<div class="fpNote">불러오는 중…</div>';
+    const { vals, capped } = await fetchDistinctValues(col, '');
+    if (requestId !== filterPanelRequestId) return;
+    fpList.dataset.capped = capped ? '1' : '';
+    pendingSelection = pendingByMode.values ? new Set(pendingByMode.values.selection) : (existing && existing.values) ? new Set(existing.values.set) : new Set(vals);
+    fpSearchInput.value = '';
+    renderFpList(vals, capped);
+  }
+}
+fpModeTabs.addEventListener('click', e => {
+  const btn = e.target.closest('.fpModeTab');
+  if (btn && !btn.hidden) renderFilterPanelMode(currentFilterCol, btn.dataset.mode);
+});
+function renderFpList(all, capped) {
+  fpList.innerHTML = all.map(v => '<label class="fpItem"><input type="checkbox" data-v="' + esc(v) + '"' + (pendingSelection.has(v) ? ' checked' : '') + '><span>' + esc(v) + '</span></label>').join('') +
+    (capped ? '<div class="fpNote">값이 많아 앞 ' + VALUE_FETCH_LIMIT + '개만 보여요 — 위에서 검색해 좁혀 보세요.</div>' : '');
+  fpList.dataset.allValues = JSON.stringify(all);
+}
+function renderColorFpList(all, mode) {
+  const isFont = mode === 'fontcolor';
+  fpList.innerHTML = all.map(c => {
+    const none = c === NO_COLOR_TOKEN;
+    const sw = none ? '<span class="sw none"></span>' : isFont ? '<span class="sw fc" style="color:' + safeColor(c) + '">가</span>' : '<span class="sw" style="background:' + safeColor(c) + '"></span>';
+    return '<label class="fpItem"><input type="checkbox" data-v="' + esc(c) + '"' + (pendingSelection.has(c) ? ' checked' : '') + '>' + sw + '<span>' + esc(none ? (isFont ? '기본 글자색' : '색 없음') : c) + '</span></label>';
+  }).join('');
+  fpList.dataset.allValues = JSON.stringify(all);
+}
+let fpSearchTimer = null;
+fpSearchInput.addEventListener('input', () => {
+  if (currentFilterMode !== 'values') return;
+  clearTimeout(fpSearchTimer);
+  fpSearchTimer = setTimeout(async () => {
+    const requestId = ++filterPanelRequestId, col = currentFilterCol;
+    const { vals, capped } = await fetchDistinctValues(col, fpSearchInput.value);
+    if (requestId !== filterPanelRequestId || currentFilterMode !== 'values' || currentFilterCol !== col) return;
+    fpList.dataset.capped = capped ? '1' : '';
+    renderFpList(vals, capped);
+  }, 250);
+});
+fpList.addEventListener('change', e => {
+  const cb = e.target.closest('input[type="checkbox"]');
+  if (cb) { if (cb.checked) pendingSelection.add(cb.dataset.v); else pendingSelection.delete(cb.dataset.v); touchedModes.add(currentFilterMode); }
+  if (e.target.id === 'fpCondOp') touchedModes.add('condition');
+});
+fpList.addEventListener('input', e => {
+  if (e.target.id === 'fpRangeMin' || e.target.id === 'fpRangeMax') touchedModes.add('range');
+  if (e.target.id === 'fpCondVal') touchedModes.add('condition');
+});
+function rerenderList() {
+  const all = JSON.parse(fpList.dataset.allValues || '[]');
+  if (currentFilterMode === 'values') renderFpList(all, fpList.dataset.capped === '1'); else renderColorFpList(all, currentFilterMode);
+}
+$('#fpSelectAll').addEventListener('click', () => { JSON.parse(fpList.dataset.allValues || '[]').forEach(v => pendingSelection.add(v)); touchedModes.add(currentFilterMode); rerenderList(); });
+$('#fpSelectNone').addEventListener('click', () => { pendingSelection.clear(); touchedModes.add(currentFilterMode); rerenderList(); });
+function stashCurrentTab() {
+  if (!currentFilterMode || !touchedModes.has(currentFilterMode)) return;
+  if (currentFilterMode === 'range') pendingByMode.range = { min: $('#fpRangeMin').value, max: $('#fpRangeMax').value };
+  else if (currentFilterMode === 'condition') pendingByMode.condition = { op: $('#fpCondOp').value, val: $('#fpCondVal').value };
+  else if (pendingSelection) pendingByMode[currentFilterMode] = { selection: new Set(pendingSelection), allValues: JSON.parse(fpList.dataset.allValues || '[]'),
+    searched: currentFilterMode === 'values' && fpSearchInput.value.trim() !== '' };
+}
+function setColumnFilter(col, axis, value) {
+  if (!activeColumnFilters[col]) activeColumnFilters[col] = {};
+  if (value === null) delete activeColumnFilters[col][axis]; else activeColumnFilters[col][axis] = value;
+  if (!Object.keys(activeColumnFilters[col]).length) delete activeColumnFilters[col];
+}
+$('#fpApplyBtn').addEventListener('click', () => {
+  stashCurrentTab(); // 지금 탭 포함, 손댄 탭을 전부 한 번에 적용(projectA 2026-08-28)
+  for (const mode in pendingByMode) {
+    if (mode === 'range') setColumnFilter(currentFilterCol, 'range', FilterPanelLogic.resolveRangeFilter(pendingByMode.range, dateColumns.includes(currentFilterCol)));
+    else if (mode === 'condition') setColumnFilter(currentFilterCol, 'condition', FilterPanelLogic.resolveConditionFilter(pendingByMode.condition));
+    else setColumnFilter(currentFilterCol, mode, FilterPanelLogic.resolveValuesFilter(pendingByMode[mode]));
+  }
+  closeFilterPanel();
+  renderHeadFilterState();
+  renderActiveFiltersBar();
+  runQuery();
+});
+$('#fpCancelBtn').addEventListener('click', closeFilterPanel);
+function closeFilterPanel() { filterPanel.hidden = true; currentFilterCol = null; }
+document.addEventListener('mousedown', e => {
+  if (!filterPanel.hidden && !filterPanel.contains(e.target) && !e.target.closest('.filterBtn')) closeFilterPanel();
+});
+// 필터 패널 끌어서 옮기기
+let fpDrag = null;
+$('#fpDragHandle').addEventListener('mousedown', e => {
+  const r = filterPanel.getBoundingClientRect();
+  fpDrag = { x: e.clientX, y: e.clientY, l: r.left, t: r.top };
+  document.body.style.userSelect = 'none';
+  e.preventDefault();
+});
+document.addEventListener('mousemove', e => {
+  if (!fpDrag) return;
+  filterPanel.style.left = Math.max(0, Math.min(fpDrag.l + e.clientX - fpDrag.x, window.innerWidth - filterPanel.offsetWidth)) + 'px';
+  filterPanel.style.top = Math.max(0, Math.min(fpDrag.t + e.clientY - fpDrag.y, window.innerHeight - filterPanel.offsetHeight)) + 'px';
+});
+document.addEventListener('mouseup', () => { if (fpDrag) { fpDrag = null; document.body.style.userSelect = ''; } });
+
+// ---- 검색·필터 → SQL ----
+let qTimer = null;
+qEl.addEventListener('input', () => { clearTimeout(qTimer); qTimer = setTimeout(runQuery, 300); });
+qEl.addEventListener('keydown', e => { if (e.key === 'Enter') { clearTimeout(qTimer); runQuery(); } });
+$('#clearBtn').addEventListener('click', () => {
+  qEl.value = '';
+  srcFilter = null;
+  $('#srcSel').value = '';
+  for (const k in activeColumnFilters) delete activeColumnFilters[k];
+  sortKey = null;
+  closeFilterPanel();
+  renderSortIndicator();
+  renderHeadFilterState();
+  renderActiveFiltersBar();
+  runQuery();
+});
+// LIKE의 %·_·\는 사용자가 입력한 글자 그대로 취급
+function likeClause(col, val, prefix, suffix, negate) {
+  const e = String(val).replace(/[\\%_]/g, c => '\\' + c);
+  return 'CAST(' + qi(col) + ' AS TEXT) ' + (negate ? 'NOT LIKE' : 'LIKE') + ' ' + sqlStr((prefix ? '%' : '') + e + (suffix ? '%' : '')) + " ESCAPE '\\'";
+}
+// 칸 종류 판별: 앞 200줄에서 값의 80% 넘게 숫자면 숫자 칸(오른쪽 정렬·쉼표·범위), 'YYYY-MM-DD'면 날짜 칸(범위 탭).
+// 모든 칸이 TEXT라 SQL 타입 함수 대신 JS로 판별(projectA 2026-08-27과 같은 이유)
+const NUMERIC_VALUE_RE = /^-?\d+(\.\d+)?$/;
+const DATE_VALUE_RE = /^\d{4}-\d{2}-\d{2}$/;
+async function detectColumnTypes(cols) {
+  if (!cols.length) return { numericColumns: [], dateColumns: [] };
+  const res = await workerExec('SELECT ' + cols.map(qi).join(',') + ' FROM ' + qi(T) + ' LIMIT 200');
+  if (!res.length) return { numericColumns: [], dateColumns: [] };
+  const cnt = cols.map(() => ({ num: 0, date: 0, total: 0 }));
+  res[0].values.forEach(row => row.forEach((v, i) => {
+    if (v === null || v === '') return;
+    const s = String(v).trim();
+    cnt[i].total++;
+    if (NUMERIC_VALUE_RE.test(s)) cnt[i].num++; else if (DATE_VALUE_RE.test(s)) cnt[i].date++;
+  }));
+  return { numericColumns: cols.filter((c, i) => cnt[i].total && cnt[i].num / cnt[i].total > 0.8),
+    dateColumns: cols.filter((c, i) => cnt[i].total && cnt[i].date / cnt[i].total > 0.8) };
+}
+// 숫자 칸만 천 단위 쉼표 — 번호·코드·연도·전화처럼 쉼표가 어색한 칸은 칸 이름으로 빼고, 0으로 시작하는 값(우편번호 등)도 그대로
+const NO_COMMA_RE = /번호|코드|연도|년도|^년$|^연$|우편|전화|핸드폰|휴대폰|사업자|id$|^no$|^no\.|code/i;
+const KO_NUMBER = new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 10 });
+function formatCellValue(col, v) {
+  if (v === null || v === undefined || v === '') return '';
+  const s = String(v).trim();
+  if (numericColumns.includes(col) && NUMERIC_VALUE_RE.test(s) && !NO_COMMA_RE.test(col) && !/^-?0\d/.test(s)) return KO_NUMBER.format(Number(s));
+  return v;
+}
+function buildColumnFilterWhere() {
+  const clauses = [];
+  for (const col in activeColumnFilters) {
+    const f = activeColumnFilters[col];
+    const isDate = dateColumns.includes(col), isNum = numericColumns.includes(col);
+    if (f.range) {
+      const p = [];
+      if (f.range.min != null) p.push(isDate ? qi(col) + ' >= ' + sqlStr(f.range.min) : 'CAST(' + qi(col) + ' AS REAL) >= ' + Number(f.range.min));
+      if (f.range.max != null) p.push(isDate ? qi(col) + ' <= ' + sqlStr(f.range.max) : 'CAST(' + qi(col) + ' AS REAL) <= ' + Number(f.range.max));
+      if (p.length) clauses.push("(" + qi(col) + " <> '' AND " + p.join(' AND ') + ')');
+    }
+    if (f.condition) {
+      const { op, val } = f.condition;
+      let x = null;
+      if (op === 'contains') x = likeClause(col, val, true, true, false);
+      else if (op === 'notcontains') x = likeClause(col, val, true, true, true);
+      else if (op === 'startswith') x = likeClause(col, val, false, true, false);
+      else if (op === 'endswith') x = likeClause(col, val, true, false, false);
+      else if (op === 'eq') x = isNum ? 'CAST(' + qi(col) + ' AS REAL) = ' + Number(val) : 'CAST(' + qi(col) + ' AS TEXT) = ' + sqlStr(val);
+      else if (op === 'neq') x = isNum ? 'CAST(' + qi(col) + ' AS REAL) != ' + Number(val) : 'CAST(' + qi(col) + ' AS TEXT) != ' + sqlStr(val);
+      else if (op === 'gt') x = isDate ? qi(col) + ' > ' + sqlStr(val) : "(" + qi(col) + " <> '' AND CAST(" + qi(col) + ' AS REAL) > ' + Number(val) + ')';
+      else if (op === 'lt') x = isDate ? "(" + qi(col) + " <> '' AND " + qi(col) + ' < ' + sqlStr(val) + ')' : "(" + qi(col) + " <> '' AND CAST(" + qi(col) + ' AS REAL) < ' + Number(val) + ')';
+      if (x) clauses.push(x);
+    }
+    [['bgcolor', BG], ['fontcolor', FC]].forEach(([axis, suf]) => {
+      const c = f[axis];
+      if (!c) return;
+      if (!c.set.size) { clauses.push('1=0'); return; }
+      const vals = Array.from(c.set), real = vals.filter(v => v !== NO_COLOR_TOKEN && safeColor(v)), p = [];
+      if (real.length) p.push(qi(col + suf) + ' IN (' + real.map(sqlStr).join(',') + ')');
+      if (vals.includes(NO_COLOR_TOKEN)) p.push(qi(col + suf) + ' IS NULL');
+      clauses.push('(' + (p.join(' OR ') || '1=0') + ')');
+    });
+    if (f.values) {
+      if (!f.values.set.size) clauses.push('1=0');
+      else clauses.push('CAST(' + qi(col) + ' AS TEXT) IN (' + Array.from(f.values.set).map(v => sqlStr(v === '(비어 있음)' ? '' : v)).join(',') + ')');
+    }
+  }
+  return clauses;
+}
+// 검색창(띄어 쓴 낱말을 모두 포함하는 줄) + 파일·탭 보기 + 칸 필터 — 표 조회와 "걸러 본 줄만 내보내기"가 똑같이 해석하도록 한곳에서
+function buildCurrentWhereSql() {
+  const where = [];
+  qEl.value.toLowerCase().split(/\s+/).filter(Boolean).forEach(t => where.push('instr(' + qi(ALL) + ', ' + sqlStr(t) + ') > 0'));
+  if (srcFilter) {
+    where.push(qi(FILE) + ' = ' + sqlStr(srcFilter.file));
+    if (srcFilter.sheet != null) where.push(qi(SHEET) + ' = ' + sqlStr(srcFilter.sheet));
+  }
+  where.push(...buildColumnFilterWhere());
+  return where.join(' AND ');
+}
+
+// ---- 스크롤 연동 윈도잉: 조건에 맞는 rowid만 받고, 보이는 구간만 BLOCK_SIZE줄씩 불러온다(projectA 2026-09-29) ----
+const BLOCK_SIZE = 200, MAX_CACHED_BLOCKS = 60, MAX_INFLIGHT_BLOCKS = 2;
+let resultIds = new Float64Array(0), resultCount = 0, queryRequestId = 0, queryGen = 0, rowSelectSql = '';
+const blockCache = new Map(), blockInflight = new Set();
+async function runQuery() {
+  if (!dbOpened) return;
+  const t0 = performance.now();
+  const reqId = ++queryRequestId;
+  const whereSql = buildCurrentWhereSql();
+  let idSql = 'SELECT rowid FROM ' + qi(T) + (whereSql ? ' WHERE ' + whereSql : '');
+  if (sortKey) {
+    const expr = numericColumns.includes(sortKey) ? 'CAST(' + qi(sortKey) + ' AS REAL)' : qi(sortKey);
+    // 빈 칸은 방향과 상관없이 맨 뒤로
+    idSql += ' ORDER BY (' + qi(sortKey) + " = '' OR " + qi(sortKey) + ' IS NULL), ' + expr + (sortAsc ? ' ASC' : ' DESC') + ', rowid';
+  }
+  let ids;
+  try { ids = await call('rowids', { sql: idSql }); }
+  catch (err) {
+    if (reqId !== queryRequestId) return;
+    countEl.textContent = '조회하지 못했어요: ' + err.message;
+    return;
+  }
+  if (reqId !== queryRequestId) return;
+  queryGen++;
+  blockCache.clear();
+  blockInflight.clear();
+  const gen = queryGen;
+  resultIds = ids;
+  resultCount = ids.length;
+  const sel = [FILE, SHEET, ROWNO].concat(columns, coloredColumns.map(c => c + BG), fontColoredColumns.map(c => c + FC)).map(qi);
+  rowSelectSql = 'SELECT rowid AS __rid,' + sel.join(',') + ' FROM ' + qi(T) + ' WHERE rowid IN ';
+  setSpacerHeight();
+  await Promise.all(visibleBlockRange().map(fetchBlock));
+  if (gen !== queryGen || reqId !== queryRequestId) return;
+  countEl.innerHTML = '<b>' + fmt(resultCount) + '건</b>' + (resultCount !== total ? ' / 전체 ' + fmt(total) + '건' : '') + ' · ' + sec(performance.now() - t0);
+  $('#exportFiltered').disabled = !resultCount;
+  paintVisible();
+}
+function setSpacerHeight() {
+  spacerEl.style.height = (resultCount * ROW_H) + 'px';
+  const maxScroll = Math.max(0, resultCount * ROW_H + headHeight - gridWrap.clientHeight);
+  if (gridWrap.scrollTop > maxScroll) gridWrap.scrollTop = maxScroll;
+}
+function getRow(i) { const b = blockCache.get(Math.floor(i / BLOCK_SIZE)); return b ? b[i % BLOCK_SIZE] : undefined; }
+function visibleRange() {
+  const first = Math.max(0, Math.floor(gridWrap.scrollTop / ROW_H) - 5);
+  const last = Math.min(resultCount - 1, Math.ceil((gridWrap.scrollTop + gridWrap.clientHeight) / ROW_H) + 5);
+  return [first, last];
+}
+function visibleBlockRange() {
+  if (!resultCount) return [];
+  const [first, last] = visibleRange(), out = [];
+  for (let b = Math.floor(first / BLOCK_SIZE); b <= Math.floor(last / BLOCK_SIZE); b++) out.push(b);
+  return out;
+}
+function wantedBlocks() {
+  const vis = visibleBlockRange();
+  if (!vis.length) return vis;
+  const maxBlock = Math.floor((resultCount - 1) / BLOCK_SIZE), out = vis.slice();
+  if (vis[vis.length - 1] + 1 <= maxBlock) out.push(vis[vis.length - 1] + 1);
+  if (vis[0] - 1 >= 0) out.push(vis[0] - 1);
+  return out;
+}
+function pumpBlockFetch() {
+  for (const b of wantedBlocks()) {
+    if (blockInflight.size >= MAX_INFLIGHT_BLOCKS) break;
+    if (blockCache.has(b) || blockInflight.has(b)) continue;
+    fetchBlock(b).then(ok => { if (ok) pumpBlockFetch(); });
+  }
+}
+async function fetchBlock(b) {
+  if (blockCache.has(b) || blockInflight.has(b)) return false;
+  const gen = queryGen;
+  blockInflight.add(b);
+  const ids = resultIds.subarray(b * BLOCK_SIZE, Math.min(resultCount, (b + 1) * BLOCK_SIZE));
+  let res;
+  try { res = await workerExec(rowSelectSql + '(' + ids.join(',') + ')'); }
+  catch (err) { if (gen === queryGen) blockInflight.delete(b); return false; }
+  if (gen !== queryGen) return false;
+  blockInflight.delete(b);
+  const byId = new Map();
+  if (res.length) {
+    const cs = res[0].columns;
+    res[0].values.forEach(vals => { const o = {}; cs.forEach((c, i) => { o[c] = vals[i]; }); byId.set(o.__rid, o); });
+  }
+  blockCache.set(b, Array.from(ids, id => byId.get(id) || {}));
+  if (blockCache.size > MAX_CACHED_BLOCKS) {
+    const keep = new Set(wantedBlocks());
+    for (const k of blockCache.keys()) { if (blockCache.size <= MAX_CACHED_BLOCKS) break; if (!keep.has(k)) blockCache.delete(k); }
+  }
+  if (visibleBlockRange().includes(b)) paintVisible();
+  return true;
+}
+function cellStyle(c, r) {
+  // 원본 엑셀의 칸 색을 그대로 — 배경만 있으면 글자는 읽히는 쪽(검정/흰색)으로
+  const bg = coloredColumns.includes(c) ? safeColor(r[c + BG]) : null;
+  const fc = fontColoredColumns.includes(c) ? safeColor(r[c + FC]) : null;
+  let s = '';
+  if (bg) s += 'background:' + bg + ';color:' + (fc || inkOn(bg)) + ';';
+  else if (fc) s += 'color:' + fc + ';';
+  return { s, fcOnly: !bg && !!fc };
+}
+function paintVisible() {
+  if (!resultCount) { rowsEl.innerHTML = '<div id="empty">조건에 맞는 줄이 없어요</div>'; rowsEl.style.width = totalGridWidth() + 'px'; return; }
+  const [start, lastIdx] = visibleRange();
+  let html = '';
+  for (let i = start; i <= lastIdx; i++) {
+    const r = getRow(i);
+    html += '<div class="trow' + (r ? '' : ' rowLoading') + (i % 2 ? ' alt' : '') + '" data-idx="' + i + '" style="transform:translateY(' + (i * ROW_H) + 'px)">';
+    if (!r) { dispCols().forEach(c => { html += '<div style="width:' + widthOf(c) + 'px"></div>'; }); html += '</div>'; continue; }
+    html += '<div class="src" style="width:' + SRC_W + 'px" title="' + esc(r[FILE] + ' › ' + r[SHEET] + ' (' + r[ROWNO] + '행)') + '">' + esc(r[SHEET]) + '</div>';
+    for (const c of columns) {
+      const { s, fcOnly } = cellStyle(c, r);
+      const v = formatCellValue(c, r[c]);
+      html += '<div class="' + (numericColumns.includes(c) ? 'num' : '') + (fcOnly ? ' fc' : '') + '" style="width:' + colWidths[c] + 'px;' + s + '" title="' + esc(v) + '">' + esc(v) + '</div>';
+    }
+    html += '</div>';
+  }
+  rowsEl.innerHTML = html;
+  for (const b of visibleBlockRange()) { const rows = blockCache.get(b); if (rows) { blockCache.delete(b); blockCache.set(b, rows); } }
+  pumpBlockFetch();
+}
+let raf = 0;
+function schedulePaint() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; paintVisible(); }); }
+gridWrap.addEventListener('scroll', () => { schedulePaint(); });
+window.addEventListener('resize', () => { if (!$('#view').hidden) { measureHead(); schedulePaint(); } });
+
+// ---- 줄 누르면 상세보기(칸이 많아 옆으로 넘기지 않고 한 줄 전체를 볼 때) ----
+rowsEl.addEventListener('click', e => {
+  const row = e.target.closest('.trow');
+  if (!row) return;
+  const r = getRow(parseInt(row.dataset.idx, 10));
+  if (r && r.__rid != null) openDetail(r);
+});
+function openDetail(r) {
+  const src = r[FILE] + ' › ' + r[SHEET] + ' · ' + r[ROWNO] + '행';
+  $('#detailBody').innerHTML = '<div class="detailSource"><span>출처: <b>' + esc(src) + '</b></span><button type="button" class="ghost detailCopyBtn" data-copy="' + esc(src) + '">복사</button></div>' +
+    columns.map(c => {
+      const { s } = cellStyle(c, r);
+      const v = formatCellValue(c, r[c]);
+      return '<div class="detailRow"><div class="detailLabel">' + esc(c) + '</div><div class="detailValue"' + (s ? ' style="' + s + '"' : '') + '>' +
+        (v === '' ? '<span style="color:var(--faint)">-</span>' : esc(v)) + '</div></div>';
+    }).join('');
+  $('#detailOverlay').hidden = false;
+}
+$('#detailBody').addEventListener('click', async e => {
+  const btn = e.target.closest('.detailCopyBtn');
+  if (!btn) return;
+  let ok = false;
+  try { await navigator.clipboard.writeText(btn.dataset.copy); ok = true; } catch (err) {}
+  btn.textContent = ok ? '복사됨' : '복사가 막혔어요 — 글자를 직접 선택해 주세요';
+  setTimeout(() => { btn.textContent = '복사'; }, 1800);
+});
+$('#detailClose').addEventListener('click', () => { $('#detailOverlay').hidden = true; });
+$('#detailOverlay').addEventListener('click', e => { if (e.target.id === 'detailOverlay') $('#detailOverlay').hidden = true; });
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  $('#detailOverlay').hidden = true;
+  closeFilterPanel();
+});
 
 // ---- 저장 · 다시 열기 ----
 const when = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }); };
@@ -1275,9 +2131,25 @@ async function exportBytes() {
   return call('export', { loadLog });
 }
 function setSaveMsg(text, err) { $('#saveMsg').textContent = text; $('#saveMsg').classList.toggle('err', !!err); }
-function busySave(on) { ['#saveFile', '#saveLocal'].forEach(s => { $(s).disabled = on; }); }
+function busySave(on) { ['#saveFile', '#saveLocal', '#exportFiltered'].forEach(s => { $(s).disabled = on; }); }
 
-$('#saveBtn').addEventListener('click', () => { $('#savePanel').hidden = !$('#savePanel').hidden; setSaveMsg(''); measureHead(); schedulePaint(); });
+$('#saveBtn').addEventListener('click', () => { $('#savePanel').hidden = !$('#savePanel').hidden; setSaveMsg(''); schedulePaint(); });
+// 지금 걸러 본 줄만(보이는 칸 전부) 저장본으로 — 직원용 파일과 같은 방식(새 DB에 그 줄만 옮겨 담음)
+$('#exportFiltered').addEventListener('click', async () => {
+  const pwOn = $('#pwOn').checked, pw = $('#pw1').value;
+  if (pwOn && (pw.length < 4 || pw !== $('#pw2').value)) { setSaveMsg('비밀번호를 4글자 이상, 두 번 똑같이 넣어 주세요.', true); return; }
+  busySave(true);
+  setSaveMsg('걸러 본 줄만 담은 파일을 만드는 중이에요…');
+  try {
+    const res = await call('split', { spec: { cols: columns, where: buildCurrentWhereSql() || null, kind: 'filtered' } });
+    let data = res.buffer;
+    if (pwOn) data = await Crypt.encrypt(data, pw);
+    const name = '걸러본줄_' + today() + (pwOn ? '_비밀번호' : '') + '.db';
+    downloadBlob(new Blob([data], { type: 'application/octet-stream' }), name);
+    setSaveMsg('"' + name + '"(' + fmt(res.rows) + '건 · ' + mb(data.byteLength) + ')을 내려받았어요. 이 화면에 끌어다 놓으면 그 줄들만 열려요.');
+  } catch (e) { setSaveMsg('만들지 못했어요: ' + e.message, true); }
+  finally { busySave(false); }
+});
 $('#saveClose').addEventListener('click', () => { $('#savePanel').hidden = true; schedulePaint(); });
 $('#pwOn').addEventListener('change', e => { $('#pwRow').hidden = !e.target.checked; });
 $('#saveFile').addEventListener('click', async () => {
@@ -1342,10 +2214,10 @@ function loadRoles() {
   try { const v = JSON.parse(localStorage.getItem(ROLE_KEY) || 'null'); if (v && Array.isArray(v.roles)) roleCfg = v; } catch (e) {}
 }
 function saveRoles() { try { localStorage.setItem(ROLE_KEY, JSON.stringify(roleCfg)); } catch (e) {} }
-const rowColIndex = () => roleCfg.rowCol ? cols.indexOf(roleCfg.rowCol) : -1;
+const rowColIndex = () => roleCfg.rowCol ? columns.indexOf(roleCfg.rowCol) : -1;
 const roleById = id => roleCfg.roles.find(r => r.id === id);
 // 지금 데이터에 있는 칸만(설정에 남은 옛 칸 이름은 무시)
-const roleColIdx = r => (r.cols || []).map(n => cols.indexOf(n)).filter(i => i >= 0);
+const roleColIdx = r => (r.cols || []).filter(n => columns.includes(n));
 function roleRows(r) {
   if (rowColIndex() < 0) return total;
   const set = new Set(r.values || []);
@@ -1359,9 +2231,9 @@ function roleSummary(r) {
 async function openStaffPanel() {
   loadRoles();
   let html = '<option value="">나누지 않음 (모든 줄)</option>';
-  cols.forEach(c => { html += '<option value="' + esc(c) + '">' + esc(c) + '</option>'; });
+  columns.forEach(c => { html += '<option value="' + esc(c) + '">' + esc(c) + '</option>'; });
   $('#roleCol').innerHTML = html;
-  if (roleCfg.rowCol && cols.indexOf(roleCfg.rowCol) < 0) roleCfg.rowCol = '';
+  if (roleCfg.rowCol && !columns.includes(roleCfg.rowCol)) roleCfg.rowCol = '';
   $('#roleCol').value = roleCfg.rowCol;
   await loadRoleValues();
   if (!roleCfg.roles.length) addRole();
@@ -1371,10 +2243,12 @@ async function openStaffPanel() {
 }
 async function loadRoleValues() {
   const i = rowColIndex();
-  roleValues = i < 0 ? [] : (await call('distinct', { col: i })).map(([v, n]) => [String(v == null ? '' : v), n]);
+  if (i < 0) { roleValues = []; return; }
+  const r = await workerExec('SELECT ' + qi(roleCfg.rowCol) + ', COUNT(*) FROM ' + qi(T) + ' GROUP BY 1 ORDER BY 2 DESC LIMIT 2000');
+  roleValues = (r.length ? r[0].values : []).map(([v, n]) => [String(v == null ? '' : v), n]);
 }
 function addRole() {
-  roleCfg.roles.push({ id: uid(), name: '직원 ' + (roleCfg.roles.length + 1), values: [], cols: cols.slice(), pw: '' });
+  roleCfg.roles.push({ id: uid(), name: '직원 ' + (roleCfg.roles.length + 1), values: [], cols: columns.slice(), pw: '' });
   saveRoles();
 }
 function renderRoles() {
@@ -1397,7 +2271,7 @@ function renderRoles() {
       if (roleValues.length >= 2000) html += '<div style="font-size:12px;color:var(--faint)">값이 많아 많은 순 2,000개만 보여요.</div>';
     }
     html += '</div><div><h4>볼 수 있는 칸</h4><div class="tools"><button class="ghost" data-act="call">모두</button><button class="ghost" data-act="cnone">없음</button></div><div class="list">';
-    cols.forEach(c => { html += '<label><input type="checkbox" data-kind="c" value="' + esc(c) + '"' + (cset.has(c) ? ' checked' : '') + '>' + esc(c) + '</label>'; });
+    columns.forEach(c => { html += '<label><input type="checkbox" data-kind="c" value="' + esc(c) + '"' + (cset.has(c) ? ' checked' : '') + '>' + esc(c) + '</label>'; });
     html += '</div></div>';
     html += '<div class="foot"><span class="sum' + (sum.zero ? ' zero' : '') + '">' + esc(sum.text) + '</span>' +
       '<button data-act="one">이 직원 파일 내려받기</button><button class="ghost" data-act="del">삭제</button></div></div>';
@@ -1418,7 +2292,7 @@ async function buildRoleFile(r) {
   if (!ci.length) throw new Error('"' + r.name + '": 볼 수 있는 칸을 하나 이상 골라 주세요.');
   if (r.pw && r.pw.length < 4) throw new Error('"' + r.name + '": 비밀번호는 4글자 이상으로 정해 주세요(비우면 비밀번호 없이 만들어요).');
   const ri = rowColIndex();
-  const res = await call('split', { spec: { name: r.name, rowCol: ri < 0 ? null : ri, values: r.values || [], cols: ci } });
+  const res = await call('split', { spec: { name: r.name, rowCol: ri < 0 ? null : roleCfg.rowCol, values: r.values || [], cols: ci, kind: 'staff' } });
   let data = res.buffer;
   if (r.pw) data = await Crypt.encrypt(data, r.pw);
   return { name: '직원용_' + safeName(r.name) + '_' + today() + '.db', data, rows: res.rows };
@@ -1545,230 +2419,43 @@ $('#roleZip').addEventListener('click', async () => {
   finally { btn.disabled = false; }
 });
 
-// ---- 표 ----
-function textWidth(s) {
-  let w = 0;
-  for (const ch of String(s)) w += ch.charCodeAt(0) > 255 ? 13 : 7.5;
-  return w;
-}
-function setupColumns(sample) {
-  const widths = cols.map((name, i) => {
-    let w = textWidth(name) + (colorInfo[i] ? 62 : 30);
-    sample.slice(0, 100).forEach(r => { w = Math.max(w, textWidth(r[i]) + 18); });
-    return Math.round(Math.min(280, Math.max(70, w)));
-  });
-  const srcW = 110;
-  const all = [srcW].concat(widths);
-  const sum = all.reduce((a, b) => a + b, 0);
-  $('#grid').style.setProperty('--cols', all.map(w => w + 'px').join(' '));
-  $('#head').style.width = sum + 'px';
-  $('#body').style.width = sum + 'px';
-  let html = '<div class="hc src"><div class="t">출처 (탭)</div></div>';
-  cols.forEach((name, i) => {
-    html += '<div class="hc" data-i="' + i + '"><div class="t" title="' + esc(name) + '"><span>' + esc(name) +
-      '</span><span class="arrow"></span></div><div class="fl"><input type="text" data-i="' + i + '" placeholder="포함" value="' + esc(state.filters[i] || '') + '">' +
-      (colorInfo[i] ? '<button class="cbtn" data-ci="' + i + '" title="색으로 거르기">색</button>' : '') + '</div></div>';
-  });
-  $('#head').innerHTML = html;
-  updateSortArrows();
-}
-function updateSortArrows() {
-  document.querySelectorAll('.hc[data-i]').forEach(el => {
-    const i = Number(el.dataset.i);
-    el.querySelector('.arrow').textContent = state.sort && state.sort.col === i ? (state.sort.dir === 'asc' ? '▲' : '▼') : '';
-  });
-  document.querySelectorAll('.hc input').forEach(inp => inp.classList.toggle('on', !!inp.value.trim()));
-  document.querySelectorAll('.cbtn').forEach(b => {
-    const c = state.colors[b.dataset.ci];
-    b.classList.toggle('on', !!(c && ((c.b && c.b.length) || (c.f && c.f.length))));
-  });
-}
 
-let headH = 0;
-function measureHead() { headH = $('#head').offsetHeight; } // 화면에 보인 뒤에 재야 0이 안 나옴
-
-async function runQuery() {
-  const ver = ++qVer;
-  const res = await call('query', { q: state });
-  if (ver !== qVer) return;
-  matched = res.count;
-  $('#count').innerHTML = '<b>' + fmt(matched) + '건</b>' + (matched !== total ? ' / 전체 ' + fmt(total) + '건' : '') + ' · ' + sec(res.ms);
-  $('#body').style.height = matched * ROW_H + 'px';
-  const grid = $('#grid');
-  const maxTop = Math.max(0, matched * ROW_H + headH - grid.clientHeight);
-  if (grid.scrollTop > maxTop) grid.scrollTop = maxTop; // 목록이 줄었을 때 옛 스크롤 위치로 빈 화면이 되지 않게
-  cache = { ver: -1, start: 0, rows: [] };
-  paint();
-}
-
-let raf = 0;
-function schedulePaint() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; paint(); }); }
-
-async function paint() {
-  const grid = $('#grid');
-  const first = Math.max(0, Math.floor(grid.scrollTop / ROW_H));
-  const last = Math.min(matched, first + Math.ceil(grid.clientHeight / ROW_H) + 1);
-  if (!matched) {
-    $('#body').innerHTML = '<div id="empty">조건에 맞는 줄이 없어요</div>';
-    return;
+// ---- 칸 필터 패널 "적용" 판정(projectA scripts/filter-panel-logic.js 그대로) ----
+// 값/배경색/글자색: 아무것도 안 고르면 0건, 보이는 걸 전부 고르면(검색으로 좁히지 않았을 때) 필터 없음.
+// 500개 넘게 잘린 목록에서 "전체 선택"도 필터 없음으로 본다(projectA 2026-09-21 버그 수정).
+const FilterPanelLogic = (() => {
+  function resolveValuesFilter({ selection, allValues, searched }) {
+    if (selection.size === 0) return { set: new Set() };
+    if (selection.size === allValues.length && !searched) return null;
+    return { set: new Set(selection) };
   }
-  const covered = cache.ver === qVer && first >= cache.start && last <= cache.start + cache.rows.length;
-  if (!covered) {
-    if (fetching) return;
-    fetching = true;
-    const ver = qVer;
-    const start = Math.max(0, first - 100), end = Math.min(matched, last + 100);
-    try {
-      const res = await call('rows', { start, end });
-      if (ver === qVer) cache = { ver, start: res.start, rows: res.rows };
-    } finally { fetching = false; }
-    return paint();
+  function resolveRangeFilter(r, isDate) {
+    const minEmpty = r.min === '' || r.min == null, maxEmpty = r.max === '' || r.max == null;
+    if (minEmpty && maxEmpty) return null;
+    return { min: minEmpty ? null : (isDate ? r.min : parseFloat(r.min)), max: maxEmpty ? null : (isDate ? r.max : parseFloat(r.max)) };
   }
-  let html = '';
-  for (let i = first; i < last; i++) {
-    const r = cache.rows[i - cache.start];
-    if (!r) continue;
-    html += '<div class="r" style="top:' + (i * ROW_H) + 'px"><div class="c src" title="' + esc(r[1]) + ' › ' + esc(r[2]) + ' (' + r[3] + '행)">' + esc(r[2]) + '</div>';
-    const n = cols.length, colored = r.length > 4 + n;
-    for (let j = 0; j < n; j++) {
-      const v = r[4 + j];
-      let style = '', fcOnly = false;
-      if (colored) {
-        // 원본 엑셀의 칸 색을 그대로 — 배경만 있으면 글자는 읽히는 쪽(검정/흰색)으로
-        const bg = safeColor(r[4 + n + j]), fc = safeColor(r[4 + 2 * n + j]);
-        if (bg) style += 'background:' + bg + ';color:' + (fc || inkOn(bg)) + ';';
-        else if (fc) { style += 'color:' + fc + ';'; fcOnly = true; }
-      }
-      html += '<div class="c' + (numeric[j] ? ' num' : '') + (fcOnly ? ' fc' : '') + '"' + (style ? ' style="' + style + '"' : '') + ' title="' + esc(v) + '">' + esc(v) + '</div>';
-    }
-    html += '</div>';
+  function resolveConditionFilter(c) {
+    if (c.val === '' || c.val == null) return null;
+    return { op: c.op, val: c.val };
   }
-  $('#body').innerHTML = html;
-}
-
-// 색 값은 '#rrggbb' 꼴만 화면에 넣는다 — 누가 조작한 .db 저장본의 색 칸에 코드를 넣어도 style 속성을 깨고 실행되지 않게
-// (projectA 2026-10-19 safeCssColor와 같은 이유)
-function safeColor(v) { return typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v) ? v : null; }
-function inkOn(hex) {
-  const v = parseInt(hex.slice(1), 16), r = v >> 16 & 255, g = v >> 8 & 255, b = v & 255;
-  return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#1d2433' : '#ffffff';
-}
-
-// ---- 색으로 거르기: 그 칸에 실제로 쓰인 색을 견본으로 보여 주고 체크해서 고름 ----
-let popCol = null;
-function openColorPop(i, btn) {
-  popCol = i;
-  const info = colorInfo[i], cur = state.colors[i] || {};
-  const list = (kind, title, all) => {
-    const rows = all.filter(([hex]) => safeColor(hex)); // 이상한 값은 목록에서 뺌
-    if (!rows.length) return '';
-    const sum = rows.reduce((a, x) => a + x[1], 0);
-    let h = '<h4>' + title + '</h4>';
-    rows.concat([['', total - sum]]).forEach(([hex, n]) => {
-      if (!hex && n <= 0) return;
-      const on = (cur[kind] || []).includes(hex);
-      const sw = !hex ? '<span class="sw none"></span>'
-        : kind === 'b' ? '<span class="sw" style="background:' + hex + '"></span>'
-        : '<span class="sw fc" style="color:' + hex + '">가</span>';
-      h += '<label title="' + (hex || '색 없음') + '"><input type="checkbox" data-kind="' + kind + '" value="' + hex + '"' + (on ? ' checked' : '') + '>' +
-        sw + (hex ? '' : '색 없음') + '<span class="n">' + fmt(n) + '건</span></label>';
-    });
-    return h;
-  };
-  $('#colorPop').innerHTML = '<div style="font-weight:700;margin-bottom:6px">' + esc(cols[i]) + '</div>' +
-    list('b', '배경색', info.b) + list('f', '글자색', info.f) +
-    '<div class="foot"><button class="ghost" id="colorClear">이 칸 색 조건 지우기</button></div>';
-  const pop = $('#colorPop');
-  pop.hidden = false;
-  const r = btn.getBoundingClientRect();
-  pop.style.left = Math.max(8, Math.min(r.left, window.innerWidth - pop.offsetWidth - 8)) + 'px';
-  pop.style.top = Math.min(r.bottom + 4, window.innerHeight - pop.offsetHeight - 8) + 'px';
-}
-function closeColorPop() { $('#colorPop').hidden = true; popCol = null; }
-$('#colorPop').addEventListener('change', e => {
-  if (popCol == null || !e.target.matches('input')) return;
-  const c = {};
-  document.querySelectorAll('#colorPop input:checked').forEach(x => { (c[x.dataset.kind] = c[x.dataset.kind] || []).push(x.value); });
-  if (c.b || c.f) state.colors[popCol] = c; else delete state.colors[popCol];
-  updateSortArrows();
-  runQuery();
-});
-$('#colorPop').addEventListener('click', e => {
-  if (e.target.id !== 'colorClear') return;
-  delete state.colors[popCol];
-  document.querySelectorAll('#colorPop input').forEach(x => { x.checked = false; });
-  updateSortArrows();
-  runQuery();
-});
-document.addEventListener('mousedown', e => {
-  if ($('#colorPop').hidden || e.target.closest('#colorPop') || e.target.closest('.cbtn')) return;
-  closeColorPop();
-});
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeColorPop(); });
-$('#grid').addEventListener('scroll', () => { if (!$('#colorPop').hidden) closeColorPop(); });
+  return { resolveValuesFilter, resolveRangeFilter, resolveConditionFilter };
+})();
 
 // ---- 이벤트 ----
-let debounce = 0;
-function requery() { clearTimeout(debounce); debounce = setTimeout(runQuery, 220); }
-
-$('#search').addEventListener('input', e => { state.search = e.target.value; requery(); });
-$('#srcSel').addEventListener('change', e => { state.src = e.target.value ? JSON.parse(e.target.value) : null; runQuery(); });
-$('#head').addEventListener('input', e => {
-  if (!e.target.matches('input')) return;
-  const i = e.target.dataset.i;
-  if (e.target.value.trim()) state.filters[i] = e.target.value; else delete state.filters[i];
-  updateSortArrows();
-  requery();
-});
-$('#head').addEventListener('click', e => {
-  const cb = e.target.closest('.cbtn');
-  if (cb) {
-    const i = Number(cb.dataset.ci);
-    if (popCol === i) closeColorPop(); else openColorPop(i, cb);
-    return;
-  }
-  const t = e.target.closest('.t');
-  const hc = e.target.closest('.hc[data-i]');
-  if (!t || !hc) return;
-  const i = Number(hc.dataset.i);
-  if (!state.sort || state.sort.col !== i) state.sort = { col: i, dir: 'asc' };
-  else if (state.sort.dir === 'asc') state.sort.dir = 'desc';
-  else state.sort = null;
-  updateSortArrows();
-  runQuery();
-});
-$('#clearBtn').addEventListener('click', () => {
-  state = { search: '', filters: {}, colors: {}, src: null, sort: null };
-  $('#search').value = '';
-  $('#srcSel').value = '';
-  closeColorPop();
-  document.querySelectorAll('.hc input').forEach(inp => { inp.value = ''; });
-  updateSortArrows();
-  runQuery();
-});
-$('#grid').addEventListener('scroll', schedulePaint);
-window.addEventListener('resize', () => { if (!$('#view').hidden) { measureHead(); schedulePaint(); } });
-
 $('#drop').addEventListener('click', () => $('#fileInput').click());
 $('#addMoreBtn').addEventListener('click', () => $('#fileInput').click());
 $('#fileInput').addEventListener('change', e => { if (e.target.files.length) addFiles(e.target.files); e.target.value = ''; });
 $('#sampleBtn').addEventListener('click', runSample);
 $('#noticeClose').addEventListener('click', () => { $('#notice').hidden = true; });
-$('#resetBtn').addEventListener('click', () => {
-  $('#topActions').hidden = true;
-  $('#resetConfirm').hidden = false;
-});
-$('#resetNo').addEventListener('click', () => {
-  $('#resetConfirm').hidden = true;
-  $('#topActions').hidden = false;
-});
+$('#resetBtn').addEventListener('click', () => { $('#topActions').hidden = true; $('#resetConfirm').hidden = false; });
+$('#resetNo').addEventListener('click', () => { $('#resetConfirm').hidden = true; $('#topActions').hidden = false; });
 $('#resetYes').addEventListener('click', async () => {
   await call('reset');
-  cols = []; total = 0; matched = 0; loadLog = []; lastLoad = null; colorInfo = {}; roleInfo = null;
+  columns = []; total = 0; loadLog = []; lastLoad = null; roleInfo = null; dbOpened = false; srcFilter = null;
+  for (const k in activeColumnFilters) delete activeColumnFilters[k];
+  sortKey = null;
+  qEl.value = '';
   $('#staffBtn').hidden = false;
-  state = { search: '', filters: {}, colors: {}, src: null, sort: null };
-  closeColorPop();
-  $('#search').value = '';
   show('#intro');
 });
 
@@ -1781,7 +2468,7 @@ window.addEventListener('drop', e => {
   e.preventDefault();
   dragDepth = 0;
   document.body.classList.remove('dragging');
-  if (e.dataTransfer.files.length && $('#progress').hidden) addFiles(e.dataTransfer.files);
+  if (e.dataTransfer.files.length && $('#progress').hidden && $('#confirm').hidden) addFiles(e.dataTransfer.files);
 });
 
 if (!BUNDLES_OK) {

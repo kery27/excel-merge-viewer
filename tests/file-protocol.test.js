@@ -38,10 +38,15 @@ async function main() {
   const text = sel => page.$eval(sel, e => e.innerText);
   const count = async () => Number((await text('#count')).match(/^([\d,]+)건/)[1].replace(/,/g, ''));
   const settle = () => page.waitForTimeout(500);
+  // 칸 제목 옆 ▾ 필터 패널
+  const openPanel = async col => { await page.click('.filterBtn[data-k="' + col + '"]'); await page.waitForSelector('#filterPanel:not([hidden])'); await settle(); };
+  const panelTabs = () => page.$$eval('#fpModeTabs .fpModeTab:not([hidden])', x => x.map(e => e.dataset.mode));
+  const apply = async () => { await page.click('#fpApplyBtn'); await settle(); };
+  const headCols = () => page.$$eval('#head .headLabel[data-k]', x => x.map(e => e.dataset.k));
 
   await page.goto(url(path.join(ROOT, 'index.html')));
   // 숨겨야 할 것(알림·확인 막대·위 버튼)이 처음 화면에 보이면 안 됨
-  for (const sel of ['#notice', '#resetConfirm', '#topActions', '#colorPop']) assert.equal(await page.isVisible(sel), false, sel + ' 가 보임');
+  for (const sel of ['#notice', '#resetConfirm', '#topActions', '#filterPanel', '#detailOverlay', '#confirm']) assert.equal(await page.isVisible(sel), false, sel + ' 가 보임');
 
   // 합치기: 칸 순서가 달라도 합치고, 제목이 다른 탭·빈 탭은 빼고 알려 준다
   const H = ['주문번호', '주문일', '고객', '금액'];
@@ -60,25 +65,77 @@ async function main() {
   let summary = await text('#summary');
   assert.match(summary, /파일 3개 · 탭 4개에서 6건/);
   assert.match(summary, /합치지 않은 탭·파일 2개/);
-  await page.click('#summary summary');
+  await page.$$eval('#summary details', d => d.forEach(x => { x.open = true; }));
   summary = await text('#summary');
-  assert.match(summary, /메모 — 제목 줄이 달라서/);
+  assert.match(summary, /메모 — 제목 줄이 많이 달라서/);
   assert.match(summary, /빈탭 — 데이터가 없는 탭/);
   assert.equal(await count(), 6);
 
-  // 검색 · 칸 필터 · 정렬
+  // 검색 · 칸 필터 패널(값·조건·범위) · 칩 · 정렬 · 상세보기
   await page.fill('#search', '테스트회사3'); await settle();
   assert.equal(await count(), 1);
-  assert.match(await text('#body'), /A3/); // 칸 순서가 다른 탭도 제자리에 들어감
+  assert.match(await text('#rowsEl'), /A3/); // 칸 순서가 다른 탭도 제자리에 들어감
   await page.click('#clearBtn'); await settle();
-  const filters = await page.$$('#head input');
-  await filters[2].fill('샘플'); await settle();
+  assert.deepEqual(await headCols(), H);
+  await openPanel('고객');
+  assert.deepEqual(await panelTabs(), ['values', 'condition']); // 글자 칸: 범위·색 탭 없음
+  await page.click('.fpModeTab[data-mode="condition"]');
+  await page.selectOption('#fpCondOp', 'startswith');
+  await page.fill('#fpCondVal', '샘플');
+  await apply();
   assert.equal(await count(), 2);
+  assert.match(await text('#activeFiltersBar'), /고객: 시작함 샘플/);
+  await openPanel('금액');
+  assert.deepEqual(await panelTabs(), ['values', 'condition', 'range']); // 숫자 칸: 범위 탭
+  await page.click('.fpModeTab[data-mode="range"]');
+  await page.fill('#fpRangeMin', '1000');
+  await apply();
+  assert.equal(await count(), 1); // 샘플회사1(9000)만 — 칸끼리 AND
+  await page.click('#activeFiltersBar .chipRemove[data-col="고객"]'); await settle();
+  assert.equal(await count(), 4); // 금액 1000 이상만 남음
+  await openPanel('주문번호');
+  await page.click('#fpSelectNone');
+  await page.check('#fpList input[data-v="A1"]'); await page.check('#fpList input[data-v="B1"]');
+  await apply();
+  assert.equal(await count(), 2);
+  assert.match(await page.$eval('.headCell[data-k="주문번호"]', e => e.className), /filtered/);
   await page.click('#clearBtn'); await settle();
-  const titles = await page.$$('#head .hc[data-i] .t');
-  await titles[3].click(); await titles[3].click(); await settle(); // 금액 내림차순
-  assert.match((await text('#body')).split('\n').slice(0, 6).join(' '), /B1/);
+  assert.equal(await count(), 6);
+  assert.equal(await page.isVisible('#activeFiltersBar'), false);
+  await page.click('.headLabel[data-k="금액"]'); await page.click('.headLabel[data-k="금액"]'); await settle(); // 금액 내림차순
+  assert.match((await text('#rowsEl')).split('\n').slice(0, 6).join(' '), /B1/);
+  await page.click('#rowsEl .trow');
+  await page.waitForSelector('#detailOverlay:not([hidden])');
+  assert.match(await text('#detailBody'), /2025년\.xlsx › Sheet1 · 2행/);
+  await page.keyboard.press('Escape');
   await page.click('#clearBtn'); await settle();
+
+  // 제목이 몇 칸만 다른 탭: 넣기 전에 맞출 방법을 묻고(비슷한 제목은 추천), 고른 것은 기억했다가 다음엔 묻지 않음
+  await drop(page, [{ name: '2023년.xlsx', sheets: [['Sheet1', [['주문번호', '주문일', '고 객', '금액', '비고'], ['D1', '2023-03-03', '오타회사', 300, '메모1']]]] }]);
+  await page.waitForSelector('#confirm:not([hidden])');
+  assert.equal(await page.$eval('select.titleMapSel[data-raw="고 객"]', e => e.value), '고객'); // 띄어쓰기만 다름 → 추천
+  assert.equal(await page.$eval('#confirmApply', e => e.disabled), true); // "비고"를 아직 안 고름
+  await page.selectOption('select.titleMapSel[data-raw="비고"]', '__new__');
+  await page.click('#confirmApply');
+  await page.waitForSelector('#view:not([hidden])');
+  await settle();
+  assert.equal(await count(), 7);
+  assert.deepEqual(await headCols(), H.concat(['비고']));
+  await page.fill('#search', '오타회사'); await settle();
+  assert.equal(await count(), 1);
+  await page.click('#clearBtn');
+  await drop(page, [{ name: '2022년.xlsx', sheets: [['Sheet1', [['주문번호', '주문일', '고 객', '금액', '비고'], ['E1', '2022-01-01', '기억회사', 1, '']]]] }]);
+  await page.waitForFunction(() => /8건/.test(document.querySelector('#summary').innerText), null, { timeout: 30000 });
+  assert.equal(await page.isVisible('#confirm'), false); // 지난번 고른 대로 바로 합침
+  assert.match(await text('#summary'), /제목을 맞춰 넣은 칸/);
+  // 넣은 파일 [빼기]
+  await page.$$eval('#summary details', d => d.forEach(x => { x.open = true; }));
+  await page.click('#summary button[data-remove="2022년.xlsx"]');
+  await page.waitForFunction(() => /7건/.test(document.querySelector('#summary').innerText), null, { timeout: 30000 });
+  await page.$$eval('#summary details', d => d.forEach(x => { x.open = true; }));
+  await page.click('#summary button[data-remove="2023년.xlsx"]');
+  await page.waitForFunction(() => /6건/.test(document.querySelector('#summary').innerText), null, { timeout: 30000 });
+  await page.click('#noticeClose');
 
   // 파일별 보기
   const opts = await page.$$eval('#srcSel option', o => o.map(x => x.textContent));
@@ -115,21 +172,33 @@ async function main() {
   assert.match(summary, /10건/);
   assert.match(summary, /색칠된 칸 7개/); // 제목 줄 색, 값 없는 칸 색은 빼고
   assert.match(summary, /색 정보 안내 2개/); // 조건부 서식, .xls
-  assert.deepEqual(await page.$$eval('.cbtn', b => b.map(x => x.dataset.ci)), ['1', '2']); // 상태(배경색)·금액(글자색)만
-  const styles = await page.$$eval('#body .c[style]', c => c.map(x => x.getAttribute('style')));
+  await openPanel('상태');
+  assert.deepEqual(await panelTabs(), ['values', 'condition', 'bgcolor']); // 상태: 배경색만
+  await page.keyboard.press('Escape');
+  await openPanel('금액');
+  assert.ok((await panelTabs()).includes('fontcolor') && !(await panelTabs()).includes('bgcolor')); // 금액: 글자색만
+  await page.keyboard.press('Escape');
+  await openPanel('메모');
+  assert.deepEqual(await panelTabs(), ['values', 'condition']); // 값 없는 칸에만 칠한 색은 안 읽음
+  await page.keyboard.press('Escape');
+  const styles = await page.$$eval('#rowsEl .trow > div[style]', c => c.map(x => x.getAttribute('style')));
   assert.ok(styles.some(x => x.includes('background:#ccc1da')), '테마색+밝기'); // 강조4(8064A2) 60% 밝게
   assert.ok(styles.some(x => x.includes('background:#ccffcc')), '옛 색 번호 42');
   assert.ok(styles.some(x => x.includes('color:#0070c0')), '글자색 rgb');
   assert.ok(styles.some(x => x.includes('color:#c0504d')), '글자색 테마');
-  await page.click('.cbtn[data-ci="1"]');
-  await page.check('#colorPop input[value="#ff0000"]'); await settle();
+  await openPanel('상태');
+  await page.click('.fpModeTab[data-mode="bgcolor"]'); await settle();
+  await page.click('#fpSelectNone');
+  await page.check('#fpList input[data-v="#ff0000"]');
+  await apply();
   assert.equal(await count(), 3); // 1월 2개 + 칸 순서가 다른 2월 1개
-  assert.match(await text('#body'), /2월/);
-  await page.check('#colorPop input[value=""]'); await settle();
+  assert.match(await text('#rowsEl'), /2월/);
+  await openPanel('상태');
+  await page.click('.fpModeTab[data-mode="bgcolor"]'); await settle();
+  await page.check('#fpList input[data-v="__none__"]');
+  await apply();
   assert.equal(await count(), 8); // 빨강 또는 색 없음
-  await page.keyboard.press('Escape');
-  assert.equal(await page.isVisible('#colorPop'), false);
-  assert.match(await page.$eval('.cbtn[data-ci="1"]', e => e.className), /\bon\b/);
+  assert.match(await text('#activeFiltersBar'), /상태: 배경색 2개/);
   await page.click('#clearBtn'); await settle();
   assert.equal(await count(), 10);
   await reset();
@@ -140,7 +209,9 @@ async function main() {
   await page.waitForSelector('#view:not([hidden])', { timeout: 60000 });
   assert.match(await text('#summary'), /10,000건/);
   assert.match(await text('#summary'), /색칠된 칸/);
-  assert.equal(await page.$$eval('.cbtn', b => b.length), 2);
+  await openPanel('배송상태');
+  assert.ok((await panelTabs()).includes('bgcolor'));
+  await page.keyboard.press('Escape');
 
   // 저장 · 다시 열기: 파일로(비밀번호 없이/있게), 이 브라우저에
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'emv-save-'));
@@ -169,11 +240,13 @@ async function main() {
     await settle();
     assert.match(await text('#summary'), /10,000건/);
     assert.match(await text('#summary'), /연 시간/);
-    assert.equal(await page.$$eval('.cbtn', b => b.length), 2); // 색 정보도 같이 돌아옴
-    await page.click('.cbtn');
-    await page.locator('#colorPop input').first().check(); await settle();
+    await openPanel('배송상태'); // 색 정보도 같이 돌아옴
+    await page.click('.fpModeTab[data-mode="bgcolor"]'); await settle();
+    await page.click('#fpSelectNone');
+    await page.locator('#fpList input').first().check();
+    await apply();
     assert.ok((await count()) > 0 && (await count()) < 10000);
-    await page.keyboard.press('Escape');
+    await page.click('#clearBtn'); await settle();
   };
   // 새로 열면 [이어서 보기]
   await page.goto(url(path.join(ROOT, 'index.html')));
@@ -203,7 +276,7 @@ async function main() {
   const evilB64 = await page.evaluate(async b64 => {
     const SQL = await (__sqljsFactory())({ wasmBinary: sqljsWasmBinary() });
     const db = new SQL.Database(Uint8Array.from(atob(b64), c => c.charCodeAt(0)));
-    db.run(`UPDATE data SET b9 = '#fff" onmouseover="window.__pwned=1" x="', f7 = 'red;x" onmouseover="window.__pwned=1' WHERE id <= 50`);
+    db.run('UPDATE data SET "배송상태\u0001배경" = ?, "금액\u0001글자" = ? WHERE rowid <= 50', ['#fff" onmouseover="window.__pwned=1" x="', 'red;x" onmouseover="window.__pwned=1']);
     const u = db.export();
     let t = '';
     for (let i = 0; i < u.length; i += 32768) t += String.fromCharCode.apply(null, u.subarray(i, i + 32768));
@@ -215,7 +288,10 @@ async function main() {
   await page.waitForSelector('#view:not([hidden])');
   await settle();
   assert.equal(await page.$$eval('[onmouseover]', x => x.length), 0, '조작한 색 값이 속성으로 들어감');
-  await page.click('.cbtn');
+  await openPanel('배송상태');
+  await page.click('.fpModeTab[data-mode="bgcolor"]'); await settle();
+  assert.equal(await page.$$eval('[onmouseover]', x => x.length), 0);
+  await page.click('#rowsEl .trow');
   assert.equal(await page.$$eval('[onmouseover]', x => x.length), 0);
   await page.keyboard.press('Escape');
   // [지우기]하면 [이어서 보기]가 사라짐
@@ -283,7 +359,7 @@ async function main() {
   await settle();
   assert.match(await text('#summary'), /직원용 파일 김테스트/);
   assert.equal(await page.isVisible('#staffBtn'), false);
-  assert.ok(!(await page.$$eval('#head .hc .t', x => x.map(e => e.textContent))).includes('고객명'));
+  assert.ok(!(await headCols()).includes('고객명'));
   await page.fill('#search', '샘플담당자B'); await settle();
   assert.equal(await count(), 0);
   await page.goto(url(path.join(ROOT, 'index.html')));
@@ -291,8 +367,13 @@ async function main() {
   await page.waitForSelector('#view:not([hidden])');
   await settle();
   assert.match(await text('#summary'), /직원용 파일 이샘플/);
-  assert.equal(await page.$$eval('#head .hc[data-i]', x => x.length), 4);
-  assert.equal(await page.$$eval('.cbtn', x => x.length), 2); // 남긴 칸(금액·배송상태)의 색은 그대로
+  assert.deepEqual(await headCols(), ['주문일', '금액', '배송상태', '담당자']);
+  await openPanel('배송상태');
+  assert.ok((await panelTabs()).includes('bgcolor')); // 남긴 칸(금액·배송상태)의 색은 그대로
+  await page.keyboard.press('Escape');
+  await openPanel('금액');
+  assert.ok((await panelTabs()).includes('fontcolor'));
+  await page.keyboard.press('Escape');
   await page.fill('#search', '테스트고객'); await settle();
   assert.equal(await count(), 0);
 
