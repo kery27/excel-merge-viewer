@@ -1635,7 +1635,7 @@ async function paint() {
       let style = '', fcOnly = false;
       if (colored) {
         // 원본 엑셀의 칸 색을 그대로 — 배경만 있으면 글자는 읽히는 쪽(검정/흰색)으로
-        const bg = r[4 + n + j], fc = r[4 + 2 * n + j];
+        const bg = safeColor(r[4 + n + j]), fc = safeColor(r[4 + 2 * n + j]);
         if (bg) style += 'background:' + bg + ';color:' + (fc || inkOn(bg)) + ';';
         else if (fc) { style += 'color:' + fc + ';'; fcOnly = true; }
       }
@@ -1646,6 +1646,9 @@ async function paint() {
   $('#body').innerHTML = html;
 }
 
+// 색 값은 '#rrggbb' 꼴만 화면에 넣는다 — 누가 조작한 .db 저장본의 색 칸에 코드를 넣어도 style 속성을 깨고 실행되지 않게
+// (projectA 2026-10-19 safeCssColor와 같은 이유)
+function safeColor(v) { return typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v) ? v : null; }
 function inkOn(hex) {
   const v = parseInt(hex.slice(1), 16), r = v >> 16 & 255, g = v >> 8 & 255, b = v & 255;
   return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#1d2433' : '#ffffff';
@@ -1656,7 +1659,8 @@ let popCol = null;
 function openColorPop(i, btn) {
   popCol = i;
   const info = colorInfo[i], cur = state.colors[i] || {};
-  const list = (kind, title, rows) => {
+  const list = (kind, title, all) => {
+    const rows = all.filter(([hex]) => safeColor(hex)); // 이상한 값은 목록에서 뺌
     if (!rows.length) return '';
     const sum = rows.reduce((a, x) => a + x[1], 0);
     let h = '<h4>' + title + '</h4>';

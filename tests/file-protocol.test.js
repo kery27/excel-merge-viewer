@@ -199,6 +199,25 @@ async function main() {
   await page.setInputFiles('#fileInput', bogus);
   await page.waitForSelector('#notice:not([hidden])');
   assert.match(await text('#noticeText'), /저장본이 아니에요/);
+  // 조작한 저장본: 색 칸에 코드를 넣어도 실행되지 않아야 함(색은 #rrggbb만 화면에 넣음)
+  const evilB64 = await page.evaluate(async b64 => {
+    const SQL = await (__sqljsFactory())({ wasmBinary: sqljsWasmBinary() });
+    const db = new SQL.Database(Uint8Array.from(atob(b64), c => c.charCodeAt(0)));
+    db.run(`UPDATE data SET b9 = '#fff" onmouseover="window.__pwned=1" x="', f7 = 'red;x" onmouseover="window.__pwned=1' WHERE id <= 50`);
+    const u = db.export();
+    let t = '';
+    for (let i = 0; i < u.length; i += 32768) t += String.fromCharCode.apply(null, u.subarray(i, i + 32768));
+    return btoa(t);
+  }, fs.readFileSync(plain).toString('base64'));
+  const evil = path.join(tmp, '조작.db');
+  fs.writeFileSync(evil, Buffer.from(evilB64, 'base64'));
+  await page.setInputFiles('#fileInput', evil);
+  await page.waitForSelector('#view:not([hidden])');
+  await settle();
+  assert.equal(await page.$$eval('[onmouseover]', x => x.length), 0, '조작한 색 값이 속성으로 들어감');
+  await page.click('.cbtn');
+  assert.equal(await page.$$eval('[onmouseover]', x => x.length), 0);
+  await page.keyboard.press('Escape');
   // [지우기]하면 [이어서 보기]가 사라짐
   await page.goto(url(path.join(ROOT, 'index.html')));
   await page.waitForSelector('#resume:not([hidden])');
