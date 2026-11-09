@@ -50,7 +50,7 @@ async function removeFile(page, p) {
 async function main() {
   // 보통 프로필로 띄운다 — 시크릿(임시) 프로필에서는 OPFS 폴더 핸들을 IndexedDB에 넣고 새로 고치면 크롬이 페이지를 닫아 버림(헤드리스 크롬 153에서 확인)
   const userDir = nfs.mkdtempSync(path.join(require('os').tmpdir(), 'emv-fs-'));
-  const ctx = await chromium.launchPersistentContext(userDir, {});
+  const ctx = await chromium.launchPersistentContext(userDir, { acceptDownloads: true });
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
@@ -97,6 +97,27 @@ async function main() {
     { path: '~$열린파일.xlsx', sheets: [['a', [['x'], ['abc-100']]]] },                              // 임시 파일 → 건너뜀
     { path: '깨진파일.xlsx', bytes: true },                                                            // 못 읽음 → 알림
   ]);
+
+  // 오프라인용 내려받기: zip을 풀어 file://로 열면 인터넷 없이 동작
+  assert.equal(await page.isVisible('#offlineBtn'), true, '웹 주소로 열면 단추가 보임');
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#offlineBtn')]);
+  assert.equal(dl.suggestedFilename(), '엑셀모아보기_오프라인.zip');
+  const zb = nfs.readFileSync(await dl.path());
+  const offDir = nfs.mkdtempSync(path.join(require('os').tmpdir(), 'emv-off-'));
+  for (let p = 0; zb.readUInt32LE(p) === 0x04034b50;) { // 압축 없는 zip이라 직접 풂
+    const size = zb.readUInt32LE(p + 18), nlen = zb.readUInt16LE(p + 26);
+    const name = zb.slice(p + 30, p + 30 + nlen).toString('utf8');
+    nfs.mkdirSync(path.dirname(path.join(offDir, name)), { recursive: true });
+    nfs.writeFileSync(path.join(offDir, name), zb.slice(p + 30 + nlen, p + 30 + nlen + size));
+    p += 30 + nlen + size;
+  }
+  assert.deepEqual(nfs.readdirSync(path.join(offDir, '엑셀모아보기')).sort(), ['index.html', 'vendor', '여는 법.txt']);
+  const off = await ctx.newPage();
+  await off.goto(url(path.join(offDir, '엑셀모아보기', 'index.html')));
+  assert.equal(await off.evaluate(() => BUNDLES_OK), true, '풀어 연 화면에서 라이브러리 읽힘');
+  assert.equal(await off.isVisible('#offlineBtn'), false, '파일로 연 화면에선 단추 숨김');
+  await off.close();
+  nfs.rmSync(offDir, { recursive: true, force: true });
 
   await page.click('#openFolderBtn');
   assert.equal(await page.isVisible('#folder'), true);

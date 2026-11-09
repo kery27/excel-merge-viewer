@@ -62,6 +62,13 @@ async function main() {
   assert.match(await text('#count'), /^1건/);
   await page.fill('#search', '병합상사'); await settle();
   assert.match(await text('#count'), /^1건/, '채우기 끔 → 병합 첫 칸만');
+  // 칸 필터 패널 "값 찾기"에서 엔터 = 찾은 값만 남기고 적용(엑셀처럼)
+  await page.fill('#search', ''); await settle();
+  await page.click('.filterBtn[data-k="금액"]'); await settle();
+  await page.fill('#fpSearchInput', '200'); await page.press('#fpSearchInput', 'Enter'); await settle();
+  assert.equal(await page.isHidden('#filterPanel'), true);
+  assert.match(await text('#count'), /^1건/);
+  await page.click('#clearBtn'); await settle();
 
   // ---- 채우기 켬: 처음부터 다시 넣으면 병합된 3줄 모두 업체명이 채워짐 ----
   await page.click('#resetBtn'); await page.click('#resetYes'); await settle();

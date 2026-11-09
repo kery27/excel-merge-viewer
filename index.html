@@ -47,6 +47,7 @@
   .brand { font-weight: 800; font-size: 16px; display: flex; align-items: center; gap: 8px; }
   .logo { width: 26px; height: 26px; border-radius: 7px; background: var(--accent); color: var(--on-accent); display: inline-flex; align-items: center; justify-content: center; font-size: 15px; }
   .topActions { display: flex; gap: 8px; }
+  #offlineBtn { margin-left: auto; margin-right: 8px; padding: 5px 12px; font-size: 13px; }
 
   main { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 16px 20px; gap: 12px; }
 
@@ -299,6 +300,7 @@
 <body>
 <header class="top">
   <div class="brand"><span class="logo">▦</span>엑셀 모아보기</div>
+  <button id="offlineBtn" class="ghost" hidden title="인터넷 없이 쓸 수 있게 이 화면을 통째로 내려받아요">오프라인용 내려받기</button>
   <div class="topActions" id="topActions" hidden>
     <button id="addMoreBtn">파일 더 넣기</button>
     <button id="saveBtn" class="ghost">저장</button>
@@ -2094,6 +2096,22 @@ function renderColorFpList(all, mode) {
   fpList.dataset.allValues = JSON.stringify(all);
 }
 let fpSearchTimer = null;
+// 값 찾기에서 엔터 = 엑셀처럼 "찾은 값만 남기고 적용"(찾을 말이 없으면 그냥 적용)
+fpSearchInput.addEventListener('keydown', async e => {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  if (currentFilterMode === 'values' && fpSearchInput.value.trim()) {
+    clearTimeout(fpSearchTimer);
+    const col = currentFilterCol;
+    const { vals, capped } = await fetchDistinctValues(col, fpSearchInput.value);
+    if (currentFilterCol !== col || currentFilterMode !== 'values') return;
+    fpList.dataset.capped = capped ? '1' : '';
+    renderFpList(vals, capped);
+    pendingSelection = new Set(JSON.parse(fpList.dataset.allValues || '[]'));
+    touchedModes.add('values');
+  }
+  $('#fpApplyBtn').click();
+});
 fpSearchInput.addEventListener('input', () => {
   if (currentFilterMode !== 'values') return;
   clearTimeout(fpSearchTimer);
@@ -3544,6 +3562,30 @@ const fsNormJsSig = c => [c.space, c.caseI, c.comma, c.company].join();
 fsRenderPeriod();
 $('#fillMergedIntro').checked = !!fsCfg.fillMerged;
 $('#fillMergedIntro').addEventListener('change', e => { fsCfg.fillMerged = e.target.checked; saveFsSettings(); });
+
+// ---- 오프라인용 내려받기: 웹 주소로 연 화면을 zip 하나로(index.html + vendor/) ----
+// 풀어서 index.html을 크롬으로 더블클릭하면 인터넷 없이 그대로 동작한다(폴더 찾아보기 포함 — file://에선 저장본이 IndexedDB로).
+// 이미 파일로 연 화면(file://)에서는 필요 없어서 단추를 숨긴다.
+const OFFLINE_FILES = ['vendor/sqljs/sqljs-bundle.js', 'vendor/sqljs/LICENSE', 'vendor/xlsx/xlsx-bundle.js', 'vendor/xlsx/LICENSE'];
+$('#offlineBtn').hidden = !/^https?:$/.test(location.protocol);
+$('#offlineBtn').addEventListener('click', async () => {
+  const btn = $('#offlineBtn');
+  btn.disabled = true; btn.textContent = '내려받을 파일 만드는 중…';
+  try {
+    const get = async u => { const r = await fetch(u, { cache: 'no-cache' }); if (!r.ok) throw new Error(u + ' (' + r.status + ')'); return new Uint8Array(await r.arrayBuffer()); };
+    const dir = '엑셀모아보기/';
+    const files = [{ name: dir + 'index.html', data: await get(location.href.split('#')[0].split('?')[0]) }];
+    for (const f of OFFLINE_FILES) files.push({ name: dir + f, data: await get(f) });
+    files.push({ name: dir + '여는 법.txt', data: new TextEncoder().encode('\ufeff엑셀 모아보기 — 오프라인용\r\n\r\n1. 이 zip을 원하는 곳에 압축 풀기(zip 안에서 바로 열면 안 돼요)\r\n2. 엑셀모아보기 폴더 안의 index.html을 크롬이나 엣지로 열기(더블클릭)\r\n3. 인터넷이 없어도 그대로 동작해요. vendor 폴더는 지우거나 옮기지 마세요.\r\n\r\n폴더 찾아보기는 크롬·엣지에서만 돼요. 넣은 엑셀은 이 PC 밖으로 나가지 않아요.\r\n') });
+    downloadBlob(makeZip(files), '엑셀모아보기_오프라인.zip');
+    btn.textContent = '내려받았어요 — 풀어서 index.html 열기';
+  } catch (e) {
+    notify('오프라인용 파일을 만들지 못했어요: ' + e.message);
+    btn.textContent = '오프라인용 내려받기';
+  }
+  btn.disabled = false;
+  setTimeout(() => { btn.textContent = '오프라인용 내려받기'; }, 6000);
+});
 
 // 자동 테스트용: 폴더 고르기 창 없이 폴더 핸들을 넘겨 연결(헤드리스 크롬은 고르기 창을 못 띄움). 화면에서는 쓰지 않음.
 window.__fsTest = { useDir: async d => { if (!fs.ready) await fsLoadStore(); show('#folder'); return fsUseDir(d, true); }, sync: () => fsSync('test'), state: () => fs, save: fsSave };

@@ -26,6 +26,7 @@
 ## 공개 체험판
 
 https://kery27.github.io/excel-jsgg/ (공개 저장소 `kery27/excel-jsgg`). main에 화면 코드를 올리면 `bash scripts/publish-public.sh ../excel-jsgg`로 바로 반영.
+웹 주소로 열면 위쪽에 **[오프라인용 내려받기]** — 화면을 zip 하나(`엑셀모아보기/index.html` + `vendor/` + 여는 법)로 내려받아, 풀어서 더블클릭하면 인터넷 없이 그대로 동작(폴더 찾아보기 포함). 파일로 연 화면에서는 단추를 숨김.
 
 ## 웹에서 체험 (claude.ai 페이지 — 2026-11-09 지움, 아래는 기록)
 
