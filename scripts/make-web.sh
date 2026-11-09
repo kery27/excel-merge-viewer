@@ -15,4 +15,20 @@ for p in sys.argv[1:]:
     t = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f\ufffd]', lambda m: '\\u%04x' % ord(m.group()), s)
     if t != s: open(p, 'w', encoding='utf-8').write(t)
 PY
+# 들어갈 때 비밀번호(선택): WEB_PW_HASH=<sha256("excel-moa:" + 비밀번호)의 16진수> bash scripts/make-web.sh
+# 비밀번호도 해시도 저장소에 넣지 않는다 — 올리는 사본에만(scripts/web-gate.html). 가벼운 장치일 뿐이다: 페이지 코드는 받아 볼 수 있고,
+# 짧은 비밀번호는 해시에서 거꾸로 맞혀 볼 수 있다. 그래서 이 페이지엔 가짜 데이터만 둔다(실제 데이터는 PC 안에서만 다룸).
+if [ -n "${WEB_PW_HASH:-}" ]; then
+  python3 - "$out/index.html" "$WEB_PW_HASH" scripts/web-gate.html <<'PY'
+import sys
+p, h, g = sys.argv[1], sys.argv[2].strip().lower(), sys.argv[3]
+assert len(h) == 64 and all(c in '0123456789abcdef' for c in h), 'WEB_PW_HASH는 sha256 16진수 64글자'
+s = open(p, encoding='utf-8').read()
+gate = open(g, encoding='utf-8').read().replace('__HASH__', h)
+anchor = '<header class="top">'
+assert s.count(anchor) == 1
+open(p, 'w', encoding='utf-8').write(s.replace(anchor, gate + anchor))
+PY
+  echo "비밀번호 화면 넣음"
+fi
 echo "만듦: $out/index.html (+ vendor/)"

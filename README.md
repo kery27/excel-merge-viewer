@@ -27,6 +27,9 @@
 
 `bash scripts/make-web.sh` → `dist/web/`(웹 페이지용 사본: 바깥 틀 태그를 빼고, SheetJS 번들의 제어 문자를 `\uXXXX`로 바꿈)을 claude.ai 페이지로 올린다. 올린 페이지 안에서는 `alert`/`confirm` 창이 안 뜨므로 알림·확인은 화면 안에서 한다.
 
+들어갈 때 비밀번호(2026-11-09~): `WEB_PW_HASH=$(printf 'excel-moa:%s' '비밀번호' | sha256sum | cut -d' ' -f1) bash scripts/make-web.sh` — 비밀번호 화면(`scripts/web-gate.html`)을 사본에만 넣는다. 비밀번호·해시는 저장소에 안 넣음.
+가벼운 장치다(페이지 코드는 받아 볼 수 있고 짧은 비밀번호는 해시에서 맞혀 볼 수 있음) — 이 페이지엔 가짜 데이터만. 한 번 맞히면 그 탭을 닫을 때까지 다시 안 물음.
+
 ## 홈페이지 공개 체험판
 
 `bash scripts/make-site.sh` → `dist/site/`(index.html + vendor/)를 홈페이지 저장소(`johnsongarage/johnsongarage.github.io`)의 `excel/` 폴더에 그대로 복사 → https://johnsongarage.github.io/excel/
