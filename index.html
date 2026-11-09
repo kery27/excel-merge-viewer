@@ -2990,7 +2990,12 @@ async function fsLoadStore() {
 async function fsPickFolder() {
   let dir;
   try { dir = await window.showDirectoryPicker({ id: 'emv-folder', mode: 'read' }); }
-  catch (e) { return; } // 취소
+  catch (e) {
+    if (e && e.name === 'AbortError') return; // 취소
+    // 웹 페이지 안(다른 사이트에 끼워 넣은 화면)에서는 크롬이 폴더 고르기를 막는다
+    fsMsg('이 화면에서는 폴더 고르기가 막혀 있어요(' + esc(e && e.name || '알 수 없음') + '). 파일을 내려받아 <b>index.html을 크롬으로 직접 열면</b> 돼요.', 'warn');
+    return;
+  }
   await fsUseDir(dir, true);
 }
 // 다른 폴더를 연결하면 저장본을 비우고 새로 읽는다(다른 폴더 내용이 섞이지 않게)
