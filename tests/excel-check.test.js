@@ -62,6 +62,13 @@ async function main() {
   assert.match(await text('#count'), /^1건/);
   await page.fill('#search', '병합상사'); await settle();
   assert.match(await text('#count'), /^1건/, '채우기 끔 → 병합 첫 칸만');
+  // 찾기: 띄어 쓴 그대로 한 덩어리, +로 이으면 모두 들어간 줄
+  await page.fill('#search', '병합 상사'); await settle();
+  assert.match(await text('#count'), /^0건/);
+  await page.fill('#search', '병합상사+200'); await settle();
+  assert.match(await text('#count'), /^1건/);
+  await page.fill('#search', '병합상사+300'); await settle();
+  assert.match(await text('#count'), /^0건/);
   // 칸 필터 패널 "값 찾기"에서 엔터 = 찾은 값만 남기고 적용(엑셀처럼)
   await page.fill('#search', ''); await settle();
   await page.click('.filterBtn[data-k="금액"]'); await settle();

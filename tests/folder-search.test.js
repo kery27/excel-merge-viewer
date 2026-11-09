@@ -130,9 +130,22 @@ async function main() {
   await page.click('#fsProblems summary');
   assert.match(await text('#fsProblems'), /깨진파일\.xlsx/);
 
-  // 표기 차이 흡수: (주)·㈜·주식회사·띄어쓰기 다 같은 업체로. 최신순.
+  // 기본: 띄어 쓴 그대로 한 덩어리로 찾음(사용자 결정 2026-11-09). (주)·㈜·주식회사는 무시
   await search('테스트상사');
   let sum = await text('#fsSummary');
+  assert.match(sum, /일치 3줄/, sum); // (주)테스트상사·테스트상사㈜·메모 "테스트상사 담당 바뀜"
+  await search('테스트 상사');
+  assert.match(await text('#fsSummary'), /일치 2줄/); // 주식회사 테스트 상사·csv "테스트 상사"
+  await search('abc-100+테스트');
+  assert.match(await text('#fsSummary'), /일치 2줄/); // +로 이으면 모두 들어간 줄
+
+  // 설정에서 띄어쓰기 무시를 켜면 (주)·㈜·주식회사·띄어쓰기 다 같은 업체로. 최신순.
+  await page.click('#fsSettingsBtn');
+  await page.check('#fsSettings input[data-k="space"]');
+  await page.waitForTimeout(800);
+  await page.click('#fsSettingsBtn');
+  await search('테스트상사');
+  sum = await text('#fsSummary');
   assert.match(sum, /일치 5줄/, sum);
   assert.match(sum, /파일 3개/, sum);
   assert.match(sum, new RegExp('가장 최근 ' + day(0))); // 메모 탭(날짜 칸 없음)은 파일 수정일 = 오늘
@@ -151,7 +164,7 @@ async function main() {
   // 대소문자·AND
   await search('ABC-100');
   assert.match(await text('#fsSummary'), /일치 3줄/);
-  await search('abc-100 테스트');
+  await search('abc-100+테스트');
   assert.match(await text('#fsSummary'), /일치 2줄/);
   // 숫자 쉼표
   await search('1250000');
@@ -180,13 +193,12 @@ async function main() {
   await page.click('#fsSettingsBtn');
   await page.uncheck('#fsSettings input[data-k="space"]');
   await page.waitForTimeout(800);
-  await search('테스트 상사'); // 띄어 쓰면 두 낱말 AND라 여전히 다 걸림 → 붙여 쓴 것으로
   await search('테스트상사');
   sum = await text('#fsSummary');
   assert.match(sum, /일치 3줄/, sum); // "주식회사 테스트 상사"·"테스트 상사"(csv) 빠짐
   await page.click('#fsDefaults'); await page.waitForTimeout(800);
   await search('테스트상사');
-  assert.match(await text('#fsSummary'), /일치 5줄/);
+  assert.match(await text('#fsSummary'), /일치 3줄/); // 기본값 = 띄어쓰기 살림
   assert.match(await text('#fsStoreInfo'), /저장본 [\d.]+MB/);
   await page.click('#fsSettingsBtn');
 
@@ -204,7 +216,7 @@ async function main() {
   assert.match(st, /새 파일 1 · 고친 파일 1 · 없어진 파일 1개/, st);
   await search('테스트상사');
   sum = await text('#fsSummary');
-  assert.match(sum, /일치 4줄/, sum); // +새출고 1, -메모 1, -csv 1
+  assert.match(sum, /일치 3줄/, sum); // (주)테스트상사·테스트상사㈜·새출고 (메모 탭 없앰, csv 지움)
   assert.equal((await dates())[0], day(1));
 
   // 저장본으로 다시 열기: 새로 고침 → 폴더 찾아보기 → 바뀐 게 없으면 다시 읽지 않고 바로 찾기
@@ -217,7 +229,7 @@ async function main() {
   assert.match(await text('#fsFolderInfo'), /파일 4개/);
   assert.equal(await page.isVisible('#fsStatus'), false, '바뀐 게 없으면 상태 줄도 안 뜸');
   await search('테스트상사');
-  assert.match(await text('#fsSummary'), /일치 4줄/);
+  assert.match(await text('#fsSummary'), /일치 3줄/);
 
   // 결과 상한
   await writeFiles(page, [{ path: '많음.xlsx', sheets: [['a', [['날짜', '코드']].concat(Array.from({ length: 1500 }, (_, i) => ['@D' + day(i % 300), 'MANY-' + i]))]] }]);
@@ -262,7 +274,7 @@ async function main() {
   assert.equal(await p2.evaluate(async () => { try { await navigator.storage.getDirectory(); return 'opfs'; } catch (e) { return 'blocked'; } }), 'blocked', 'file://에서는 OPFS가 막혀 있어야 이 확인이 의미 있음');
   await useMock();
   await p2.waitForFunction(() => window.__fsTest.state().lastCheck);
-  await p2.fill('#fsQ', '테스트상사'); await p2.press('#fsQ', 'Enter'); await p2.waitForTimeout(400);
+  await p2.fill('#fsQ', '상사'); await p2.press('#fsQ', 'Enter'); await p2.waitForTimeout(400);
   assert.match(await p2.$eval('#fsSummary', e => e.innerText), /일치 2줄 · 파일 2개 · 가장 최근 2026-01-02 · 가장 오래된 2020-05-05/);
   assert.equal(await p2.evaluate(() => new Promise(r => { const q = indexedDB.open('emv_folder'); q.onsuccess = () => { const g = q.result.transaction('kv').objectStore('kv').get('store'); g.onsuccess = () => r(g.result ? g.result.size : 0); }; })) > 0, true, '저장본이 IndexedDB에');
   await p2.reload();

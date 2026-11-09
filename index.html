@@ -367,7 +367,7 @@
       <div id="fsStatus" hidden><span id="fsStatusText"></span><div class="bar"><i id="fsBar"></i></div></div>
       <div id="fsProblems" hidden></div>
       <div class="fsBar">
-        <input id="fsQ" type="search" placeholder="업체명·상품코드·송장번호… (띄어 쓰면 모두 들어간 줄만)" autocomplete="off">
+        <input id="fsQ" type="search" placeholder="업체명·상품코드·송장번호… (띄어 쓴 그대로 찾아요 · 여러 말을 같이 찾으려면 + 로: 테스트상사+P0123)" autocomplete="off">
         <div id="fsPeriod"></div>
       </div>
       <div id="fsSummary"></div>
@@ -427,7 +427,7 @@
     </div>
     <div id="summary"></div>
     <div class="toolbar">
-      <input id="search" type="text" placeholder="전체에서 찾기 (띄어 쓰면 모두 포함된 줄만)" autocomplete="off">
+      <input id="search" type="text" placeholder="전체에서 찾기 (띄어 쓴 그대로 찾아요 · 여러 말을 같이 찾으려면 + 로: 서울+카드)" autocomplete="off">
       <select id="srcSel"></select>
       <button id="clearBtn" class="ghost">조건 지우기</button>
       <span id="count"></span>
@@ -1107,17 +1107,20 @@ function workerMain() {
   }
   function fsMetaGet(k) { const r = fdb.exec('SELECT v FROM meta WHERE k = ?', [k]); return r.length ? JSON.parse(r[0].values[0][0]) : null; }
   function fsMetaSet(k, v) { fdb.run('INSERT OR REPLACE INTO meta VALUES (?, ?)', [k, JSON.stringify(v)]); }
-  function normSig(o) { return [o.space, o.caseI, o.comma, o.company].map(b => b ? 1 : 0).join(''); }
+  function normSig(o) { return [o.space, o.caseI, o.comma, o.company].map(b => b ? 1 : 0).join('') + 'w'; } // w: 공백 모으기 규칙(바뀌면 찾기용 글자 다시 만듦)
   // 검색용 글자 만들기 — 검색어에도 똑같이 적용한다
   const COMPANY_RE = /\(주\)|㈜|주식회사|\(유\)|㈲|유한회사/g;
   function normText(s, o) {
     s = String(s == null ? '' : s).replace(INVIS_ALL, ''); // 안 보이는 글자는 설정과 상관없이 늘 무시
     if (o.caseI) s = s.toLowerCase();
     if (o.space) s = s.replace(/[\s 　​﻿]+/g, '');
+    else s = s.replace(/[ \t\u00a0\u3000]+/g, ' '); // 띄어쓰기를 살릴 때도 두 칸 띄운 것·전각 공백은 한 칸으로
     if (o.company) s = s.replace(o.space ? COMPANY_RE : /\(\s*주\s*\)|㈜|주식회사|\(\s*유\s*\)|㈲|유한회사/g, '');
     if (o.comma) s = s.replace(/(\d),(?=\d)/g, '$1');
     return s;
   }
+  // 검색어 나누기(화면과 같은 규칙): '+'로만 나눈다. 띄어쓰기는 낱말을 나누지 않음
+  const splitQuery = q => String(q || '').split('+').map(t => t.trim().replace(/\s+/g, ' ')).filter(Boolean);
   // 칸 값을 줄 단위 검색 글자로 — 칸 사이는 \u0001로 끊어 "앞 칸 끝 + 뒤 칸 앞"이 붙어서 걸리지 않게
   const rowNorm = (vals, o) => vals.map(v => normText(v, o)).join('\u0001');
 
@@ -1365,7 +1368,8 @@ function workerMain() {
   // order: 'new' 최신순 · 'old' 오래된 순 · 'file' 파일별. cap을 넘으면 순서대로 앞의 cap줄만 돌려준다.
   function fsSearch(o) {
     const t0 = performance.now();
-    const terms = String(o.q || '').split(/\s+/).map(t => normText(t, fnorm)).filter(Boolean);
+    // 찾을 말 전체가 띄어 쓴 그대로 한 덩어리("테스트 상사"는 "테스트 상사"만 — 사용자 결정 2026-11-09). 여러 말을 같이 찾을 때만 '+'로 나눔(모두 포함)
+    const terms = splitQuery(o.q).map(t => normText(t, fnorm)).filter(Boolean);
     if (!terms.length) return { terms, total: 0, rows: [], sheets: {} };
     const conds = terms.map(() => 'instr(r.norm, ?) > 0');
     const args = terms.slice();
@@ -2316,7 +2320,9 @@ function buildColumnFilterWhere() {
 // 검색창(띄어 쓴 낱말을 모두 포함하는 줄) + 파일·탭 보기 + 칸 필터 — 표 조회와 "걸러 본 줄만 내보내기"가 똑같이 해석하도록 한곳에서
 function buildCurrentWhereSql() {
   const where = [];
-  qEl.value.toLowerCase().split(/\s+/).filter(Boolean).forEach(t => where.push('instr(' + qi(ALL) + ', ' + sqlStr(t) + ') > 0'));
+  // 찾을 말 전체가 띄어 쓴 그대로 한 덩어리("테스트 상사"는 "테스트 상사"가 들어간 줄만 — 사용자 결정 2026-11-09). '+'로 나누면 모두 포함된 줄
+  qEl.value.toLowerCase().split('+').map(t => t.trim().replace(/\s+/g, ' ')).filter(Boolean)
+    .forEach(t => where.push('instr(' + qi(ALL) + ', ' + sqlStr(t) + ') > 0'));
   if (srcFilter) {
     where.push(qi(FILE) + ' = ' + sqlStr(srcFilter.file));
     if (srcFilter.sheet != null) where.push(qi(SHEET) + ' = ' + sqlStr(srcFilter.sheet));
@@ -2987,11 +2993,12 @@ const FS_DEFAULTS = {
   readOrder: 'recent',   // recent(최근에 고친 파일부터) | name
   checkOnOpen: true,
   watch: true,
-  space: true, caseI: true, comma: true, company: true,
+  space: false, caseI: true, comma: true, company: true, // space: 띄어쓰기 무시 — 기본 끔(띄어 쓴 그대로 찾기, 2026-11-09 사용자 결정)
   fillMerged: false,     // 병합된 칸을 같은 값으로 채우기(두 입구 공용)
   order: 'new',          // new | old | file
   period: 'all',         // all | 7 | 30 | 90 | 365
-  cap: 10000
+  cap: 10000,
+  v: 2                   // 설정 형식 번호
 };
 const FS_DB_NAME = '엑셀모아보기_찾아보기.db';    // 폴더에 둘 때 파일 이름
 const FS_OPFS_NAME = 'folder-search.db';          // 브라우저 안(OPFS)에 둘 때
@@ -3014,6 +3021,7 @@ const fs = {
 function loadFsSettings() {
   try {
     const v = JSON.parse(localStorage.getItem(FS_SETTINGS_KEY) || '{}') || {};
+    if (!(v.v >= 2)) { delete v.space; v.v = 2; } // 2: 띄어쓰기 무시 기본값을 끔으로 바꿈 — 예전 기본값(켬)이 저장돼 있으면 새 기본값으로
     return Object.assign({}, FS_DEFAULTS, v, { types: Object.assign({}, FS_DEFAULTS.types, v.types || {}) });
   } catch (e) { return JSON.parse(JSON.stringify(FS_DEFAULTS)); }
 }
@@ -3361,7 +3369,8 @@ async function fsRun() {
 }
 function fsHintHtml() {
   if (!fs.rows) return '';
-  return '<div class="fsHint">업체명·상품코드·송장번호처럼 찾을 말을 넣어 보세요. 띄어 쓰면 모두 들어간 줄만 찾아요.' +
+  return '<div class="fsHint">업체명·상품코드·송장번호처럼 찾을 말을 넣어 보세요. 띄어 쓴 그대로 찾아요("테스트 상사"는 "테스트 상사"만).' +
+    '<br>여러 말이 모두 들어간 줄을 찾으려면 + 로 이어 쓰세요(예: 테스트상사+P0123).' +
     '<br><span class="sub">' + [fsCfg.space && '띄어쓰기', fsCfg.caseI && '대소문자', fsCfg.comma && '숫자 쉼표', fsCfg.company && '회사 표기((주)·주식회사 등)'].filter(Boolean).join('·') + ' 차이는 무시하고 찾아요(설정에서 바꿈).</span></div>';
 }
 function fsRenderSummary(r) {
@@ -3394,6 +3403,7 @@ function fsNormJs(s) {
   s = s.replace(/[\u200b-\u200d\u2060\ufeff\u00ad\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, '');
   if (fsCfg.caseI) s = s.toLowerCase();
   if (fsCfg.space) s = s.replace(/[\s 　​﻿]+/g, '');
+  else s = s.replace(/[ \t\u00a0\u3000]+/g, ' ');
   if (fsCfg.company) s = s.replace(fsCfg.space ? /\(주\)|㈜|주식회사|\(유\)|㈲|유한회사/g : /\(\s*주\s*\)|㈜|주식회사|\(\s*유\s*\)|㈲|유한회사/g, '');
   if (fsCfg.comma) s = s.replace(/(\d),(?=\d)/g, '$1');
   return s;
@@ -3477,7 +3487,7 @@ function fsRenderSettings() {
       '<label>읽는 순서 <select data-k="readOrder"><option value="recent"' + (c.readOrder === 'recent' ? ' selected' : '') + '>최근에 고친 파일부터</option><option value="name"' + (c.readOrder === 'name' ? ' selected' : '') + '>이름순</option></select></label>' +
       ck('fillMerged', '병합된 칸은 같은 값으로 채우기', '(바꾸면 전부 다시 읽음 · 파일 모아보기에도 같이 적용)') +
       ck('checkOnOpen', '열 때 바뀐 파일 다시 확인') + ck('watch', '열려 있는 동안 변경 감지', typeof window.FileSystemObserver === 'function' ? '' : '(이 브라우저는 바로 감지를 못 해서, 이 창으로 돌아올 때 확인)') + '</div>' +
-    '<div class="fsSet"><h4>찾을 때 무시할 차이</h4>' + ck('space', '띄어쓰기', '"테스트 상사" = "테스트상사"') + ck('caseI', '대소문자', 'abc-1 = ABC-1') + ck('comma', '숫자 쉼표', '1,000 = 1000') + ck('company', '회사 표기', '(주)·㈜·주식회사·(유)·유한회사') + '</div>' +
+    '<div class="fsSet"><h4>찾을 때 무시할 차이</h4>' + ck('space', '띄어쓰기', '"테스트 상사" = "테스트상사" — 기본은 끔(띄어 쓴 그대로 찾기)') + ck('caseI', '대소문자', 'abc-1 = ABC-1') + ck('comma', '숫자 쉼표', '1,000 = 1000') + ck('company', '회사 표기', '(주)·㈜·주식회사·(유)·유한회사') + '</div>' +
     '<div class="fsSet"><h4>결과</h4>' +
       '<label>순서 <select data-k="order"><option value="new"' + (c.order === 'new' ? ' selected' : '') + '>최신순</option><option value="old"' + (c.order === 'old' ? ' selected' : '') + '>오래된 순</option><option value="file"' + (c.order === 'file' ? ' selected' : '') + '>파일별</option></select></label>' +
       '<label>기본 기간 <select data-k="period">' + PERIODS.map(([v, t]) => '<option value="' + v + '"' + (c.period === v ? ' selected' : '') + '>' + t + '</option>').join('') + '</select></label>' +
