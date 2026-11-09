@@ -1,0 +1,126 @@
+// 소개 페이지 + 가짜 회사 폴더 체험 자동 확인 — 공개 체험판 모양(dist/public: / 소개, /app/ 앱)을 만들어 http로 연다.
+// 실행: LANG=C.UTF-8 node tests/intro.test.js   (Playwright + Chromium 필요)
+// 장면 카드마다: "이 장면 직접 해 보기" → 앱이 가짜 회사 폴더로 열리고, 카드에 적은 "일치 N줄 · 파일 N개"·날짜가 실제 결과와 같은지.
+// 체험은 아무것도 저장하지 않는지, [내 폴더 연결하기]로 나오는지, 예전 주소(?sample=1)가 앱으로 가는지, 휴대폰 화면에서 안 삐져나가는지.
+const { chromium, devices } = require('playwright');
+const assert = require('assert');
+const path = require('path'), http = require('http'), nfs = require('fs'), os = require('os');
+const { execSync } = require('child_process');
+
+const ROOT = path.resolve(__dirname, '..');
+const PUB = path.join(ROOT, 'dist', 'public');
+
+async function main() {
+  execSync('bash scripts/make-public.sh', { cwd: ROOT, stdio: 'ignore' });
+  const server = http.createServer((req, res) => {
+    let f = path.join(PUB, decodeURIComponent(req.url.split('?')[0]));
+    if (!f.startsWith(PUB)) { res.writeHead(404); return res.end(); }
+    if (nfs.existsSync(f) && nfs.statSync(f).isDirectory()) f = path.join(f, 'index.html');
+    if (!nfs.existsSync(f)) { res.writeHead(404); return res.end(); }
+    res.writeHead(200, { 'Content-Type': f.endsWith('.html') ? 'text/html; charset=utf-8' : 'application/javascript' });
+    nfs.createReadStream(f).pipe(res);
+  }).listen(0);
+  const base = 'http://localhost:' + server.address().port + '/';
+  const userDir = nfs.mkdtempSync(path.join(os.tmpdir(), 'emv-intro-'));
+  const ctx = await chromium.launchPersistentContext(userDir, {});
+  const page = ctx.pages()[0] || await ctx.newPage();
+  const errors = [];
+  page.on('pageerror', e => errors.push(e.message));
+  page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+
+  // ---- 소개 페이지 ----
+  await page.goto(base);
+  const cards = await page.$$eval('.scene', x => x.map(c => ({
+    title: c.querySelector('h3').textContent.trim(),
+    ind: c.dataset.ind,
+    href: c.querySelector('.try').getAttribute('href'),
+    claim: c.querySelector('.mini .n').textContent.trim(),
+    dates: [...c.querySelectorAll('.mini li .dt')].map(e => e.textContent.trim())
+  })));
+  assert.equal(cards.length, 7);
+  assert.ok(cards.every(c => /^\d{4}-\d{2}(-\d{2})?$/.test(c.dates[0])), '예시 날짜가 오늘 기준으로 채워짐');
+  // 업종 고르기
+  const visible = async ind => { await page.click('.tabs button[data-ind="' + ind + '"]'); return page.$$eval('.scene:not([hidden])', x => x.length); };
+  assert.equal(await visible('logistics'), 3);
+  assert.equal(await visible('wholesale'), 2);
+  assert.equal(await visible('shop'), 1);
+  assert.equal(await visible('maker'), 1);
+  assert.equal(await visible('office'), 1);
+  assert.equal(await visible('all'), 7);
+  // 외부로 나가는 요청이 없는지(글꼴·분석 도구 없음)
+  const external = await page.evaluate(() => performance.getEntriesByType('resource').map(r => r.name).filter(u => !u.startsWith(location.origin)));
+  assert.deepEqual(external, []);
+
+  // ---- 장면마다 직접 해 보기 ----
+  for (const c of cards) {
+    await page.goto(base + c.href);
+    await page.waitForFunction(() => window.__fsTest && window.__fsTest.state().lastCheck, null, { timeout: 60000 });
+    await page.waitForTimeout(300);
+    const q = new URLSearchParams(c.href.split('?')[1]).get('q');
+    assert.equal(await page.inputValue('#fsQ'), q, c.title);
+    assert.equal(await page.isVisible('#fsDemoBar'), true);
+    const sum = await page.$eval('#fsSummary', e => e.innerText);
+    assert.ok(sum.startsWith(c.claim), c.title + ': 카드 "' + c.claim + '" ↔ 앱 "' + sum + '"');
+    const resultDates = await page.$$eval('#fsResults td.fsD', x => x.map(e => e.textContent));
+    for (const d of c.dates) {
+      if (d.length === 7) assert.ok(resultDates.some(r => r.startsWith(d)) || /청구/.test(await page.$eval('#fsResults', e => e.innerText)), c.title + ' ' + d);
+      else assert.ok(resultDates.includes(d), c.title + ': 카드 날짜 ' + d + ' 가 결과에 없음 ' + resultDates);
+    }
+  }
+  // 체험 단추로도 찾을 말이 바뀜
+  await page.click('#fsDemoQs [data-demo-q="LT-5517"]'); await page.waitForTimeout(300);
+  assert.match(await page.$eval('#fsSummary', e => e.innerText), /^일치 4줄/);
+
+  // 체험은 아무것도 저장하지 않음 — 폴더 기억·저장본(OPFS·IndexedDB) 모두 없음
+  const stored = await page.evaluate(async () => {
+    const kv = await new Promise(r => { const q = indexedDB.open('emv_folder', 1); q.onupgradeneeded = () => q.result.createObjectStore('kv'); q.onsuccess = () => { const t = q.result.transaction('kv'); const s = t.objectStore('kv'); const a = s.get('dir'), b = s.get('store'); t.oncomplete = () => r([a.result || null, b.result || null]); }; });
+    let opfs = false; try { await (await navigator.storage.getDirectory()).getFileHandle('folder-search.db'); opfs = true; } catch (e) {}
+    return { dir: !!kv[0], store: !!kv[1], opfs };
+  });
+  assert.deepEqual(stored, { dir: false, store: false, opfs: false });
+
+  // [내 폴더 연결하기] → 체험 끝, 진짜 폴더 연결 안내
+  await page.click('#fsDemoExit');
+  await page.waitForSelector('#fsConnect:not([hidden])');
+  assert.equal(await page.isVisible('#fsDemoBar'), false);
+  assert.equal(new URL(page.url()).search, '', '주소에서 demo가 빠짐');
+
+  // 앱 띠의 "어디에 쓰나요" → 소개 페이지
+  assert.equal(await page.$eval('a[href="../"]', e => e.textContent.includes('업종별 장면')), true);
+
+  // 예전 주소(?sample=1) → 앱으로 가서 가짜 데이터 체험
+  await page.goto(base + '?sample=1');
+  await page.waitForSelector('#view:not([hidden])', { timeout: 60000 });
+  assert.match(page.url(), /\/app\/\?sample=1$/);
+
+  // ---- 휴대폰: 소개 페이지·체험 화면이 화면 밖으로 안 삐져나감 ----
+  // persistent context에서는 기기 흉내를 못 바꿔서 따로 띄움
+  const b2 = await chromium.launch();
+  const m = await b2.newContext({ ...devices['Pixel 7'] });
+  const mp = await m.newPage();
+  mp.on('pageerror', e => errors.push(e.message));
+  const sticking = () => mp.evaluate(() => { const W = document.documentElement.clientWidth; const bad = []; document.querySelectorAll('body *').forEach(e => { if (e.closest('.tw, .tabs, .fsTableWrap')) return; const r = e.getBoundingClientRect(); if (r.width && r.right > W + 1) bad.push((e.id || e.className || e.tagName) + ':' + Math.round(r.right)); }); return bad.slice(0, 5); });
+  await mp.goto(base);
+  assert.deepEqual(await sticking(), [], '소개 페이지');
+  await mp.goto(base + 'app/?demo=1&q=1250000');
+  await mp.waitForFunction(() => window.__fsTest && window.__fsTest.state().lastCheck, null, { timeout: 60000 });
+  await mp.waitForTimeout(300);
+  assert.deepEqual(await sticking(), [], '체험 화면');
+  await b2.close();
+
+  // ---- 파일 더블클릭(file://)으로 연 앱에서도 체험됨 ----
+  const fp = await ctx.newPage();
+  fp.on('pageerror', e => errors.push(e.message));
+  await fp.goto('file://' + encodeURI(path.join(PUB, 'app', 'index.html')) + '?demo=1&q=' + encodeURIComponent('한빛샘플'));
+  await fp.waitForFunction(() => window.__fsTest && window.__fsTest.state().lastCheck, null, { timeout: 60000 });
+  await fp.waitForTimeout(300);
+  assert.match(await fp.$eval('#fsSummary', e => e.innerText), /^일치 2줄 · 파일 2개 · 가장 최근 2021-09-02 · 가장 오래된 2019-05-14/);
+
+  assert.deepEqual(errors, []);
+  await ctx.close();
+  server.close();
+  nfs.rmSync(userDir, { recursive: true, force: true });
+  console.log('소개 페이지·체험 확인 통과');
+}
+
+main().catch(e => { console.error(e); process.exit(1); });

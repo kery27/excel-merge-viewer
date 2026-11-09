@@ -40,6 +40,8 @@
 - 공개 저장소 `kery27/excel-jsgg`(GitHub Pages https://kery27.github.io/excel-jsgg/)가 체험판이다. 이 저장소는 비공개로 둔다(의뢰인 이름·내부 메모·이력 때문).
 - **화면 코드(`index.html`·`vendor/`)를 main에 올리면 바로 `bash scripts/publish-public.sh <excel-jsgg 클론 경로>`로 공개 체험판도 갱신한다.** 공개 쪽엔 체험판 index.html·vendor/·README만.
 - claude.ai 웹 체험 페이지(아티팩트)는 지웠다 — 다시 만들지 않는다.
+- 공개 체험판 첫 화면은 **소개 페이지**(`intro/index.html`, 업종별 "못 찾아서 손해 보던 장면")이고 앱은 `app/`(2026-11-09). 장면 카드의 찾을 말·결과는 앱의 가짜 회사 폴더(`makeDemoTree`)와 맞춘다 — 바꾸면 `tests/intro.test.js`로 확인.
+- 어필은 "엑셀 검색"이 아니라 **업무에서 못 찾아 손해 보던 장면**으로(hq DECISIONS 2026-11-09).
 
 ## projectA와의 관계
 

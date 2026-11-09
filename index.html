@@ -248,6 +248,12 @@
   .warnTxt { color: var(--warn); }
   #fsConnect { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 22px 20px; text-align: center; font-size: 14px; line-height: 1.7; color: var(--sub); }
   #fsConnect .row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  #fsDemoBar { background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 10px; padding: 10px 14px; font-size: 13px; display: flex; flex-direction: column; gap: 8px; line-height: 1.6; }
+  #fsDemoBar .dmTop { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  #fsDemoBar .dmTop > span { flex: 1; min-width: 200px; }
+  #fsDemoQs { display: flex; gap: 6px; flex-wrap: wrap; }
+  #fsDemoQs button { padding: 4px 10px; font-size: 12.5px; }
+  #fsDemoQs button b { color: var(--accent); font-weight: 700; margin-left: 2px; }
   #fsMsg { display: flex; gap: 10px; align-items: flex-start; border-radius: 10px; padding: 10px 14px; font-size: 13px; line-height: 1.6; background: var(--accent-soft); border: 1px solid var(--accent); }
   #fsMsg.warn { background: var(--warn-soft); border-color: var(--warn); }
   #fsStatus { font-size: 13px; color: var(--sub); line-height: 1.6; }
@@ -356,6 +362,10 @@
       <div class="what"><span id="fsFolderName"></span><span id="fsFolderInfo"></span></div>
       <button id="fsRescan" class="ghost">다시 확인</button>
       <button id="fsSettingsBtn" class="ghost">설정</button>
+    </div>
+    <div id="fsDemoBar" hidden>
+      <div class="dmTop"><span><b>가짜 회사 폴더</b>로 체험 중이에요 · <span id="fsDemoInfo"></span> · 모두 가짜 데이터, 아무것도 저장하지 않아요</span><button id="fsDemoExit">내 폴더 연결하기</button></div>
+      <div id="fsDemoQs"></div>
     </div>
     <div id="fsMsg" hidden></div>
     <div id="fsConnect" hidden>
@@ -3082,6 +3092,7 @@ const hm = t => new Date(t).toLocaleTimeString('ko-KR', { hour: '2-digit', minut
 
 async function openFolderView() {
   show('#folder');
+  if (fs.demo) { fsRenderTop(); return; } // 가짜 회사 폴더 체험 중이면 그대로
   if (!FS_SUPPORTED) {
     $('#fsConnect').hidden = false;
     $('#fsConnectBtn').disabled = true;
@@ -3281,6 +3292,7 @@ async function fsSyncOnce(why) {
 
 // 저장본 쓰기 — 브라우저 안(OPFS) 또는 고른 폴더. 용량 여유를 먼저 보고, 실패하면 화면에 알린다(조용히 넘어가지 않음).
 async function fsSave() {
+  if (fs.demo) return true; // 체험 중에는 저장하지 않음
   if (!fs.dirtySince) return true;
   const buf = await call('fsExport', { folder: fs.dir ? fs.dir.name : fs.savedFolder });
   const bytes = buf.byteLength;
@@ -3315,7 +3327,7 @@ async function fsSave() {
 // 열려 있는 동안 변경 감지 — FileSystemObserver가 있는 크롬에서만. 없으면 이 화면으로 돌아올 때(창 포커스) 다시 확인.
 function fsStartWatch() {
   fsStopWatch();
-  if (!fsCfg.watch || !fs.dir) return;
+  if (!fsCfg.watch || !fs.dir || fs.demo) return;
   if (typeof window.FileSystemObserver === 'function') {
     try {
       let tm = 0;
@@ -3604,7 +3616,7 @@ $('#fsSettings').addEventListener('click', async e => {
       await fsSave();
     } catch (err) {}
   } else if (e.target.id === 'fsStoreDel') {
-    try {
+    if (!fs.demo) try { // 체험 중이면 진짜 저장본은 건드리지 않음
       if (fsCfg.store === 'folder') { if (fs.storeDir) await fs.storeDir.removeEntry(FS_DB_NAME); }
       else await browserStoreDelete();
     } catch (err) {}
@@ -3645,6 +3657,162 @@ $('#offlineBtn').addEventListener('click', async () => {
   setTimeout(() => { btn.textContent = '오프라인용 내려받기'; }, 6000);
 });
 
+// ---- 가짜 회사 폴더로 체험 (소개 페이지의 "이 장면 직접 해 보기") ----
+// 주소에 ?demo=1(&q=찾을 말)이 있으면 진짜 폴더 대신 메모리 안에 만든 가짜 회사 폴더(출고·반품·청구·통장·영업·쇼핑몰·납품·옛 계약)를
+// 연결한다. 전부 누가 봐도 가짜인 데이터. 체험 중에는 아무것도 저장하지 않는다 — 저장본·폴더 기억·변경 감지 모두 끔.
+// 폴더 고르기가 없는 브라우저(사파리·휴대폰)에서도 체험은 된다(고르기 창을 안 쓰므로).
+// 장면별 찾을 말은 소개 페이지(intro/index.html)의 카드와 맞춘다 — 바꾸면 둘 다, tests/intro.test.js도.
+const DEMO_SCENES = [
+  ['반품 출고 확인', 'TS-88412'], ['오배송', 'P-3310'], ['이름 잘린 입금', '1250000'], ['거래처 지난 거래', '샘플마트'],
+  ['쇼핑몰 주문', '31005873412'], ['로트 추적', 'LT-5517'], ['몇 년 전 계약', '한빛샘플']
+];
+function makeDemoTree() {
+  const X = __xlsxFactory();
+  let seed = 20261109;
+  const rnd = () => { seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const pick = a => a[Math.floor(rnd() * a.length)];
+  const int = (a, b) => a + Math.floor(rnd() * (b - a + 1));
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const ago = n => new Date(today.getFullYear(), today.getMonth(), today.getDate() - n);
+  const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const ym = d => iso(d).slice(0, 7);
+  const book = sheets => { const wb = X.utils.book_new(); sheets.forEach(([n, aoa]) => X.utils.book_append_sheet(wb, X.utils.aoa_to_sheet(aoa), n)); return new Uint8Array(X.write(wb, { type: 'array', bookType: 'xlsx' })); };
+  const files = [];
+  const put = (path, data, when) => files.push([path, new File([data], path.split('/').pop(), { lastModified: (when || today).getTime() + 18 * 3600000 })]);
+  const PRODUCTS = [['P-1001', '샘플 텀블러', 8000], ['P-1002', '샘플 머그컵', 6500], ['P-2045', '샘플 블루투스 스피커', 32000], ['P-2101', '예시 충전기', 12000],
+    ['P-3320', '샘플 키보드', 29000], ['P-4010', '견본 수납함', 9500], ['P-5005', '테스트 우산', 7000]];
+  const SHIP_TO = ['(주)테스트상사', '샘플물산', '예시유통', '가나다유통(주)', '모의무역', '견본산업', '테스트 물류'];
+
+  // 1·2. 출고(하루 한 파일, 맨 위에 제목 한 줄 — 최근 30일은 칸 이름이 다름: 양식이 바뀐 회사처럼)
+  let inv = 80000;
+  for (let d = 44; d >= 0; d--) {
+    const day = ago(d);
+    if (day.getDay() === 0 && d !== 12 && d !== 3) continue;
+    const head = d < 30 ? ['일자', '송장', '품번', '품명', '수량', '받는 곳'] : ['출고일', '송장번호', '상품코드', '상품명', '수량', '거래처'];
+    const rows = [['출고 내역 ' + iso(day)], [], head];
+    for (let i = int(24, 36); i > 0; i--) { const p = pick(PRODUCTS); rows.push([day, 'TS-' + (inv++), p[0], p[1], int(1, 5), pick(SHIP_TO)]); }
+    if (d === 12) rows.splice(int(4, rows.length - 1), 0, [day, 'TS-88412', 'P-2045', '샘플 블루투스 스피커', 1, '(주)테스트상사']);
+    if (d === 3) { const at = int(4, rows.length - 1); rows.splice(at, 0, [day, 'TS-90121', 'P-3310', '샘플 무선 마우스', 1, '샘플물산'], [day, 'TS-90122', 'P-3310', '샘플 무선 마우스', 1, '예시유통']); }
+    put('출고/' + ym(day) + '/출고_' + iso(day) + '.xlsx', book([['출고', rows]]), day);
+  }
+  // 반품 접수
+  const ret = [['접수일', '송장번호', '상품', '사유', '처리']];
+  for (let i = 0; i < 8; i++) ret.push([ago(int(2, 20)), 'TS-' + int(80000, inv - 1), pick(PRODUCTS)[1], pick(['단순 변심', '파손', '오배송']), pick(['완료', '확인 중'])]);
+  ret.push([ago(1), 'TS-88412', '샘플 블루투스 스피커', '단순 변심', '확인 중']);
+  put('반품/반품접수_' + ym(today) + '.xlsx', book([['반품', ret]]), ago(1));
+
+  // 3. 거래처 청구(월마다) + 통장(입금자명이 잘림)
+  const amount = () => { let a = int(30, 200) * 10000; if (a === 1250000) a += 10000; return a; };
+  for (let m = 3; m >= 1; m--) {
+    const first = new Date(today.getFullYear(), today.getMonth() - m, 1), last = new Date(today.getFullYear(), today.getMonth() - m + 1, 0);
+    const rows = [['거래처', '청구월', '청구금액', '입금액', '미수', '비고']];
+    for (const c of SHIP_TO.concat(['샘플마트'])) {
+      if (m === 1 && c === '가나다유통(주)') { rows.push([c, ym(first), 1250000, 0, 1250000, '입금 예정']); continue; }
+      const a = amount();
+      let paid = rnd() < 0.8 ? a : a - int(1, 5) * 10000;
+      if (paid === 1250000) paid -= 10000; // 장면 3의 금액(1250000)은 한 곳에만
+      rows.push([c, ym(first), a, paid, a - paid, a === paid ? '' : '일부 입금']);
+    }
+    put('청구/거래처청구_' + ym(first) + '.xlsx', book([['청구', rows], ['메모', [['메모'], ['샘플 거래처 담당자 바뀜']]]]), last);
+  }
+  const bank = ['거래일시,적요,입금자명,입금액,출금액'];
+  for (let i = 0; i < 18; i++) {
+    const d = ago(int(0, 9));
+    bank.push(iso(d) + ' ' + String(int(9, 17)).padStart(2, '0') + ':' + String(int(0, 59)).padStart(2, '0') + ',타행이체,' + pick(['테스트상사', '샘플물산', '예시유통', '모의무역', '견본산업(주']) + ',' + amount() + ',');
+  }
+  bank.push(iso(ago(2)) + ' 14:22,타행이체,가나다유,1250000,');
+  put('통장/거래내역_' + ym(today) + '.csv', new TextEncoder().encode('﻿' + bank.join('\r\n') + '\r\n'), ago(0));
+
+  // 4. 영업 주문(연도별 파일, 월별 탭 — 6월부터 칸 이름이 조금 다름, 거래처 표기도 제각각)
+  const orders = [];
+  const SALES = ['예시유통', '테스트상사㈜', '모의무역', '가나다유통(주)', '견본산업'];
+  for (let m = 13; m >= 0; m--) {
+    const first = new Date(today.getFullYear(), today.getMonth() - m, 1);
+    const lastDay = m === 0 ? today.getDate() : new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
+    for (let i = int(6, 10); i > 0; i--) { const p = pick(PRODUCTS); orders.push([new Date(first.getFullYear(), first.getMonth(), int(1, lastDay)), pick(SALES), p[1], int(5, 40), p[2]]); }
+  }
+  [[6, 30, 6800], [37, 20, 6800], [70, 25, 6500], [300, 20, 6200], [340, 15, 6200]].forEach(([n, q, price]) => orders.push([ago(n), '샘플마트', '샘플 머그컵', q, price]));
+  const byYear = {};
+  orders.forEach(o => { const y = o[0].getFullYear(), mo = o[0].getMonth() + 1; ((byYear[y] = byYear[y] || {})[mo] = byYear[y][mo] || []).push(o); });
+  Object.keys(byYear).forEach(y => {
+    const tabs = Object.keys(byYear[y]).map(Number).sort((a, b) => a - b).map(mo => {
+      const head = mo >= 6 ? ['주문일', '거래처명', '품목', '수량', '단가', '금액', '담당자'] : ['주문일', '거래처', '품목', '수량', '단가', '금액', '담당'];
+      const rows = byYear[y][mo].sort((a, b) => a[0] - b[0]).map(o => [o[0], o[1], o[2], o[3], o[4], o[3] * o[4], pick(['샘플담당A', '샘플담당B'])]);
+      return [mo + '월', [head].concat(rows)];
+    });
+    const lastOrder = byYear[y][Math.max(...Object.keys(byYear[y]).map(Number))].reduce((a, o) => o[0] > a ? o[0] : a, new Date(0));
+    put('영업/주문내역_' + y + '.xlsx', book(tabs), lastOrder);
+  });
+
+  // 5. 쇼핑몰(마켓마다 칸 이름이 다름)
+  const ss = [['주문번호', '주문일시', '상품명', '수량', '수취인', '송장번호', '발송일']], cp = [['주문번호', '결제일', '노출상품명', '구매수', '받는분', '운송장번호', '출고일']];
+  for (let i = 0; i < 20; i++) {
+    const d = ago(int(1, 25)), p = pick(PRODUCTS), no = String(int(100000000, 999999999));
+    if (i % 2) ss.push(['2026' + no, d, p[1], int(1, 3), '테스트고객' + int(1, 99), 'TS-' + int(91000, 91800), ago(Math.max(0, Math.round((today - d) / 864e5) - 1))]);
+    else cp.push(['4' + no + String(int(10, 99)), d, p[1], int(1, 3), '테스트고객' + int(1, 99), 'TS-' + int(91000, 91800), ago(Math.max(0, Math.round((today - d) / 864e5) - 1))]);
+  }
+  cp.push(['31005873412', ago(5), '샘플 머그컵', 2, '테스트고객7', 'TS-91877', ago(4)]);
+  put('쇼핑몰/스마트스토어_주문_' + ym(today) + '.xlsx', book([['주문', ss]]), ago(1));
+  put('쇼핑몰/쿠팡_주문_' + ym(today) + '.xlsx', book([['Sheet1', cp]]), ago(1));
+
+  // 6. 제조 납품 일지 + 품질 기록(로트)
+  const lot = [['납품일', '로트번호', '제품', '수량', '납품처']];
+  for (let i = 0; i < 30; i++) { let l = 'LT-' + int(5000, 5600); if (l === 'LT-5517') l = 'LT-5518'; lot.push([ago(int(5, 90)), l, pick(PRODUCTS)[1], int(50, 300), pick(SHIP_TO)]); }
+  [[40, 200, '견본산업'], [33, 150, '모의무역'], [20, 120, '예시유통']].forEach(([n, q, to]) => lot.push([ago(n), 'LT-5517', '견본 수납함', q, to]));
+  lot.sort((a, b) => (a[0] instanceof Date ? a[0] : 0) - (b[0] instanceof Date ? b[0] : 0));
+  put('생산/납품일지_' + today.getFullYear() + '.xlsx', book([['납품', lot]]), ago(2));
+  put('생산/품질이력.xlsx', book([['품질', [['접수일', '로트번호', '내용', '조치'], [ago(30), 'LT-5402', '포장 찢김(샘플)', '완료'], [ago(1), 'LT-5517', '외관 불량 접수(샘플)', '회수 범위 확인 중']]]]), ago(1));
+
+  // 7. 몇 년 전 계약(연도마다 칸 이름이 다름)
+  const D = s => new Date(s + 'T00:00:00');
+  put('고객관리/2019_계약관리.xlsx', book([
+    ['상반기', [['계약일', '고객사', '제품', '라이선스 수', '담당'], [D('2019-02-11'), '예시소프트', '샘플 관리 프로그램', 10, '샘플담당A'], [D('2019-05-14'), '한빛샘플', '샘플 관리 프로그램', 5, '샘플담당A'], [D('2019-06-03'), '견본정보', '샘플 보안 도구', 20, '샘플담당B']]],
+    ['하반기', [['계약일', '고객사', '제품', '라이선스 수', '담당'], [D('2019-09-20'), '테스트시스템', '샘플 관리 프로그램', 8, '샘플담당B']]]
+  ]), D('2019-12-31'));
+  put('고객관리/2021_계약관리.xlsx', book([['2021', [['일자', '업체명', '품목', '수량', '영업 담당'], [D('2021-03-15'), '샘플랩', '샘플 보안 도구', 12, '샘플담당C'], [D('2021-09-02'), '한빛샘플(주)', '샘플 관리 프로그램 추가', 3, '샘플담당C']]]]), D('2021-12-30'));
+  put('고객관리/2023_계약관리.xlsx', book([['2023', [['일자', '업체명', '품목', '수량', '영업 담당'], [D('2023-04-10'), '예시소프트', '샘플 관리 프로그램 갱신', 10, '샘플담당C']]]]), D('2023-12-29'));
+
+  // 경로 목록 → 폴더 핸들 흉내(entries·getFile·queryPermission만 — 폴더 찾아보기가 쓰는 것)
+  const tree = {};
+  files.forEach(([path, file]) => { const parts = path.split('/'); let t = tree; parts.slice(0, -1).forEach(p => { t = t[p] = t[p] || {}; }); t[parts[parts.length - 1]] = file; });
+  const dir = (name, t) => ({ kind: 'directory', name, demo: true, queryPermission: async () => 'granted',
+    async *entries() { for (const [n, v] of Object.entries(t)) yield [n, v instanceof File ? { kind: 'file', name: n, getFile: async () => v } : dir(n, v)]; } });
+  return { dir: dir('가짜회사_엑셀모음', tree), count: files.length };
+}
+async function fsStartDemo(q) {
+  show('#folder');
+  fsStopWatch();
+  fs.demo = true;
+  $('#fsConnect').hidden = true;
+  fsSetStatus('가짜 회사 폴더를 만드는 중…', null);
+  const { dir, count } = makeDemoTree();
+  // 진짜 저장본은 불러오지도, 덮어쓰지도 않는다 — 빈 DB로 시작
+  await call('fsInit', { buffer: null, norm: fsNorm() });
+  fs.known = new Map(); fs.rows = 0; fs.ready = true; fs.dirtySince = 0; fs.lastCheck = null;
+  fs.dir = dir; fs.savedFolder = dir.name;
+  $('#fsMain').hidden = false; $('#fsRescan').hidden = false;
+  $('#fsDemoBar').hidden = false;
+  $('#fsDemoInfo').textContent = '엑셀·CSV ' + count + '개';
+  $('#fsDemoQs').innerHTML = DEMO_SCENES.map(([label, word]) => '<button type="button" class="ghost" data-demo-q="' + esc(word) + '">' + esc(label) + ' <b>' + esc(word) + '</b></button>').join('');
+  fsRenderTop();
+  await fsSync('demo');
+  if (q) { $('#fsQ').value = q; await fsRun(); } else $('#fsQ').focus();
+}
+async function fsExitDemo() {
+  fs.demo = false; fs.dir = null; fs.ready = false; fs.known = new Map(); fs.rows = 0; fs.lastResult = null; fs.lastCheck = null; fs.savedFolder = null;
+  $('#fsDemoBar').hidden = true; $('#fsSummary').innerHTML = ''; $('#fsResults').innerHTML = ''; $('#fsQ').value = ''; fsSetStatus('');
+  try { history.replaceState(null, '', location.pathname); } catch (e) {}
+  await openFolderView(); // 진짜 저장본을 다시 불러오고, 기억한 폴더가 있으면 그대로
+}
+$('#fsDemoExit').addEventListener('click', fsExitDemo);
+$('#fsDemoQs').addEventListener('click', e => {
+  const b = e.target.closest('[data-demo-q]');
+  if (!b) return;
+  $('#fsQ').value = b.dataset.demoQ;
+  fs.period = null; fsRenderPeriod();
+  fsRun();
+});
+
 // 자동 테스트용: 폴더 고르기 창 없이 폴더 핸들을 넘겨 연결(헤드리스 크롬은 고르기 창을 못 띄움). 화면에서는 쓰지 않음.
 window.__fsTest = { useDir: async d => { if (!fs.ready) await fsLoadStore(); show('#folder'); return fsUseDir(d, true); }, sync: () => fsSync('test'), state: () => fs, save: fsSave };
 
@@ -3656,8 +3824,11 @@ if (!BUNDLES_OK) {
   startWorker();
   refreshResume();
   // 링크로 바로 체험: ?sample=1 → 약 1만 건, ?sample=100000처럼 목록에 있는 건수면 그만큼
-  const sp = new URLSearchParams(location.search).get('sample');
-  if (sp) {
+  // ?demo=1(&q=찾을 말) → 가짜 회사 폴더로 폴더 찾아보기(소개 페이지의 장면 카드에서 옴)
+  const params = new URLSearchParams(location.search);
+  const sp = params.get('sample');
+  if (params.has('demo')) fsStartDemo(params.get('q') || '');
+  else if (sp) {
     const opt = Array.from($('#sampleSize').options).find(o => o.value === sp);
     $('#sampleSize').value = opt ? sp : '10000';
     runSample();

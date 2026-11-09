@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # 홈페이지(johnsongarage.github.io)에 올릴 공개 체험판을 dist/site/에 만든다.
 # 사용: bash scripts/make-site.sh  → dist/site/ 통째로 홈페이지 저장소의 excel/ 폴더에 복사
-# 공개 저장소(kery27/excel-moa, GitHub Pages)용: SITE_URL=https://kery27.github.io/excel-moa/ WEB_PW_HASH=... bash scripts/make-site.sh
-#   SITE_URL: 공유용 주소(기본은 홈페이지 excel/). WEB_PW_HASH: 들어갈 때 비밀번호(scripts/make-web.sh와 같은 방식, 선택)
+# 공개 체험판(kery27/excel-jsgg)은 scripts/make-public.sh가 이걸 불러 app/ 아래에 넣는다.
+#   SITE_URL: 공유용 주소(기본은 홈페이지 excel/). INTRO_URL: 띠에 "어디에 쓰나요" 링크(소개 페이지, 선택).
+#   WEB_PW_HASH: 들어갈 때 비밀번호(scripts/make-web.sh와 같은 방식, 선택)
 # 바꾸는 것: 검색·공유용 제목·설명, 맨 위 "체험판" 띠(만든 곳 링크). 기능 코드는 index.html 그대로.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -10,9 +11,9 @@ out=dist/site
 home='https://johnsongarage.github.io/'
 rm -rf "$out" && mkdir -p "$out"
 cp -r vendor "$out/vendor"
-python3 - "$out/index.html" "$home" "${SITE_URL:-}" <<'PY'
+python3 - "$out/index.html" "$home" "${SITE_URL:-}" "${INTRO_URL:-}" <<'PY'
 import sys
-out, home, url = sys.argv[1], sys.argv[2], sys.argv[3] or sys.argv[2] + 'excel/'
+out, home, url, intro = sys.argv[1], sys.argv[2], sys.argv[3] or sys.argv[2] + 'excel/', sys.argv[4]
 s = open('index.html', encoding='utf-8').read()
 def sub(a, b):
     global s
@@ -29,6 +30,7 @@ sub('<title>엑셀 모아보기</title>',
 sub('<header class="top">',
     '<div style="background:var(--accent-soft);color:var(--ink);font-size:13px;padding:8px 20px;display:flex;gap:6px 14px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--line)">'
     '<span><b>체험판</b> · 가짜 데이터로 눌러 보세요. 내 엑셀을 넣어도 이 PC 밖으로 나가지 않아요.</span>'
+    + ('<a href="' + intro + '" style="color:var(--accent);font-weight:700;text-decoration:none">어디에 쓰나요? 업종별 장면 보기</a>' if intro else '') +
     '<a href="' + home + '#contact" style="color:var(--accent);font-weight:700;text-decoration:none;margin-left:auto">우리 회사 엑셀에 맞춰 만들기 문의 →</a></div>\n'
     '<header class="top">')
 open(out, 'w', encoding='utf-8').write(s)

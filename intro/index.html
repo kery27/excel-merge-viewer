@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>엑셀 모아보기 — 못 찾아서 손해 보던 일, 10초면</title>
+<meta name="description" content="반품 출고일, 이름 잘린 입금, 지난번 단가, 몇 년 전 계약… 폴더 속 엑셀 수백 개에서 그 줄을 10초 안에 찾아요. 설치·업로드 없이 내 PC에서만.">
+<meta property="og:title" content="엑셀 모아보기 — 못 찾아서 손해 보던 일, 10초면">
+<meta property="og:description" content="반품 출고일, 이름 잘린 입금, 지난번 단가, 몇 년 전 계약… 폴더 속 엑셀 수백 개에서 그 줄을 10초 안에. 업종별 장면을 가짜 데이터로 바로 해 보세요.">
+<meta property="og:url" content="https://kery27.github.io/excel-jsgg/">
+<!-- 소개 페이지 — 공개 체험판(kery27/excel-jsgg)의 첫 화면. 앱은 app/ 아래. 외부 글꼴·스크립트·분석 도구 없음(외부 요청 0).
+     장면 카드의 찾을 말·결과는 앱의 가짜 회사 폴더(index.html makeDemoTree)와 맞춘다 — 바꾸면 둘 다, tests/intro.test.js도. -->
+<style>
+  :root {
+    --bg: #f4f5f8; --panel: #ffffff; --ink: #1d2433; --sub: #5d6678; --faint: #9aa2b1;
+    --line: #e2e5ec; --line-soft: #eef0f4; --accent: #4257e8; --accent-ink: #2f42c9; --accent-soft: #eef0fe; --on-accent: #ffffff;
+    --warn: #b5541c; --warn-soft: #fff4ec; --ok: #1f7a4d; --ok-soft: #eaf7f0; --hit: #fff1a8; --head-bg: #f7f8fb;
+    --shadow: 0 1px 2px rgba(20,24,40,.05), 0 8px 24px rgba(20,24,40,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14161c; --panel: #1c1f27; --ink: #e6e8ee; --sub: #a3aaba; --faint: #737b8c;
+      --line: #2e323d; --line-soft: #262a33; --accent: #7b8cff; --accent-ink: #a3b0ff; --accent-soft: #252b4a; --on-accent: #0f1220;
+      --warn: #f0a36e; --warn-soft: #3a2a1e; --ok: #6fd3a0; --ok-soft: #1c3329; --hit: #5c4d12; --head-bg: #21242d;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25); color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14161c; --panel: #1c1f27; --ink: #e6e8ee; --sub: #a3aaba; --faint: #737b8c;
+    --line: #2e323d; --line-soft: #262a33; --accent: #7b8cff; --accent-ink: #a3b0ff; --accent-soft: #252b4a; --on-accent: #0f1220;
+    --warn: #f0a36e; --warn-soft: #3a2a1e; --ok: #6fd3a0; --ok-soft: #1c3329; --hit: #5c4d12; --head-bg: #21242d;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25); color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    font-size: 16px; line-height: 1.65; word-break: keep-all; overflow-wrap: anywhere; -webkit-font-smoothing: antialiased; }
+  a { color: var(--accent-ink); }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 12px 20px; border-radius: 10px; font-weight: 700; font-size: 15px;
+    text-decoration: none; border: 1px solid var(--accent); background: var(--accent); color: var(--on-accent); white-space: nowrap; }
+  .btn:hover { filter: brightness(1.06); }
+  .btn.ghost { background: var(--panel); color: var(--ink); border-color: var(--line); }
+  .btn.ghost:hover { border-color: var(--accent); }
+  .btn.small { padding: 7px 14px; font-size: 14px; border-radius: 8px; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+  /* 위 막대 */
+  .nav { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--panel) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+  .nav .wrap { display: flex; align-items: center; gap: 18px; height: 60px; }
+  .brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 16px; color: var(--ink); text-decoration: none; }
+  .logo { width: 28px; height: 28px; border-radius: 8px; background: var(--accent); color: var(--on-accent); display: inline-flex; align-items: center; justify-content: center; font-size: 15px; }
+  .nav nav { display: flex; gap: 18px; margin-left: auto; font-size: 14px; }
+  .nav nav a { color: var(--sub); text-decoration: none; }
+  .nav nav a:hover { color: var(--ink); }
+
+  /* 첫 화면 */
+  .hero { padding: 64px 0 56px; }
+  .hero .wrap { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 48px; align-items: center; } /* minmax(0,…): 안 접히는 표가 칸을 화면보다 넓히지 않게 */
+  .hero .wrap > * { min-width: 0; }
+  .eyebrow { display: inline-block; font-size: 13px; font-weight: 700; color: var(--accent-ink); background: var(--accent-soft); padding: 4px 10px; border-radius: 999px; margin-bottom: 14px; }
+  h1 { font-size: clamp(27px, 3.4vw, 37px); line-height: 1.3; letter-spacing: -0.6px; margin: 0 0 16px; }
+  .lead { font-size: 17px; color: var(--sub); margin: 0 0 26px; }
+  .ctaRow { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+  .chips { display: flex; gap: 8px 14px; flex-wrap: wrap; font-size: 13.5px; color: var(--sub); padding: 0; margin: 0; list-style: none; }
+  .chips li::before { content: '✓'; color: var(--ok); font-weight: 800; margin-right: 5px; }
+
+  /* 앱 모양 미리 보기 */
+  .mock { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; min-width: 0; }
+  .mockBar { display: flex; align-items: center; gap: 6px; padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--head-bg); font-size: 12px; color: var(--faint); }
+  .mockBar i { width: 9px; height: 9px; border-radius: 50%; background: var(--line); display: inline-block; }
+  .mockBar span { margin-left: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mockBody { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .mockQ { display: flex; gap: 8px; align-items: center; }
+  .mockQ .in { flex: 1; min-width: 0; border: 1.5px solid var(--accent); border-radius: 8px; padding: 8px 12px; font-size: 15px; font-weight: 600; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+  .mockQ .per { display: flex; gap: 4px; }
+  .mockQ .per b, .mockQ .per s { font-size: 12px; padding: 5px 8px; border-radius: 6px; text-decoration: none; font-weight: 600; }
+  .mockQ .per b { background: var(--accent); color: var(--on-accent); }
+  .mockQ .per s { border: 1px solid var(--line); color: var(--sub); }
+  .mockSum { font-size: 13px; color: var(--sub); }
+  .mockSum b { color: var(--ink); }
+  .grp { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .grpHead { font-size: 12px; color: var(--sub); padding: 6px 10px; border-bottom: 1px solid var(--line); background: var(--panel); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .grpHead b { color: var(--ink); }
+  .tw { overflow-x: auto; }
+  .grp table { border-collapse: collapse; font-size: 12.5px; white-space: nowrap; width: 100%; }
+  .grp th { background: var(--head-bg); color: var(--sub); font-weight: 700; text-align: left; padding: 5px 10px; border-bottom: 1px solid var(--line); }
+  .grp td { padding: 6px 10px; border-bottom: 1px solid var(--line-soft); }
+  .grp tr:last-child td { border-bottom: 0; }
+  .grp td.d, .grp th.d { background: var(--accent-soft); font-weight: 700; color: var(--ink); }
+  .grp th.d { color: var(--accent-ink); }
+  .hit { background: var(--hit); border-radius: 3px; padding: 0 2px; }
+  .mockCap { font-size: 12.5px; color: var(--faint); text-align: center; margin: 10px 0 0; }
+
+  /* 구역 공통 */
+  section.block { padding: 64px 0; }
+  section.block.alt { background: var(--panel); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .kicker { font-size: 13px; font-weight: 800; color: var(--accent-ink); letter-spacing: .3px; margin-bottom: 6px; }
+  h2 { font-size: clamp(23px, 3vw, 30px); line-height: 1.35; letter-spacing: -0.4px; margin: 0 0 10px; }
+  .secLead { color: var(--sub); margin: 0 0 26px; max-width: 680px; }
+
+  /* 업종 고르기 */
+  .tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin: 0 0 22px; scrollbar-width: thin; }
+  .tabs button { flex: none; font: inherit; font-size: 14px; font-weight: 600; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; }
+  .tabs button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+
+  /* 장면 카드 */
+  .scenes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+  .scene { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 22px 22px 20px; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--shadow); min-width: 0; }
+  .scene[hidden] { display: none; }
+  .sceneTop { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .ind { font-size: 12px; font-weight: 700; color: var(--sub); border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; }
+  .scene h3 { margin: 0; font-size: 19px; letter-spacing: -0.2px; }
+  .situ { margin: 0; font-size: 15.5px; }
+  .flow { margin: 0; display: grid; gap: 8px; font-size: 14.5px; }
+  .flow div { display: grid; grid-template-columns: 74px 1fr; gap: 10px; align-items: baseline; }
+  .flow dt { font-size: 12.5px; font-weight: 800; color: var(--sub); padding: 1px 0; }
+  .flow dd { margin: 0; }
+  .flow .loss dt { color: var(--warn); }
+  .flow .loss dd { color: var(--ink); }
+  .flow .fix dt { color: var(--ok); }
+  .mini { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--bg); }
+  .mini .q { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 14px; background: var(--panel); }
+  .mini .q svg { flex: none; color: var(--faint); }
+  .mini .q b { font-weight: 700; }
+  .mini .q .n { margin-left: auto; font-size: 12px; color: var(--sub); white-space: nowrap; }
+  .mini ul { list-style: none; margin: 0; padding: 4px 0; }
+  .mini li { display: grid; grid-template-columns: 88px 1fr; gap: 10px; padding: 6px 12px; font-size: 13px; }
+  .mini li .dt { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .mini li .src { display: block; color: var(--faint); font-size: 12px; }
+  .try { align-self: flex-start; font-weight: 700; font-size: 14.5px; text-decoration: none; color: var(--accent-ink); }
+  .try:hover { text-decoration: underline; }
+  .note { font-size: 13px; color: var(--faint); margin: 18px 0 0; }
+
+  /* 모아보기 */
+  .merge { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 32px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 28px; box-shadow: var(--shadow); }
+  .merge > * { min-width: 0; }
+  .merge ul { margin: 0 0 20px; padding-left: 20px; color: var(--sub); }
+  .merge ul b { color: var(--ink); }
+  .tabsMock { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 10px; }
+  .tabsMock span { font-size: 11.5px; padding: 3px 8px; border: 1px solid var(--line); border-radius: 6px 6px 0 0; color: var(--sub); background: var(--bg); }
+  .arrowDown { text-align: center; color: var(--accent); font-size: 22px; line-height: 1; margin: 6px 0; }
+
+  /* 이렇게 써요 */
+  .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; counter-reset: s; list-style: none; padding: 0; margin: 0; }
+  .steps li { background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 22px; }
+  .steps li::before { counter-increment: s; content: counter(s); display: inline-flex; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--on-accent); font-weight: 800; align-items: center; justify-content: center; margin-bottom: 10px; }
+  .steps h3 { margin: 0 0 6px; font-size: 17px; }
+  .steps p { margin: 0; color: var(--sub); font-size: 15px; }
+
+  /* 안심 */
+  .safe { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .safe div { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px 22px; }
+  .safe h3 { margin: 0 0 4px; font-size: 16.5px; }
+  .safe p { margin: 0; color: var(--sub); font-size: 15px; }
+  .stat { margin-top: 18px; display: flex; gap: 10px 28px; flex-wrap: wrap; align-items: baseline; background: var(--accent-soft); border-radius: 14px; padding: 18px 22px; }
+  .stat b { font-size: 26px; letter-spacing: -0.5px; color: var(--accent-ink); }
+  .stat span { color: var(--sub); font-size: 14px; }
+
+  /* 자주 묻는 것 */
+  .faq { max-width: 780px; }
+  .faq details { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 0 18px; margin-bottom: 10px; }
+  .faq summary { cursor: pointer; padding: 15px 0; font-weight: 700; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: '+'; color: var(--faint); font-weight: 400; font-size: 20px; line-height: 1; }
+  .faq details[open] summary::after { content: '−'; }
+  .faq p { margin: 0 0 16px; color: var(--sub); }
+
+  /* 마지막 권유 */
+  .cta { text-align: center; padding: 64px 0 72px; }
+  .cta p { color: var(--sub); max-width: 620px; margin: 0 auto 24px; }
+  .cta .ctaRow { justify-content: center; }
+  footer { border-top: 1px solid var(--line); padding: 24px 0 36px; font-size: 13px; color: var(--faint); }
+  footer .wrap { display: flex; gap: 8px 18px; flex-wrap: wrap; justify-content: space-between; }
+
+  @media (max-width: 900px) {
+    .hero .wrap, .merge { grid-template-columns: minmax(0, 1fr); }
+    .hero { padding: 40px 0 44px; }
+    .scenes { grid-template-columns: 1fr; }
+    .steps { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .wrap { padding: 0 16px; }
+    .nav nav { display: none; }
+    .nav .btn { margin-left: auto; }
+    .safe { grid-template-columns: 1fr; }
+    section.block { padding: 48px 0; }
+    .scene { padding: 18px 16px; }
+    .flow div { grid-template-columns: 64px 1fr; }
+    .mini li { grid-template-columns: 1fr; gap: 0; }
+    .merge { padding: 20px 16px; }
+    .mockQ .per { display: none; }
+    .btn { padding: 12px 16px; }
+    .ctaRow .btn { flex: 1 1 100%; }
+  }
+</style>
+</head>
+<body>
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="./"><span class="logo">▦</span>엑셀 모아보기</a>
+    <nav aria-label="이 페이지"><a href="#scenes">이럴 때</a><a href="#how">쓰는 법</a><a href="#safe">안심</a><a href="#faq">자주 묻는 것</a></nav>
+    <a class="btn small" href="app/">무료로 써 보기</a>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <span class="eyebrow">엑셀로 일하는 회사를 위한</span>
+        <h1>엑셀 어딘가에 있는데,<br>못 찾아서 손해 본 적 있으시죠</h1>
+        <p class="lead">반품 들어온 물건이 언제 나갔는지, 이름 잘린 입금이 어느 거래처 돈인지, 몇 년 전에 몇 개를 팔았는지.
+          폴더 속 엑셀 수백 개에서 그 줄을 10초 안에 찾아요.</p>
+        <div class="ctaRow">
+          <a class="btn" href="app/?demo=1">가짜 회사 폴더로 해 보기</a>
+          <a class="btn ghost" href="app/">내 엑셀로 무료로 써 보기</a>
+        </div>
+        <ul class="chips">
+          <li>설치 없음</li><li>인터넷 없어도</li><li>파일이 내 PC 밖으로 안 나가요</li><li>양식 정리 필요 없음</li>
+        </ul>
+      </div>
+      <figure style="margin:0">
+        <div class="mock" aria-label="찾은 화면 예시">
+          <div class="mockBar"><i></i><i></i><i></i><span>폴더 찾아보기 · 가짜회사_엑셀모음</span></div>
+          <div class="mockBody">
+            <div class="mockQ"><div class="in">TS-88412</div><div class="per"><b>전체</b><s>30일</s><s>1년</s></div></div>
+            <div class="mockSum">일치 <b>2</b>줄 · 파일 <b>2</b>개 · 가장 최근 <b data-ago="1">1일 전</b></div>
+            <div class="grp">
+              <div class="grpHead"><b>반품/반품접수.xlsx</b> › 반품</div>
+              <div class="tw"><table>
+                <tr><th class="d">접수일</th><th>송장번호</th><th>상품</th><th>사유</th><th>처리</th></tr>
+                <tr><td class="d" data-ago="1">1일 전</td><td><span class="hit">TS-88412</span></td><td>샘플 블루투스 스피커</td><td>단순 변심</td><td>확인 중</td></tr>
+              </table></div>
+            </div>
+            <div class="grp">
+              <div class="grpHead"><b>출고/출고_<span data-ago="12">12일 전</span>.xlsx</b> › 출고</div>
+              <div class="tw"><table>
+                <tr><th class="d">일자</th><th>송장</th><th>품명</th><th>받는 곳</th></tr>
+                <tr><td class="d" data-ago="12">12일 전</td><td><span class="hit">TS-88412</span></td><td>샘플 블루투스 스피커</td><td>(주)테스트상사</td></tr>
+              </table></div>
+            </div>
+          </div>
+        </div>
+        <figcaption class="mockCap">반품 들어온 송장번호 하나로 — 반품 접수 줄과 12일 전 출고 줄 (가짜 데이터)</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="block alt" id="scenes">
+    <div class="wrap">
+      <div class="kicker">이럴 때 써요</div>
+      <h2>업종을 고르면, 그 일에서 자주 생기는 장면을 보여 드려요</h2>
+      <p class="secLead">장면마다 "지금은 어떻게 하는지 → 못 찾으면 무슨 손해인지 → 이걸로 어떻게 되는지"예요. 가짜 회사 폴더로 바로 해 볼 수 있어요.</p>
+      <div class="tabs" role="group" aria-label="업종 고르기">
+        <button type="button" data-ind="all" aria-pressed="true">전체</button>
+        <button type="button" data-ind="logistics" aria-pressed="false">물류·창고</button>
+        <button type="button" data-ind="wholesale" aria-pressed="false">도매·유통</button>
+        <button type="button" data-ind="shop" aria-pressed="false">쇼핑몰</button>
+        <button type="button" data-ind="maker" aria-pressed="false">제조·납품</button>
+        <button type="button" data-ind="office" aria-pressed="false">사무·고객 관리</button>
+      </div>
+
+      <div class="scenes">
+        <article class="scene" data-ind="logistics">
+          <div class="sceneTop"><span class="ind">물류·창고</span><h3>반품 출고 확인</h3></div>
+          <p class="situ">반품 박스가 들어왔어요. 언제, 어느 거래처로 나간 물건인지 알아야 처리할 수 있어요.</p>
+          <dl class="flow">
+            <div><dt>지금은</dt><dd>최근 한 달 치 출고 엑셀을 날짜별로 하나씩 열어 송장번호를 찾아요.</dd></div>
+            <div class="loss"><dt>못 찾으면</dt><dd>확인 못 하고 받아 주거나, 처리가 밀려 거래처 불만이 쌓여요.</dd></div>
+            <div class="fix"><dt>이렇게</dt><dd>송장번호 하나로 반품 접수 줄과 출고 줄이 같이 나와요.</dd></div>
+          </dl>
+          <div class="mini">
+            <div class="q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><b>TS-88412</b><span class="n">일치 2줄 · 파일 2개</span></div>
+            <ul>
+              <li><span class="dt" data-ago="1">1일 전</span><span>단순 변심 · 확인 중<span class="src">반품접수 › 반품</span></span></li>
+              <li><span class="dt" data-ago="12">12일 전</span><span>샘플 블루투스 스피커 → (주)테스트상사<span class="src">출고_<span data-ago="12">12일 전</span>.xlsx › 출고</span></span></li>
+            </ul>
+          </div>
+          <a class="try" href="app/?demo=1&amp;q=TS-88412">이 장면 직접 해 보기 →</a>
+        </article>
+
+        <article class="scene" data-ind="logistics">
+          <div class="sceneTop"><span class="ind">물류·창고</span><h3>오배송 연락</h3></div>
+          <p class="situ">"마우스를 시켰는데 다른 물건이 왔어요." 송장이 바뀌어 붙은 상대를 찾아야 양쪽에 다시 보낼 수 있어요.</p>
+          <dl class="flow">
+            <div><dt>지금은</dt><dd>그날 출고 파일을 열어 같은 상품 줄을 눈으로 훑어요.</dd></div>
+            <div class="loss"><dt>못 찾으면</dt><dd>원인을 못 찾고 재발송·보상 비용을 떠안아요.</dd></div>
+            <div class="fix"><dt>이렇게</dt><dd>상품코드를 넣으면 그날 그 상품이 나간 줄이 나란히 — 바뀐 상대가 바로 보여요.</dd></div>
+          </dl>
+          <div class="mini">
+            <div class="q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><b>P-3310</b><span class="n">일치 2줄 · 파일 1개</span></div>
+            <ul>
+              <li><span class="dt" data-ago="3">3일 전</span><span>TS-90121 · 샘플 무선 마우스 → 샘플물산<span class="src">출고_<span data-ago="3">3일 전</span>.xlsx</span></span></li>
+              <li><span class="dt" data-ago="3">3일 전</span><span>TS-90122 · 샘플 무선 마우스 → 예시유통<span class="src">같은 날, 같은 상품</span></span></li>
+            </ul>
+          </div>
+          <a class="try" href="app/?demo=1&amp;q=P-3310">이 장면 직접 해 보기 →</a>
+        </article>
+
+        <article class="scene" data-ind="wholesale logistics">
+          <div class="sceneTop"><span class="ind">도매·유통</span><h3>이름 잘린 입금</h3></div>
+          <p class="situ">통장에 '가나다유' 이름으로 1,250,000원이 들어왔어요. 이름이 잘려 어느 거래처 돈인지 모르겠어요.</p>
+          <dl class="flow">
+            <div><dt>지금은</dt><dd>비슷한 이름의 거래처 청구서를 하나씩 열어 금액을 맞춰 봐요.</dd></div>
+            <div class="loss"><dt>못 찾으면</dt><dd>미수로 남거나, 다른 거래처 미수를 잘못 지워 엉뚱한 곳에 독촉해요.</dd></div>
+            <div class="fix"><dt>이렇게</dt><dd>금액으로 찾으면 통장 줄과 그 금액을 청구한 거래처 줄이 같이. 쉼표가 있든 없든 찾아요.</dd></div>
+          </dl>
+          <div class="mini">
+            <div class="q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><b>1250000</b><span class="n">일치 2줄 · 파일 2개</span></div>
+            <ul>
+              <li><span class="dt" data-ago="2">2일 전</span><span>가나다유 · 입금 1,250,000<span class="src">통장 거래내역.csv</span></span></li>
+              <li><span class="dt" data-month-ago="1">지난달</span><span>가나다유통(주) · 청구 1,250,000 · 미수 1,250,000<span class="src">거래처청구_<span data-month-ago="1">지난달</span>.xlsx</span></span></li>
+            </ul>
+          </div>
+          <a class="try" href="app/?demo=1&amp;q=1250000">이 장면 직접 해 보기 →</a>
+        </article>
+
+        <article class="scene" data-ind="wholesale">
+          <div class="sceneTop"><span class="ind">도매·유통</span><h3>거래처 지난 거래</h3></div>
+          <p class="situ">"지난번이랑 같은 걸로요. 그때 얼마였죠?" 전화로 바로 답해야 해요.</p>
+          <dl class="flow">
+            <div><dt>지금은</dt><dd>"확인하고 다시 전화드릴게요" 하고 연도별 주문 파일을 뒤져요.</dd></div>
+            <div class="loss"><dt>못 찾으면</dt><dd>다른 단가를 말하거나, 다시 거는 사이 주문을 놓쳐요.</dd></div>
+            <div class="fix"><dt>이렇게</dt><dd>거래처 이름으로 거래 몇 건, 처음·마지막 거래일, 최근 거래가 맨 위에. 연도마다 칸 이름이 달라도 같이 찾아요.</dd></div>
+          </dl>
+          <div class="mini">
+            <div class="q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><b>샘플마트</b><span class="n">일치 8줄</span></div>
+            <ul>
+              <li><span class="dt" data-ago="6">6일 전</span><span>샘플 머그컵 30개 · 단가 6,800<span class="src">주문내역 › 이번 달 탭</span></span></li>
+              <li><span class="dt" data-ago="70">70일 전</span><span>샘플 머그컵 25개 · 단가 6,500<span class="src">주문내역 › 그 달 탭</span></span></li>
+            </ul>
+          </div>
+          <a class="try" href="app/?demo=1&amp;q=%EC%83%98%ED%94%8C%EB%A7%88%ED%8A%B8">이 장면 직접 해 보기 →</a>
+        </article>
+
+        <article class="scene" data-ind="shop">
+          <div class="sceneTop"><span class="ind">쇼핑몰</span><h3>"언제 보냈어요?" 문의</h3></div>
+          <p class="situ">고객이 주문번호만 알려 주며 언제 보냈는지 물어요. 주문은 마켓마다 다른 엑셀에 있어요.</p>
+          <dl class="flow">
+            <div><dt>지금은</dt><dd>마켓별 주문 파일을 하나씩 열어 주문번호를 찾아요.</dd></div>
+            <div class="loss"><dt>못 찾으면</dt><dd>답이 늦어져 취소나 나쁜 후기로 이어져요.</dd></div>
+            <div class="fix"><dt>이렇게</dt><dd>주문번호만 넣으면 어느 마켓 파일이든 출고일·운송장이 바로. 마켓마다 칸 이름이 달라도 돼요.</dd></div>
+          </dl>
+          <div class="mini">
+            <div class="q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><b>31005873412</b><span class="n">일치 1줄</span></div>
+            <ul>
+              <li><span class="dt" data-ago="4">4일 전</span><span>샘플 머그컵 2개 · 운송장 TS-91877<span class="src">쿠팡_주문.xlsx (출고일 기준)</span></span></li>
+            </ul>
+          </div>
+          <a class="try" href="app/?demo=1&amp;q=31005873412">이 장면 직접 해 보기 →</a>
+        </article>
+
+        <article class="scene" data-ind="maker">
+          <div class="sceneTop"><span class="ind">제조·납품</span><h3>불량 로트 추적</h3></div>
+          <p class="situ">"LT-5517 로트에서 불량이 나왔대요. 어디로 나갔죠?" 회수할 곳을 바로 정해야 해요.</p>
+          <dl class="flow">
+            <div><dt>지금은</dt><dd>납품 일지를 월별로 열어 로트번호를 찾아요.</dd></div>
+            <div class="loss"><dt>못 찾으면</dt><dd>범위를 못 정해 전부 회수하거나, 한 곳을 빠뜨려요.</dd></div>
+            <div class="fix"><dt>이렇게</dt><dd>로트번호 하나로 그 로트가 나간 납품처 전부와 품질 기록이 같이 나와요.</dd></div>
+          </dl>
+          <div class="mini">
+            <div class="q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><b>LT-5517</b><span class="n">일치 4줄 · 파일 2개</span></div>
+            <ul>
+              <li><span class="dt" data-ago="1">1일 전</span><span>외관 불량 접수 · 회수 범위 확인 중<span class="src">품질이력.xlsx</span></span></li>
+              <li><span class="dt" data-ago="20">20일 전</span><span>견본 수납함 120개 → 예시유통 <span style="color:var(--faint)">외 2곳</span><span class="src">납품일지.xlsx</span></span></li>
+            </ul>
+          </div>
+          <a class="try" href="app/?demo=1&amp;q=LT-5517">이 장면 직접 해 보기 →</a>
+        </article>
+
+        <article class="scene" data-ind="office">
+          <div class="sceneTop"><span class="ind">사무·고객 관리</span><h3>몇 년 전 계약 증빙</h3></div>
+          <p class="situ">"2019년에 몇 개 샀었죠?" 갱신·분쟁·세무 확인 때 몇 년 전 기록이 필요해요.</p>
+          <dl class="flow">
+            <div><dt>지금은</dt><dd>연도별 파일과 월별 탭 수십 개를 뒤지다 포기해요.</dd></div>
+            <div class="loss"><dt>못 찾으면</dt><dd>증빙을 못 해 손해를 보거나, 갱신 기회를 놓쳐요.</dd></div>
+            <div class="fix"><dt>이렇게</dt><dd>업체 이름으로 몇 년 전 줄까지 빠짐없이, 어느 파일 어느 탭 몇 번째 줄인지까지.</dd></div>
+          </dl>
+          <div class="mini">
+            <div class="q"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><b>한빛샘플</b><span class="n">일치 2줄 · 파일 2개</span></div>
+            <ul>
+              <li><span class="dt">2021-09-02</span><span>한빛샘플(주) · 추가 3개<span class="src">2021_계약관리.xlsx</span></span></li>
+              <li><span class="dt">2019-05-14</span><span>한빛샘플 · 5개<span class="src">2019_계약관리.xlsx › 상반기 · 3행</span></span></li>
+            </ul>
+          </div>
+          <a class="try" href="app/?demo=1&amp;q=%ED%95%9C%EB%B9%9B%EC%83%98%ED%94%8C">이 장면 직접 해 보기 →</a>
+        </article>
+      </div>
+      <p class="note">모든 예시는 가짜 데이터예요. 장면은 실제로 들은 이야기와, 같은 일을 하는 업종에서 흔히 생길 만한 일을 바탕으로 만들었어요.</p>
+    </div>
+  </section>
+
+  <section class="block" id="merge">
+    <div class="wrap">
+      <div class="merge">
+        <div>
+          <div class="kicker">매달 하는 정리는</div>
+          <h2>흩어진 탭·파일을 하나로 모아 조건으로 걸러요</h2>
+          <p class="secLead" style="margin-bottom:14px">월별 탭 12개, 연도별 파일 5개. 같은 양식의 파일과 탭을 한꺼번에 끌어다 놓으면 하나의 표로 모여요.
+            "작년 이맘때 · 서울 · 카드 결제"처럼 칸마다 조건을 걸어 바로 걸러요.</p>
+          <ul>
+            <li><b>칸 순서가 달라도</b> 합쳐요. 제목이 조금 다르면 어떻게 맞출지 물어봐요.</li>
+            <li>메모·요약 탭은 빼고, <b>무엇을 뺐는지</b> 알려 드려요.</li>
+            <li>칠해 둔 <b>셀 색깔</b>로도 걸러요. 수십만 줄도 바로.</li>
+          </ul>
+          <a class="btn ghost" href="app/?sample=1">가짜 주문 1만 건으로 해 보기</a>
+        </div>
+        <div aria-hidden="true">
+          <div class="tabsMock"><span>1월</span><span>2월</span><span>3월</span><span>4월</span><span>5월</span><span>6월</span><span>…</span><span>12월</span><span>2024년.xlsx</span><span>2025년.xlsx</span></div>
+          <div class="arrowDown">↓</div>
+          <div class="grp">
+            <div class="grpHead"><b>하나로 모음</b> · 61개 탭에서 10,000건</div>
+            <div class="tw"><table>
+              <tr><th>출처</th><th>주문일</th><th>지역</th><th>결제</th><th>금액</th></tr>
+              <tr><td>3월</td><td>2025-03-14</td><td>서울</td><td>카드</td><td>48,000</td></tr>
+              <tr><td>2024년</td><td>2024-03-02</td><td>서울</td><td>카드</td><td>31,500</td></tr>
+            </table></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block alt" id="how">
+    <div class="wrap">
+      <div class="kicker">쓰는 법</div>
+      <h2>폴더를 한 번 연결하면 끝이에요</h2>
+      <p class="secLead">엑셀을 고치거나 한곳에 모아 둘 필요가 없어요. 쓰던 폴더 그대로예요.</p>
+      <ol class="steps">
+        <li><h3>폴더 연결</h3><p>엑셀이 쌓이는 폴더를 한 번 골라요(크롬·엣지). 다음부터는 새로 생기거나 바뀐 파일만 다시 읽어요.</p></li>
+        <li><h3>찾을 말 넣기</h3><p>송장번호, 거래처, 금액, 로트번호… 띄어 쓴 그대로 찾고, 여러 말을 같이 찾을 땐 + 로 이어요.</p></li>
+        <li><h3>그 줄과 출처</h3><p>최신순으로, 어느 파일 어느 탭 몇 번째 줄인지까지. 파일마다 다른 칸 제목도 원래 그대로 보여요.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="block" id="safe">
+    <div class="wrap">
+      <div class="kicker">안심하고 쓰세요</div>
+      <h2>회사 파일이 밖으로 나가지 않아요</h2>
+      <div class="safe">
+        <div><h3>어디에도 올리지 않아요</h3><p>이 화면은 내 브라우저 안에서만 돌아가요. 파일을 받는 서버가 없어요.</p></div>
+        <div><h3>설치 없이, 인터넷 없이</h3><p>[오프라인용 내려받기]로 받아 두면 인터넷이 끊겨도 그대로 써요.</p></div>
+        <div><h3>양식 정리 안 해도 돼요</h3><p>맨 위 안내 글, 합계 줄, 메모 탭이 섞여 있어도 그대로 찾아요. 원본 엑셀은 읽기만 해요.</p></div>
+        <div><h3>빠지는 걸 숨기지 않아요</h3><p>암호 걸린 파일·깨진 파일, 수식 오류값·병합된 칸은 목록으로 알려 드려요.</p></div>
+      </div>
+      <div class="stat"><b>0.2~0.4초</b><span>가짜 엑셀 365개 · 36만 5천 줄에서 한 번 찾는 데 걸린 시간 (2026년 11월 측정)</span></div>
+    </div>
+  </section>
+
+  <section class="block alt" id="faq">
+    <div class="wrap">
+      <div class="kicker">자주 묻는 것</div>
+      <h2>궁금한 점</h2>
+      <div class="faq">
+        <details><summary>우리 회사 엑셀은 양식이 제각각인데 되나요?</summary>
+          <p>그대로 두세요. 탭마다 제목 줄을 알아서 찾고, 제목 줄 위에 적힌 안내 글(거래처·기간 등)까지 찾을 수 있게 담아 둬요. 칸을 맞추거나 파일을 고칠 필요가 없어요.</p></details>
+        <details><summary>공유 폴더(NAS)에 있어요.</summary>
+          <p>PC에서 폴더로 열리면 연결할 수 있어요. 다만 공유 폴더는 회사마다 환경이 달라서, 회사에 맞춰 세팅할 때 같이 확인해요.</p></details>
+        <details><summary>어떤 브라우저에서 되나요?</summary>
+          <p>내 폴더 연결은 크롬·엣지에서 돼요. 가짜 회사 폴더 체험은 휴대폰 크롬에서도 볼 수 있어요.</p></details>
+        <details><summary>엑셀 파일이 바뀌거나 지워지지 않나요?</summary>
+          <p>읽기만 해요. 원본 파일은 그대로예요. 찾기용으로 읽어 둔 내용은 이 PC 브라우저 안(또는 직접 고른 폴더)에만 두고, 언제든 지울 수 있어요.</p></details>
+        <details><summary>직원 여러 명이 같이 쓰거나, 우리 일에 맞추고 싶어요.</summary>
+          <p>회사에 맞춰 세팅해 드려요. 아래 문의로 어떤 엑셀에서 무엇을 찾다가 곤란했는지 알려 주세요. 파일은 보내지 않으셔도 돼요.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <div class="wrap">
+      <h2>우리 회사 엑셀에서도 될까요?</h2>
+      <p>어떤 엑셀에서, 무엇을 찾다가 손해를 보셨는지 알려 주세요. 회사 폴더에 맞춰 세팅해 드려요. 혼자 쓰시는 건 지금 바로 무료로 써 보실 수 있어요.</p>
+      <div class="ctaRow">
+        <a class="btn" href="https://johnsongarage.github.io/#contact">문의하기</a>
+        <a class="btn ghost" href="app/?demo=1">가짜 회사 폴더로 해 보기</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>엑셀 모아보기 · 만든 곳 <a href="https://johnsongarage.github.io/">존슨거라지</a></span>
+    <span>이 페이지의 모든 예시는 가짜 데이터예요.</span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  // 예전 주소(?sample=1 등)로 들어오면 앱으로 보낸다 — 첫 화면이 소개 페이지로 바뀌기 전에 퍼진 링크용
+  var p = new URLSearchParams(location.search);
+  if (p.has('sample') || p.has('demo') || p.has('q')) { location.replace('app/' + location.search); return; }
+
+  // 예시 날짜를 오늘 기준으로(앱의 가짜 회사 폴더도 오늘 기준으로 만들어짐)
+  var t = new Date(); t.setHours(0, 0, 0, 0);
+  function iso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  document.querySelectorAll('[data-ago]').forEach(function (e) { e.textContent = iso(new Date(t.getFullYear(), t.getMonth(), t.getDate() - Number(e.getAttribute('data-ago')))); });
+  document.querySelectorAll('[data-month-ago]').forEach(function (e) { e.textContent = iso(new Date(t.getFullYear(), t.getMonth() - Number(e.getAttribute('data-month-ago')), 1)).slice(0, 7); });
+
+  // 업종 고르기
+  var tabs = document.querySelectorAll('.tabs button'), cards = document.querySelectorAll('.scene');
+  tabs.forEach(function (b) {
+    b.addEventListener('click', function () {
+      var ind = b.getAttribute('data-ind');
+      tabs.forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      cards.forEach(function (c) { c.hidden = ind !== 'all' && c.getAttribute('data-ind').split(' ').indexOf(ind) < 0; });
+    });
+  });
+})();
+</script>
+</body>
+</html>
