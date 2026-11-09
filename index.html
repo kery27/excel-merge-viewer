@@ -163,6 +163,10 @@
   .trow > div.num { text-align: right; font-variant-numeric: tabular-nums; }
   .trow > div.src { color: var(--faint); font-size: 12px; }
   .trow > div.fc { filter: var(--fc-filter); }
+  .errv { color: var(--faint) !important; font-style: italic; } /* 엑셀 수식 오류값(#N/A 등) — 데이터가 아니라 표시만 */
+  .ckList { margin: 4px 0 0; padding-left: 20px; line-height: 1.7; }
+  .ckList .pos { color: var(--faint); font-size: 12px; }
+  .introOpt { margin: 10px 0 0; font-size: 13px; color: var(--sub); display: flex; gap: 6px; align-items: center; }
   .trow.rowLoading > div::after { content: ''; display: inline-block; height: 8px; width: 60%; background: var(--line-soft); border-radius: 4px; }
   #empty { position: absolute; left: 0; right: 0; top: 80px; width: 100%; text-align: center; color: var(--faint); font-size: 14px; }
   #activeFiltersBar { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -249,6 +253,8 @@
   #fsStatus .bar { margin-top: 6px; }
   #fsProblems { font-size: 13px; }
   #fsProblems summary { cursor: pointer; color: var(--warn); }
+  #fsProblems summary.ckSum { color: var(--sub); }
+  #fsProblems .ckList { color: var(--sub); max-height: 200px; overflow: auto; }
   #fsProblems ul { margin: 6px 0 0; padding-left: 20px; line-height: 1.7; color: var(--sub); max-height: 160px; overflow: auto; }
   #fsSettings { flex: none; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; font-size: 13px; max-height: 60vh; overflow: auto; }
   #fsSettingsBody { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 28px; }
@@ -334,6 +340,7 @@
       </select>
       <button id="sampleBtn">가짜 데이터로 체험</button>
     </div>
+    <label class="introOpt"><input type="checkbox" id="fillMergedIntro"> 병합된 칸은 위(왼쪽) 칸과 같은 값으로 채워 넣기 <span class="sub">— 끄면 병합 칸은 첫 칸에만 값이 들어가요. 어느 쪽이든 몇 곳인지 알려 드려요</span></label>
     <ul class="rules">
       <li><b>같은 구조</b>끼리 합쳐요 — 첫 줄(제목 줄)의 칸 이름이 같은 탭·파일. 칸 순서는 달라도 괜찮아요.</li>
       <li>제목이 몇 칸만 다르면(오타·새 칸) 어떻게 맞출지 물어보고 합쳐요. 제목이 아예 다른 탭(메모·요약 탭 등)은 빼고, 무엇을 뺐는지 알려 드려요.</li>
@@ -507,6 +514,48 @@ function workerMain() {
     });
   }
   const blank = v => v === undefined || v === null || (typeof v === 'string' && v.replace(/[​ ﻿]/g, '').trim() === '');
+  // ---- 엑셀 점검(projectA "엑셀 점검" scripts/merge-split.real-data-check.html을 가져와 다듬음) ----
+  // 빼지 않고 고쳐 넣은 뒤 무엇을 고쳤는지 알린다(정상/오류 판단은 사람이 — 병합은 넓혀 놓은 칸인 경우가 많았음).
+  // ① 수식 오류값: SheetJS는 빈 글자로 돌려줘서 "원래 빈 칸"과 구별이 안 됨 → '#N/A'처럼 글자로 넣는다
+  // ② 안 보이는 글자(폭 없는 공백·BOM·제어 문자): 값은 그대로, 찾기용 글자에서만 지운다
+  // ③ 병합된 칸: 왼쪽 위 칸에만 값이 있다 → 몇 곳인지 알리고, 설정이 켜져 있으면 같은 값으로 채운다
+  const ERR_TXT = { 0: '#NULL!', 7: '#DIV/0!', 15: '#VALUE!', 23: '#REF!', 29: '#NAME?', 36: '#NUM!', 42: '#N/A', 43: '#GETTING_DATA' };
+  const errText = cell => (cell.w && /^#/.test(cell.w)) ? cell.w : (ERR_TXT[cell.v] || '#오류');
+  const INVIS_TEST = /[\u200b-\u200d\u2060\ufeff\u00ad\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/;
+  const INVIS_ALL = /[\u200b-\u200d\u2060\ufeff\u00ad\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g;
+  const CK_MAX = 30; // 탭마다 위치는 이만큼만 기억(개수는 다 셈)
+  function newChecks() { return { err: 0, inv: 0, merge: 0, filled: 0, at: [] }; }
+  function ckAt(ck, kind, R, col) { if (ck.at.length < CK_MAX) ck.at.push([kind, R, col]); }
+  // 데이터 영역(제목 줄 아래)의 병합만. 반환: 덮인 칸 → 왼쪽 위 칸 키(행 index·칸 index는 rows 기준)
+  function mergeMapOf(ws, r0, c0, h, ck, colName) {
+    const ms = ws['!merges'] || [];
+    let cover = null, tops = null, cells = 0;
+    for (const m of ms) {
+      const sr = m.s.r - r0, sc = m.s.c - c0, er = m.e.r - r0, ec = m.e.c - c0;
+      if (sr <= h) continue; // 제목 줄·그 위 병합은 셈하지 않음
+      ck.merge++;
+      ckAt(ck, 'merge', m.s.r + 1, colName(sc) + (ec > sc ? '~' + colName(ec) : '') + (er > sr ? ' (' + (er - sr + 1) + '줄)' : ''));
+      if (cells > 200000) continue;
+      if (!cover) { cover = new Map(); tops = new Set(); }
+      const top = sr * 16384 + sc;
+      tops.add(top);
+      for (let i = sr; i <= er; i++) for (let j = sc; j <= ec; j++) { if (i === sr && j === sc) continue; cover.set(i * 16384 + j, top); cells++; }
+    }
+    return cover ? { cover, tops, val: new Map() } : null;
+  }
+  // 칸 값 하나 점검·보정 — v: sheet_to_json 값, cell: 원본 칸
+  function fixCell(v, cell, i, j, R, colName, ck, mm, fill) {
+    if (cell && cell.t === 'e') { v = errText(cell); ck.err++; ckAt(ck, 'err', R, colName(j)); }
+    else if (typeof v === 'string' && INVIS_TEST.test(v)) { ck.inv++; ckAt(ck, 'inv', R, colName(j)); }
+    if (mm) {
+      const key = i * 16384 + j;
+      const top = mm.cover.get(key);
+      if (top !== undefined && fill && blank(v) && mm.val.has(top)) { v = mm.val.get(top); ck.filled++; }
+      if (mm.tops.has(key)) mm.val.set(key, v);
+    }
+    return v;
+  }
+
   // 제목 줄 = 위에서 50줄 안의 첫 번째 비어 있지 않은 줄
   function headerRow(rows) {
     for (let i = 0; i < rows.length && i < 50; i++) if ((rows[i] || []).some(v => !blank(v))) return i;
@@ -726,7 +775,8 @@ function workerMain() {
 
   // ---- 넣기: plan = { 파일 이름: [넣을 탭 이름…] }, map = { 원래 제목: 맞출 제목 | '__new__' | '__drop__' } ----
   // 같은 이름의 파일이 이미 있으면 그 파일 몫을 통째로 지우고 새로 넣는다(교체). 전부 한 트랜잭션 — 중간에 실패하면 그대로.
-  async function ingest(files, plan, map) {
+  async function ingest(files, plan, map, opts) {
+    opts = opts || {};
     await ready;
     const t0 = performance.now();
     if (!db) { db = new SQL.Database(); createTable(db); }
@@ -753,11 +803,11 @@ function workerMain() {
           progress({ file: f.name, fileIndex: fi, fileCount: files.length, phase: 'sheet', sheet: sn, sheetIndex: si, sheetCount: names.length });
           let sc = null;
           if (isZip) { try { sc = sheetColors(wb, st, sn); } catch (e) { sc = null; } }
-          sheets.push(ingestSheet(f.name, sn, wb.Sheets[sn], sc, st, map, date1904));
+          sheets.push(ingestSheet(f.name, sn, wb.Sheets[sn], sc, st, map, date1904, !!opts.fillMerged));
           wb.Sheets[sn] = null; // 메모리 바로 풀기
         });
         wb = null;
-        result.push({ name: f.name, replaced: had, sheets, noColor: /\.xls$/i.test(f.name) });
+        result.push({ name: f.name, replaced: had, sheets, noColor: /\.xls$/i.test(f.name), fillMerged: !!opts.fillMerged });
       }
       db.run('COMMIT');
     } catch (e) {
@@ -767,7 +817,7 @@ function workerMain() {
     return { files: result, ms: performance.now() - t0, total: count() };
   }
 
-  function ingestSheet(fileName, sheetName, ws, sc, st, map, date1904) {
+  function ingestSheet(fileName, sheetName, ws, sc, st, map, date1904, fillMerged) {
     const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '', blankrows: true });
     let r0 = 0, c0 = 0;
     try { const rg = XLSX.utils.decode_range(ws['!ref']); r0 = rg.s.r; c0 = rg.s.c; } catch (e) {}
@@ -801,6 +851,9 @@ function workerMain() {
     const stmt = db.prepare('INSERT INTO ' + q(T) + ' (' + colNames.map(q).join(', ') + ') VALUES (' + colNames.map(() => '?').join(', ') + ')');
     const n = targets.length;
     let cnt = 0, colorCells = 0, blankSkipped = 0, kk = 0;
+    const ck = newChecks();
+    const colName = j => raw[j] !== undefined ? raw[j] : '(' + (j + 1) + '번째 칸)';
+    const mm = mergeMapOf(ws, r0, c0, h, ck, colName);
     try {
       for (let i = h + 1; i < rows.length; i++) {
         const row = rows[i] || [];
@@ -808,13 +861,16 @@ function workerMain() {
         const srcRow = ws[r0 + i] || [];
         const vals = new Array(n);
         let any = false;
+        // 병합 채우기는 읽지 않는 칸에 걸린 병합도 따라가야 해서 칸 순서대로 전부 본다
+        if (mm) for (let j = 0; j < raw.length; j++) if (jToK[j] < 0) fixCell(row[j] == null ? '' : row[j], null, i, j, R, colName, newChecks(), mm, fillMerged);
         for (let k = 0; k < n; k++) {
           let v = row[srcIdx[k]];
+          const cell = srcRow[c0 + srcIdx[k]];
           if (v === undefined || v === null) v = '';
           else if (typeof v === 'number') {
-            const cell = srcRow[c0 + srcIdx[k]];
             if (cell && cell.t === 'n' && cell.z && XLSX.SSF.is_date(cell.z)) v = serialToISODate(v, date1904);
           } else if (typeof v === 'boolean') v = v ? 'TRUE' : 'FALSE';
+          v = fixCell(v, cell, i, srcIdx[k], R, colName, ck, mm, fillMerged);
           vals[k] = v;
           if (!any && !blank(v)) any = true;
         }
@@ -832,14 +888,14 @@ function workerMain() {
             if (bg[k] || fc[k]) colorCells++;
           }
         }
-        const args = [fileName, sheetName, R, vals.join('\t').toLowerCase()].concat(vals);
+        const args = [fileName, sheetName, R, vals.join('\t').toLowerCase().replace(INVIS_ALL, '')].concat(vals);
         comps.forEach(([k, , kind]) => args.push(kind === 'b' ? bg[k] : fc[k]));
         stmt.run(args);
         cnt++;
       }
     } finally { stmt.free(); }
     if (!cnt) return { sheet: sheetName, status: 'empty', rows: 0 };
-    return { sheet: sheetName, status: 'ok', rows: cnt, colorCells, cf: !!(sc && sc.cf), blankSkipped, titles: targets };
+    return { sheet: sheetName, status: 'ok', rows: cnt, colorCells, cf: !!(sc && sc.cf), blankSkipped, titles: targets, checks: ck };
   }
 
   // ---- 저장본(.db): 모은 데이터 DB를 통째로. 다시 열 때 엑셀을 읽지 않아 몇십~몇백 밀리초면 열린다 ----
@@ -1037,10 +1093,10 @@ function workerMain() {
   // 모아보기(위 data 표)와 따로 쓰는 DB(fdb). 탭끼리 제목을 맞추지 않는다 — 줄마다 칸 값 목록(JSON)과
   // 검색용 글자(norm: 설정의 "무시" 규칙을 적용한 글자), 날짜(d: 그 탭의 날짜 칸 값, 없으면 파일 수정일)만 따로 둔다.
   // 설정을 바꾸면 norm만 다시 만든다(원본 값은 vals에 그대로 있어 엑셀을 다시 읽을 필요 없음).
-  const FS_APP = 'excel-merge-viewer-folder', FS_VERSION = 1;
-  let fdb = null, fnorm = null;
+  const FS_APP = 'excel-merge-viewer-folder', FS_VERSION = 2; // 2: 엑셀 점검 결과(f_files.checks)
+  let fdb = null, fnorm = null, fsFill = false; // fsFill: 병합 칸 채우기(설정)
   function fsCreate(d) {
-    d.run('CREATE TABLE IF NOT EXISTS f_files (path TEXT PRIMARY KEY, size INTEGER, mtime INTEGER, status TEXT, error TEXT, rows INTEGER, sheets INTEGER)');
+    d.run('CREATE TABLE IF NOT EXISTS f_files (path TEXT PRIMARY KEY, size INTEGER, mtime INTEGER, status TEXT, error TEXT, rows INTEGER, sheets INTEGER, checks TEXT)');
     d.run('CREATE TABLE IF NOT EXISTS f_sheets (id INTEGER PRIMARY KEY, path TEXT, sheet TEXT, headers TEXT, header_row INTEGER, date_col INTEGER, date_name TEXT, rows INTEGER)');
     d.run('CREATE INDEX IF NOT EXISTS f_sheets_path ON f_sheets (path)');
     d.run('CREATE TABLE IF NOT EXISTS f_rows (sheet INTEGER, rowno INTEGER, vals TEXT, norm TEXT, d TEXT)');
@@ -1053,7 +1109,7 @@ function workerMain() {
   // 검색용 글자 만들기 — 검색어에도 똑같이 적용한다
   const COMPANY_RE = /\(주\)|㈜|주식회사|\(유\)|㈲|유한회사/g;
   function normText(s, o) {
-    s = String(s == null ? '' : s);
+    s = String(s == null ? '' : s).replace(INVIS_ALL, ''); // 안 보이는 글자는 설정과 상관없이 늘 무시
     if (o.caseI) s = s.toLowerCase();
     if (o.space) s = s.replace(/[\s 　​﻿]+/g, '');
     if (o.company) s = s.replace(o.space ? COMPANY_RE : /\(\s*주\s*\)|㈜|주식회사|\(\s*유\s*\)|㈲|유한회사/g, '');
@@ -1082,7 +1138,7 @@ function workerMain() {
     return Object.assign(fsState(), { reset, renormed, folder: fsMetaGet('folder') });
   }
   function fsState() {
-    const files = fdb.exec('SELECT path, size, mtime, status, error, rows, sheets FROM f_files');
+    const files = fdb.exec('SELECT path, size, mtime, status, error, rows, sheets, checks FROM f_files');
     const tot = fdb.exec('SELECT COUNT(*) FROM f_rows')[0].values[0][0];
     return { files: files.length ? files[0].values : [], rows: tot };
   }
@@ -1148,7 +1204,7 @@ function workerMain() {
     fdb.run('BEGIN');
     try {
       fsDropPath(f.path);
-      fdb.run('INSERT INTO f_files VALUES (?, ?, ?, ?, ?, 0, 0)', [f.path, f.size, f.mtime, status, error || null]);
+      fdb.run('INSERT INTO f_files VALUES (?, ?, ?, ?, ?, 0, 0, NULL)', [f.path, f.size, f.mtime, status, error || null]);
       fdb.run('COMMIT');
     } catch (e) { fdb.run('ROLLBACK'); throw e; }
   }
@@ -1174,6 +1230,7 @@ function workerMain() {
     const fileDate = new Date(f.mtime);
     const fileISO = fileDate.getFullYear() + '-' + String(fileDate.getMonth() + 1).padStart(2, '0') + '-' + String(fileDate.getDate()).padStart(2, '0');
     let total = 0, nSheets = 0;
+    const fck = { err: 0, inv: 0, merge: 0, filled: 0, at: [] }; // 파일 전체 점검(위치에는 탭 이름도)
     fdb.run('BEGIN');
     try {
       fsDropPath(f.path);
@@ -1189,19 +1246,25 @@ function workerMain() {
           try { const rg = XLSX.utils.decode_range(ws['!ref']); r0 = rg.s.r; c0 = rg.s.c; } catch (e) {}
           const h = fsHeaderRow(rows);
           if (h < 0) return;
-          // 값: 서식이 날짜인 숫자 칸만 'YYYY-MM-DD'로(모아보기와 같은 규칙), 나머지는 원래 값
+          const hdr = makeHeader(rows[h]);
+          const colName = j => hdr[j] !== undefined ? hdr[j] : '(' + (j + 1) + '번째 칸)';
+          const ck = newChecks();
+          const mm = mergeMapOf(ws, r0, c0, h, ck, colName);
+          // 값: 서식이 날짜인 숫자 칸만 'YYYY-MM-DD'로(모아보기와 같은 규칙), 나머지는 원래 값. 오류값·병합은 fixCell에서
           const body = [];
           let width = 0;
           for (let i = h + 1; i < rows.length; i++) {
             const row = rows[i] || [], srcRow = ws[r0 + i] || [];
+            const R = r0 + i + 1;
             let any = false;
             const vals = row.map((v, j) => {
+              const cell = srcRow[c0 + j];
               if (v === undefined || v === null) v = '';
               else if (typeof v === 'number') {
-                const cell = srcRow[c0 + j];
                 if (cell && cell.t === 'n' && cell.z && XLSX.SSF.is_date(cell.z)) v = serialToISODate(v, date1904);
               } else if (typeof v === 'boolean') v = v ? 'TRUE' : 'FALSE';
               else if (typeof v === 'string') v = v.replace(/\r\n?/g, '\n');
+              v = fixCell(v, cell, i, j, R, colName, ck, mm, fsFill);
               if (!any && !blank(v)) any = true;
               return v;
             });
@@ -1210,7 +1273,9 @@ function workerMain() {
             width = Math.max(width, vals.length);
             body.push([r0 + i + 1, vals]);
           }
-          const headers = makeHeader(rows[h]);
+          ['err', 'inv', 'merge', 'filled'].forEach(k => { fck[k] += ck[k]; });
+          ck.at.forEach(a => { if (fck.at.length < CK_MAX) fck.at.push([a[0], sn, a[1], a[2]]); });
+          const headers = hdr;
           for (let j = headers.length; j < width; j++) headers.push('(제목 없음 ' + (j + 1) + ')');
           if (!body.length && !headers.length) return;
           const dc = pickDateCol(headers, body.map(b => b[1]));
@@ -1224,10 +1289,11 @@ function workerMain() {
           total += body.length; nSheets++;
         });
       } finally { insSheet.free(); insRow.free(); }
-      fdb.run('INSERT INTO f_files VALUES (?, ?, ?, ?, NULL, ?, ?)', [f.path, f.size, f.mtime, 'ok', total, nSheets]);
+      const hasCk = fck.err || fck.inv || fck.merge;
+      fdb.run('INSERT INTO f_files VALUES (?, ?, ?, ?, NULL, ?, ?, ?)', [f.path, f.size, f.mtime, 'ok', total, nSheets, hasCk ? JSON.stringify(fck) : null]);
       fdb.run('COMMIT');
     } catch (e) { fdb.run('ROLLBACK'); throw e; }
-    return { status: 'ok', rows: total, sheets: nSheets, ms: performance.now() - t0 };
+    return { status: 'ok', rows: total, sheets: nSheets, checks: (fck.err || fck.inv || fck.merge) ? fck : null, ms: performance.now() - t0 };
   }
 
   // 설정의 "무시" 규칙이 바뀌면 검색용 글자만 다시 만든다
@@ -1291,7 +1357,7 @@ function workerMain() {
       await ready;
       let result, transfer = [];
       if (cmd === 'preview') result = preview(e.data.files);
-      else if (cmd === 'ingest') { result = await ingest(e.data.files, e.data.plan, e.data.map); pending = new Map(); }
+      else if (cmd === 'ingest') { result = await ingest(e.data.files, e.data.plan, e.data.map, e.data.opts); pending = new Map(); }
       else if (cmd === 'dropPending') { pending = new Map(); result = true; }
       else if (cmd === 'exec') result = db ? db.exec(e.data.sql, e.data.params || []) : [];
       else if (cmd === 'rowids') {
@@ -1330,7 +1396,7 @@ function workerMain() {
       else if (cmd === 'reset') { if (db) db.close(); db = null; result = true; }
       // 폴더 찾아보기
       else if (cmd === 'fsInit') result = fsInit(e.data.buffer, e.data.norm);
-      else if (cmd === 'fsIndex') result = fsIndexFile(e.data.file);
+      else if (cmd === 'fsIndex') { fsFill = !!e.data.fill; result = fsIndexFile(e.data.file); }
       else if (cmd === 'fsMark') { fsMark(e.data.file, e.data.status, e.data.error); result = true; }
       else if (cmd === 'fsRemove') result = fsRemove(e.data.paths);
       else if (cmd === 'fsState') result = fsState();
@@ -1401,6 +1467,23 @@ const qi = name => '"' + String(name).replace(/"/g, '""') + '"';
 const sqlStr = v => "'" + String(v).replace(/'/g, "''") + "'";
 // 색 값은 '#rrggbb' 꼴만 화면에 넣는다 — 누가 조작한 .db 저장본의 색 칸에 코드를 넣어도 style 속성을 깨고 실행되지 않게
 function safeColor(v) { return typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v) ? v : null; }
+// 엑셀 수식 오류값(작업 스레드가 빈 칸 대신 글자로 넣음) — 흐리게 표시
+const ERR_VAL_RE = /^#(NULL!|DIV\/0!|VALUE!|REF!|NAME\?|NUM!|N\/A|GETTING_DATA|오류)$/;
+const isErrVal = v => typeof v === 'string' && ERR_VAL_RE.test(v);
+// 엑셀 점검 결과 → 요약용 목록. items: [{ where, ck: { err, inv, merge, filled, at: [[kind, (탭,) 행, 칸]...] } }]
+const CK_LABEL = { err: '오류값', inv: '안 보이는 글자', merge: '병합' };
+function checksHtml(items, fill) {
+  const li = items.filter(x => x.ck && (x.ck.err || x.ck.inv || x.ck.merge)).map(({ where, ck }) => {
+    const parts = [];
+    if (ck.err) parts.push('수식 오류값 <b>' + fmt(ck.err) + '칸</b>(빈 칸 대신 #N/A처럼 글자로 넣음)');
+    if (ck.merge) parts.push('병합된 칸 <b>' + fmt(ck.merge) + '곳</b>(' + (fill ? '같은 값으로 ' + fmt(ck.filled) + '칸 채움' : '첫 칸에만 값 — 채우려면 "병합된 칸 채우기"를 켜고 다시 읽기') + ')');
+    if (ck.inv) parts.push('안 보이는 글자가 든 칸 <b>' + fmt(ck.inv) + '칸</b>(값은 그대로, 찾을 때는 무시)');
+    const pos = ck.at.map(a => a.length === 4 ? esc(a[1]) + ' ' + a[2] + '행 ' + esc(a[3]) + '(' + CK_LABEL[a[0]] + ')' : a[1] + '행 ' + esc(a[2]) + '(' + CK_LABEL[a[0]] + ')');
+    const more = ck.err + ck.inv + ck.merge - ck.at.length;
+    return '<li><b>' + esc(where) + '</b> — ' + parts.join(' · ') + (pos.length ? '<br><span class="pos">위치: ' + pos.join(', ') + (more > 0 ? ' 외 ' + fmt(more) + '곳' : '') + '</span>' : '') + '</li>';
+  });
+  return li.length ? { n: li.length, html: '<ul class="ckList">' + li.join('') + '</ul>' } : null;
+}
 function inkOn(hex) {
   const v = parseInt(hex.slice(1), 16), r = v >> 16 & 255, g = v >> 8 & 255, b = v & 255;
   return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#1d2433' : '#ffffff';
@@ -1624,7 +1707,7 @@ async function applyStaged() {
   $('#progTitle').textContent = '파일 ' + files.length + '개를 합치는 중이에요';
   setProgress('파일 여는 중…', 0);
   let res;
-  try { res = await call('ingest', { files, plan: want, map }); }
+  try { res = await call('ingest', { files, plan: want, map, opts: { fillMerged: !!fsCfg.fillMerged } }); }
   catch (e) { notify('합치는 중 문제가 생겼어요. 아무것도 바뀌지 않았어요: ' + e.message); show(total ? '#view' : '#intro'); return; }
   // 넣은 파일 요약 = 넣은 탭(워커 결과) + 합치지 않은 탭(이번 결정)
   res.files.forEach(f => {
@@ -1740,6 +1823,11 @@ function renderSummary() {
   });
   if (colorCells) html += '<div style="margin-top:4px">색칠된 칸 <b>' + fmt(colorCells) + '개</b>를 같이 읽었어요 · 칸 제목 옆 ▾에서 배경색·글자색으로도 거를 수 있어요</div>';
   if (colorNotes.length) html += '<details><summary>색 정보 안내 ' + colorNotes.length + '개</summary><ul>' + colorNotes.join('') + '</ul></details>';
+  // 엑셀 점검: 오류값·병합·안 보이는 글자
+  const ckItems = [];
+  loadLog.forEach(f => f.sheets.forEach(x => { if (x.status === 'ok' && x.checks) ckItems.push({ where: f.name + ' › ' + x.sheet, ck: x.checks }); }));
+  const ckh = checksHtml(ckItems, loadLog.some(f => f.fillMerged));
+  if (ckh) html += '<details><summary>확인할 것 ' + ckh.n + '곳 — 엑셀에 있는 그대로는 보여 줄 수 없는 칸</summary>' + ckh.html + '</details>';
   $('#summary').innerHTML = html;
 }
 $('#summary').addEventListener('click', async e => {
@@ -2290,7 +2378,7 @@ function paintVisible() {
     for (const c of columns) {
       const { s, fcOnly } = cellStyle(c, r);
       const v = formatCellValue(c, r[c]);
-      html += '<div class="' + (numericColumns.includes(c) ? 'num' : '') + (fcOnly ? ' fc' : '') + '" style="width:' + colWidths[c] + 'px;' + s + '" title="' + esc(v) + '">' + esc(v) + '</div>';
+      html += '<div class="' + (numericColumns.includes(c) ? 'num' : '') + (fcOnly ? ' fc' : '') + (isErrVal(r[c]) ? ' errv' : '') + '" style="width:' + colWidths[c] + 'px;' + s + '" title="' + esc(v) + '">' + esc(v) + '</div>';
     }
     html += '</div>';
   }
@@ -2317,7 +2405,7 @@ function openDetail(r) {
     columns.map(c => {
       const { s } = cellStyle(c, r);
       const v = formatCellValue(c, r[c]);
-      return '<div class="detailRow"><div class="detailLabel">' + esc(c) + '</div><div class="detailValue"' + (s ? ' style="' + s + '"' : '') + '>' +
+      return '<div class="detailRow"><div class="detailLabel">' + esc(c) + '</div><div class="detailValue' + (isErrVal(r[c]) ? ' errv' : '') + '"' + (s ? ' style="' + s + '"' : '') + '>' +
         (v === '' ? '<span style="color:var(--faint)">-</span>' : esc(v)) + '</div></div>';
     }).join('');
   $('#detailOverlay').hidden = false;
@@ -2839,6 +2927,7 @@ const FS_DEFAULTS = {
   checkOnOpen: true,
   watch: true,
   space: true, caseI: true, comma: true, company: true,
+  fillMerged: false,     // 병합된 칸을 같은 값으로 채우기(두 입구 공용)
   order: 'new',          // new | old | file
   period: 'all',         // all | 7 | 30 | 90 | 365
   cap: 10000
@@ -2978,7 +3067,7 @@ async function fsLoadStore() {
     }
   } catch (e) {}
   const res = await call('fsInit', { buffer: buf, norm: fsNorm() }, buf ? [buf] : []);
-  fs.known = new Map(res.files.map(v => [v[0], { size: v[1], mtime: v[2], status: v[3], error: v[4], rows: v[5] }]));
+  fs.known = new Map(res.files.map(v => [v[0], { size: v[1], mtime: v[2], status: v[3], error: v[4], rows: v[5], checks: v[7] ? JSON.parse(v[7]) : null }]));
   fs.rows = res.rows;
   fs.ready = true;
   fs.savedFolder = res.folder;
@@ -3088,13 +3177,13 @@ async function fsSyncOnce(why) {
     } else {
       try {
         const buf = await (await f.handle.getFile()).arrayBuffer();
-        res = await call('fsIndex', { file: Object.assign(meta, { buffer: buf }) }, [buf]);
+        res = await call('fsIndex', { file: Object.assign(meta, { buffer: buf }), fill: !!fsCfg.fillMerged }, [buf]);
       } catch (e) {
         const why = /NotReadable|NotFound/i.test(e.name || '') ? '열 수 없어요(다른 프로그램이 쓰는 중이거나 지워짐)' : '읽다가 문제가 생겼어요: ' + (e.message || e);
         await call('fsMark', { file: meta, status: 'error', error: why }); res = { status: 'error', error: why };
       }
     }
-    fs.known.set(f.path, { size: f.size, mtime: f.mtime, status: res.status, error: res.error || null, rows: res.rows || 0 });
+    fs.known.set(f.path, { size: f.size, mtime: f.mtime, status: res.status, error: res.error || null, rows: res.rows || 0, checks: res.checks || null });
     readRows += res.rows || 0;
     fs.rows = (await call('fsState')).rows;
     fs.readThrough = f.mtime;
@@ -3182,11 +3271,11 @@ function fsRenderTop() {
     (fs.lastCheck ? ' · 마지막 확인 ' + hm(fs.lastCheck) : '') +
     (fs.observer ? ' · <span title="파일이 생기거나 바뀌면 바로 다시 읽어요">변경 감지 켜짐</span>' : '');
   const pb = $('#fsProblems');
-  pb.hidden = !bad.length;
-  if (bad.length) {
-    pb.innerHTML = '<details><summary>못 읽은 파일 ' + bad.length + '개 — 이 파일들의 내용은 찾기에 나오지 않아요</summary><ul>' +
-      bad.sort((a, b) => a[0].localeCompare(b[0], 'ko')).map(([p, f]) => '<li><b>' + esc(p) + '</b> — ' + esc(f.error || '읽지 못했어요') + '</li>').join('') + '</ul></details>';
-  }
+  const ckh = checksHtml([...fs.known.entries()].filter(([, f]) => f.status === 'ok' && f.checks).sort((a, b) => a[0].localeCompare(b[0], 'ko')).map(([p, f]) => ({ where: p, ck: f.checks })), fsCfg.fillMerged);
+  pb.hidden = !bad.length && !ckh;
+  pb.innerHTML = (bad.length ? '<details><summary>못 읽은 파일 ' + bad.length + '개 — 이 파일들의 내용은 찾기에 나오지 않아요</summary><ul>' +
+      bad.sort((a, b) => a[0].localeCompare(b[0], 'ko')).map(([p, f]) => '<li><b>' + esc(p) + '</b> — ' + esc(f.error || '읽지 못했어요') + '</li>').join('') + '</ul></details>' : '') +
+    (ckh ? '<details><summary class="ckSum">확인할 것 ' + ckh.n + '개 파일 — 엑셀에 있는 그대로는 보여 줄 수 없는 칸(빼지 않고 넣었어요)</summary>' + ckh.html + '</details>' : '');
 }
 
 // ---- 찾기 ----
@@ -3238,6 +3327,7 @@ function fsCellHit(v, terms) {
   return terms.some(t => n.includes(t));
 }
 function fsNormJs(s) {
+  s = s.replace(/[\u200b-\u200d\u2060\ufeff\u00ad\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, '');
   if (fsCfg.caseI) s = s.toLowerCase();
   if (fsCfg.space) s = s.replace(/[\s 　​﻿]+/g, '');
   if (fsCfg.company) s = s.replace(fsCfg.space ? /\(주\)|㈜|주식회사|\(유\)|㈲|유한회사/g : /\(\s*주\s*\)|㈜|주식회사|\(\s*유\s*\)|㈲|유한회사/g, '');
@@ -3282,7 +3372,7 @@ function fsRowHtml(row, s, terms, idx) {
   let tds = '';
   for (let j = 0; j < n; j++) {
     const v = vals[j] == null ? '' : vals[j];
-    tds += '<td' + (fsCellHit(v, terms) ? ' class="hit"' : typeof v === 'number' ? ' class="num"' : '') + '>' + esc(fsFmt(v)) + '</td>';
+    tds += '<td' + (fsCellHit(v, terms) ? ' class="hit"' : typeof v === 'number' ? ' class="num"' : isErrVal(v) ? ' class="errv"' : '') + '>' + esc(fsFmt(v)) + '</td>';
   }
   return '<tr data-i="' + idx + '"><td class="fsD">' + esc(row[3]) + '</td><td class="fsR">' + row[1] + '</td>' + tds + '</tr>';
 }
@@ -3296,7 +3386,7 @@ function fsOpenDetail(idx) {
     '<div class="detailRow"><div class="detailLabel">날짜</div><div class="detailValue">' + esc(row[3]) + ' <span class="sub">(' + (s.dateCol >= 0 ? '"' + esc(s.dateName) + '" 칸' : '파일 수정일 — 날짜 칸을 못 찾음') + ')</span></div></div>' +
     s.headers.map((h, j) => {
       const v = vals[j] == null ? '' : fsFmt(vals[j]);
-      return '<div class="detailRow"><div class="detailLabel">' + esc(h) + '</div><div class="detailValue' + (fsCellHit(v, r.terms) ? ' hit' : '') + '">' +
+      return '<div class="detailRow"><div class="detailLabel">' + esc(h) + '</div><div class="detailValue' + (fsCellHit(v, r.terms) ? ' hit' : isErrVal(v) ? ' errv' : '') + '">' +
         (v === '' ? '<span style="color:var(--faint)">-</span>' : esc(v)) + '</div></div>';
     }).join('') +
     '<div class="detailRow"><div class="detailLabel">제목 줄</div><div class="detailValue sub">엑셀 ' + s.headerRow + '행 · 파일 수정 ' + esc(when(s.mtime)) + '</div></div>';
@@ -3319,6 +3409,7 @@ function fsRenderSettings() {
       '<label>이름에 이 글자가 들어간 파일은 건너뛰기 <span class="sub">(쉼표로 여러 개 · ~$ 임시 파일과 숨김 파일은 늘 건너뜀)</span><input type="text" data-k="skip" value="' + esc(c.skip) + '"></label>' +
       '<label>파일 크기 상한 <select data-k="maxMB">' + [[50, '50MB'], [100, '100MB'], [200, '200MB'], [500, '500MB'], [0, '제한 없음']].map(([v, t]) => '<option value="' + v + '"' + (c.maxMB === v ? ' selected' : '') + '>' + t + '</option>').join('') + '</select></label>' +
       '<label>읽는 순서 <select data-k="readOrder"><option value="recent"' + (c.readOrder === 'recent' ? ' selected' : '') + '>최근에 고친 파일부터</option><option value="name"' + (c.readOrder === 'name' ? ' selected' : '') + '>이름순</option></select></label>' +
+      ck('fillMerged', '병합된 칸은 같은 값으로 채우기', '(바꾸면 전부 다시 읽음 · 파일 모아보기에도 같이 적용)') +
       ck('checkOnOpen', '열 때 바뀐 파일 다시 확인') + ck('watch', '열려 있는 동안 변경 감지', typeof window.FileSystemObserver === 'function' ? '' : '(이 브라우저는 바로 감지를 못 해서, 이 창으로 돌아올 때 확인)') + '</div>' +
     '<div class="fsSet"><h4>찾을 때 무시할 차이</h4>' + ck('space', '띄어쓰기', '"테스트 상사" = "테스트상사"') + ck('caseI', '대소문자', 'abc-1 = ABC-1') + ck('comma', '숫자 쉼표', '1,000 = 1000') + ck('company', '회사 표기', '(주)·㈜·주식회사·(유)·유한회사') + '</div>' +
     '<div class="fsSet"><h4>결과</h4>' +
@@ -3359,6 +3450,10 @@ async function fsSettingChanged(k, before) {
   } else if (['sub', 'types', 'skip', 'maxMB'].includes(k)) {
     // 읽을 파일 규칙이 바뀌면: 크기 상한 때문에 못 읽었던 파일은 다시 읽어 보고, 이제 빠지는 파일은 결과에서 뺀다
     if (k === 'maxMB') for (const [p, f] of fs.known) if (f.status === 'big') f.size = -1;
+    fsSync('settings');
+  } else if (k === 'fillMerged') {
+    $('#fillMergedIntro').checked = !!fsCfg.fillMerged;
+    for (const f of fs.known.values()) if (f.status === 'ok') f.size = -1; // 전부 다시 읽기
     fsSync('settings');
   } else if (k === 'watch') fsStartWatch();
   else if (k === 'order' || k === 'period' || k === 'cap') { if (k === 'period') { fs.period = null; fsRenderPeriod(); } fsRefreshResults(); }
@@ -3421,6 +3516,8 @@ $('#fsSettings').addEventListener('click', async e => {
     if (fsNormJsSig(prev) !== fsNormJsSig(fsCfg)) await fsSettingChanged('space');
     if (prev.sub !== fsCfg.sub || prev.skip !== fsCfg.skip || prev.maxMB !== fsCfg.maxMB || JSON.stringify(prev.types) !== JSON.stringify(fsCfg.types)) fsSync('settings');
     if (prev.store !== fsCfg.store) { fs.dirtySince = Date.now(); await fsSave(); }
+    $('#fillMergedIntro').checked = !!fsCfg.fillMerged;
+    if (prev.fillMerged !== fsCfg.fillMerged) { for (const f of fs.known.values()) if (f.status === 'ok') f.size = -1; fsSync('settings'); }
     fsRefreshResults();
   } else if (e.target.id === 'fsStorePick') {
     try {
@@ -3445,6 +3542,8 @@ $('#fsSettings').addEventListener('click', async e => {
 });
 const fsNormJsSig = c => [c.space, c.caseI, c.comma, c.company].join();
 fsRenderPeriod();
+$('#fillMergedIntro').checked = !!fsCfg.fillMerged;
+$('#fillMergedIntro').addEventListener('change', e => { fsCfg.fillMerged = e.target.checked; saveFsSettings(); });
 
 // 자동 테스트용: 폴더 고르기 창 없이 폴더 핸들을 넘겨 연결(헤드리스 크롬은 고르기 창을 못 띄움). 화면에서는 쓰지 않음.
 window.__fsTest = { useDir: async d => { if (!fs.ready) await fsLoadStore(); show('#folder'); return fsUseDir(d, true); }, sync: () => fsSync('test'), state: () => fs, save: fsSave };
