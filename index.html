@@ -226,7 +226,69 @@
   .roleBanner { margin-top: 4px; color: var(--ink); }
   #savePanel .wide { grid-column: 1 / -1; border-top: 1px solid var(--line-soft); padding-top: 10px; }
 
-</style></style>
+  /* ---- 첫 화면 입구 두 개 ---- */
+  .entries { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 0 14px; }
+  .entry { text-align: left; display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font-size: 13px; line-height: 1.5; }
+  .entry span { color: var(--sub); }
+  .entry.on { border-color: var(--accent); background: var(--accent-soft); }
+  button.entry:hover { border-color: var(--accent); }
+  button.entry b { color: var(--accent); }
+
+  /* ---- 폴더 찾아보기 ---- */
+  #folder { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; }
+  .fsTop { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; font-size: 13px; }
+  .fsTop .what { flex: 1; min-width: 200px; color: var(--sub); line-height: 1.6; }
+  .fsTop .what b { color: var(--ink); }
+  #fsFolderName { font-weight: 800; color: var(--ink); margin-right: 6px; }
+  .warnTxt { color: var(--warn); }
+  #fsConnect { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 22px 20px; text-align: center; font-size: 14px; line-height: 1.7; color: var(--sub); }
+  #fsConnect .row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  #fsMsg { display: flex; gap: 10px; align-items: flex-start; border-radius: 10px; padding: 10px 14px; font-size: 13px; line-height: 1.6; background: var(--accent-soft); border: 1px solid var(--accent); }
+  #fsMsg.warn { background: var(--warn-soft); border-color: var(--warn); }
+  #fsStatus { font-size: 13px; color: var(--sub); line-height: 1.6; }
+  #fsStatus .bar { margin-top: 6px; }
+  #fsProblems { font-size: 13px; }
+  #fsProblems summary { cursor: pointer; color: var(--warn); }
+  #fsProblems ul { margin: 6px 0 0; padding-left: 20px; line-height: 1.7; color: var(--sub); max-height: 160px; overflow: auto; }
+  #fsSettings { flex: none; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; font-size: 13px; max-height: 60vh; overflow: auto; }
+  #fsSettingsBody { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 28px; }
+  .fsSet h4 { margin: 0 0 6px; font-size: 13px; }
+  .fsSet label { display: block; margin: 4px 0; color: var(--ink); }
+  .fsSet .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 4px 0; }
+  .fsSet.wide { grid-column: 1 / -1; border-top: 1px solid var(--line-soft); padding-top: 10px; }
+  .fsSet input[type=text], .fsSet select { padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--field); color: var(--ink); margin-left: 4px; }
+  .fsSet input[type=text] { display: block; width: 100%; margin: 4px 0 0; }
+  .fsSet .sub, #fsStoreInfo { line-height: 1.6; }
+  .fsBar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  #fsQ { flex: 1; min-width: 220px; padding: 10px 12px; font-size: 15px; border: 1px solid var(--line); border-radius: 8px; background: var(--field); color: var(--ink); }
+  #fsQ:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--focus); }
+  #fsPeriod { display: flex; gap: 4px; }
+  #fsPeriod button { padding: 6px 10px; font-size: 13px; }
+  #fsSummary { font-size: 13px; color: var(--sub); line-height: 1.7; }
+  #fsSummary b { color: var(--ink); }
+  #fsResults { flex: 1; min-height: 200px; overflow: auto; display: flex; flex-direction: column; gap: 12px; padding-bottom: 12px; }
+  .fsHint { color: var(--sub); font-size: 13px; line-height: 1.7; padding: 20px; text-align: center; }
+  .fsGroup { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; flex: none; }
+  .fsGroupHead { padding: 8px 12px; font-size: 12.5px; color: var(--sub); border-bottom: 1px solid var(--line); word-break: break-all; }
+  .fsGroupHead b { color: var(--ink); }
+  .fsTableWrap { overflow-x: auto; }
+  .fsTable { border-collapse: collapse; font-size: 13px; white-space: nowrap; }
+  .fsTable th { background: var(--head-bg); color: var(--sub); font-weight: 700; font-size: 12px; text-align: left; padding: 6px 10px; border-right: 1px solid var(--line-soft); border-bottom: 1px solid var(--line); }
+  .fsTable td { padding: 5px 10px; border-right: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft); max-width: 320px; overflow: hidden; text-overflow: ellipsis; }
+  .fsTable td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .fsTable td.hit, .detailValue.hit { background: #fff1a8; color: #1d2433; }
+  .fsTable .fsD { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; background: var(--accent-soft); }
+  .fsTable th.fsD { color: var(--accent); }
+  .fsTable .fsR { color: var(--faint); font-size: 12px; text-align: right; }
+  .fsTable tbody tr { cursor: pointer; }
+  .fsTable tbody tr:hover td { background: var(--row-hover); }
+  .fsTable tbody tr:hover td.hit { background: #ffe066; }
+  .fsMore { text-align: center; padding: 4px; }
+  @media (max-width: 640px) {
+    .entries { grid-template-columns: 1fr; }
+    #fsSettingsBody { grid-template-columns: 1fr; }
+  }
+</style>
 </head>
 <body>
 <header class="top">
@@ -254,6 +316,10 @@
     </div>
     <h1>엑셀 여러 개를 던지면, 하나로 모아 바로 찾아봅니다</h1>
     <p class="lead">월별 탭, 연도별 파일로 흩어진 데이터를 한 화면에서 조건으로 걸러 보세요.<br>파일은 이 PC 밖으로 나가지 않아요. 인터넷이 없어도 됩니다.</p>
+    <div class="entries">
+      <div class="entry on"><b>파일 모아보기</b><span>같은 구조의 엑셀을 하나로 합쳐 칸 조건으로 걸러 봐요 — 아래에 파일을 끌어다 놓으세요</span></div>
+      <button type="button" class="entry" id="openFolderBtn"><b>폴더 찾아보기 →</b><span>폴더를 한 번 연결해 두면 키워드 하나로 그 안의 모든 엑셀에서 그 줄을 찾아요. 제목 형식이 달라도 돼요</span></button>
+    </div>
     <div id="drop">
       <strong>엑셀·CSV 파일을 여기로 끌어다 놓으세요</strong>
       <span>여러 개를 한꺼번에 넣어도 돼요 · 저장해 둔 .db 파일도 여기로 · 또는 눌러서 파일 고르기</span>
@@ -273,6 +339,31 @@
       <li>제목이 몇 칸만 다르면(오타·새 칸) 어떻게 맞출지 물어보고 합쳐요. 제목이 아예 다른 탭(메모·요약 탭 등)은 빼고, 무엇을 뺐는지 알려 드려요.</li>
       <li>같은 이름의 파일을 다시 넣으면 새 파일 내용으로 바꿔요.</li>
     </ul>
+  </section>
+
+  <section id="folder" hidden>
+    <div class="fsTop">
+      <button id="fsBack" class="ghost">← 처음 화면</button>
+      <div class="what"><span id="fsFolderName"></span><span id="fsFolderInfo"></span></div>
+      <button id="fsRescan" class="ghost">다시 확인</button>
+      <button id="fsSettingsBtn" class="ghost">설정</button>
+    </div>
+    <div id="fsMsg" hidden></div>
+    <div id="fsConnect" hidden>
+      <div id="fsConnectText"></div>
+      <div class="row"><button id="fsAllowBtn" hidden></button><button id="fsConnectBtn">폴더 연결</button></div>
+    </div>
+    <div id="fsSettings" hidden><div id="fsSettingsBody"></div></div>
+    <div id="fsMain" hidden style="display:contents">
+      <div id="fsStatus" hidden><span id="fsStatusText"></span><div class="bar"><i id="fsBar"></i></div></div>
+      <div id="fsProblems" hidden></div>
+      <div class="fsBar">
+        <input id="fsQ" type="search" placeholder="업체명·상품코드·송장번호… (띄어 쓰면 모두 들어간 줄만)" autocomplete="off">
+        <div id="fsPeriod"></div>
+      </div>
+      <div id="fsSummary"></div>
+      <div id="fsResults"></div>
+    </div>
   </section>
 
   <section id="progress" hidden>
@@ -942,6 +1033,258 @@ function workerMain() {
   }
 
 
+  // ===== 폴더 찾아보기: 폴더 안 엑셀을 탭마다 "원래 제목 그대로" 담아 두고 키워드로 그 줄을 찾는다 =====
+  // 모아보기(위 data 표)와 따로 쓰는 DB(fdb). 탭끼리 제목을 맞추지 않는다 — 줄마다 칸 값 목록(JSON)과
+  // 검색용 글자(norm: 설정의 "무시" 규칙을 적용한 글자), 날짜(d: 그 탭의 날짜 칸 값, 없으면 파일 수정일)만 따로 둔다.
+  // 설정을 바꾸면 norm만 다시 만든다(원본 값은 vals에 그대로 있어 엑셀을 다시 읽을 필요 없음).
+  const FS_APP = 'excel-merge-viewer-folder', FS_VERSION = 1;
+  let fdb = null, fnorm = null;
+  function fsCreate(d) {
+    d.run('CREATE TABLE IF NOT EXISTS f_files (path TEXT PRIMARY KEY, size INTEGER, mtime INTEGER, status TEXT, error TEXT, rows INTEGER, sheets INTEGER)');
+    d.run('CREATE TABLE IF NOT EXISTS f_sheets (id INTEGER PRIMARY KEY, path TEXT, sheet TEXT, headers TEXT, header_row INTEGER, date_col INTEGER, date_name TEXT, rows INTEGER)');
+    d.run('CREATE INDEX IF NOT EXISTS f_sheets_path ON f_sheets (path)');
+    d.run('CREATE TABLE IF NOT EXISTS f_rows (sheet INTEGER, rowno INTEGER, vals TEXT, norm TEXT, d TEXT)');
+    d.run('CREATE INDEX IF NOT EXISTS f_rows_sheet ON f_rows (sheet)');
+    d.run('CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT)');
+  }
+  function fsMetaGet(k) { const r = fdb.exec('SELECT v FROM meta WHERE k = ?', [k]); return r.length ? JSON.parse(r[0].values[0][0]) : null; }
+  function fsMetaSet(k, v) { fdb.run('INSERT OR REPLACE INTO meta VALUES (?, ?)', [k, JSON.stringify(v)]); }
+  function normSig(o) { return [o.space, o.caseI, o.comma, o.company].map(b => b ? 1 : 0).join(''); }
+  // 검색용 글자 만들기 — 검색어에도 똑같이 적용한다
+  const COMPANY_RE = /\(주\)|㈜|주식회사|\(유\)|㈲|유한회사/g;
+  function normText(s, o) {
+    s = String(s == null ? '' : s);
+    if (o.caseI) s = s.toLowerCase();
+    if (o.space) s = s.replace(/[\s 　​﻿]+/g, '');
+    if (o.company) s = s.replace(o.space ? COMPANY_RE : /\(\s*주\s*\)|㈜|주식회사|\(\s*유\s*\)|㈲|유한회사/g, '');
+    if (o.comma) s = s.replace(/(\d),(?=\d)/g, '$1');
+    return s;
+  }
+  // 칸 값을 줄 단위 검색 글자로 — 칸 사이는 \u0001로 끊어 "앞 칸 끝 + 뒤 칸 앞"이 붙어서 걸리지 않게
+  const rowNorm = (vals, o) => vals.map(v => normText(v, o)).join('\u0001');
+
+  function fsInit(buffer, norm) {
+    if (fdb) { fdb.close(); fdb = null; }
+    let reset = null;
+    if (buffer) {
+      try {
+        const d = new SQL.Database(new Uint8Array(buffer));
+        const app = d.exec("SELECT v FROM meta WHERE k = 'app'");
+        const meta = app.length ? JSON.parse(app[0].values[0][0]) : null;
+        if (meta && meta.app === FS_APP && meta.version === FS_VERSION) fdb = d;
+        else { d.close(); reset = '예전 형식의 저장본이라 처음부터 다시 읽어요.'; }
+      } catch (e) { reset = '저장본이 손상되어 처음부터 다시 읽어요.'; }
+    }
+    if (!fdb) { fdb = new SQL.Database(); fsCreate(fdb); fsMetaSet('app', { app: FS_APP, version: FS_VERSION }); }
+    fnorm = norm;
+    let renormed = false;
+    if (fsMetaGet('norm') !== normSig(norm)) { if (buffer && !reset) { fsRenorm(norm); renormed = true; } fsMetaSet('norm', normSig(norm)); }
+    return Object.assign(fsState(), { reset, renormed, folder: fsMetaGet('folder') });
+  }
+  function fsState() {
+    const files = fdb.exec('SELECT path, size, mtime, status, error, rows, sheets FROM f_files');
+    const tot = fdb.exec('SELECT COUNT(*) FROM f_rows')[0].values[0][0];
+    return { files: files.length ? files[0].values : [], rows: tot };
+  }
+
+  // 날짜 칸 찾기: 칸 이름(일자·날짜·출고일…)과 값 모양으로 탭마다 하나. 날짜처럼 보이는 값을 'YYYY-MM-DD'로 바꿔 준다.
+  const DATE_NAME_RE = /일자|날짜|일시|년월일|date|출고일|발주일|주문일|배송일|입고일|등록일|접수일|반품일|거래일|작성일|처리일/i;
+  function toISO(v, nameHit) {
+    if (v === '' || v == null) return null;
+    if (typeof v === 'number') {
+      // 서식이 날짜가 아닌 숫자: 날짜 칸 이름일 때만 20261102 꼴이나 엑셀 일련번호로 본다
+      if (!nameHit) return null;
+      if (v >= 19000101 && v <= 21001231 && Number.isInteger(v)) v = String(v);
+      else if (v > 20000 && v < 80000) return serialToISODate(v, false);
+      else return null;
+    }
+    const s = String(v).trim();
+    let m = s.match(/^(\d{4})\s*[-./년]\s*(\d{1,2})\s*[-./월]\s*(\d{1,2})/);
+    if (!m && nameHit) m = s.match(/^(\d{4})(\d{2})(\d{2})$/);
+    if (!m && nameHit) { const y = s.match(/^(\d{2})[-./](\d{1,2})[-./](\d{1,2})$/); if (y) m = [0, '20' + y[1], y[2], y[3]]; }
+    if (!m) return null;
+    const mo = +m[2], da = +m[3];
+    if (mo < 1 || mo > 12 || da < 1 || da > 31) return null;
+    return m[1] + '-' + String(mo).padStart(2, '0') + '-' + String(da).padStart(2, '0');
+  }
+  function pickDateCol(headers, rows) {
+    let best = -1, bestScore = 0;
+    const sample = rows.slice(0, 200);
+    headers.forEach((h, j) => {
+      const hit = DATE_NAME_RE.test(h);
+      let n = 0, ok = 0;
+      for (const r of sample) { const v = r[j]; if (v === '' || v == null) continue; n++; if (toISO(v, hit)) ok++; }
+      if (!n) return;
+      const ratio = ok / n;
+      const score = hit ? (ratio >= 0.5 ? 1 + ratio : 0) : (ratio >= 0.8 ? ratio : 0);
+      if (score > bestScore) { bestScore = score; best = j; }
+    });
+    return best;
+  }
+  // 제목 줄 찾기(찾아보기용): 위쪽 30줄 중 칸이 가장 많이 찬 줄의 절반 이상이 찬 첫 줄 — 맨 위 "2026년 11월 출고 내역" 같은
+  // 한 칸짜리 제목은 건너뛴다. 못 찾으면 첫 줄.
+  function fsHeaderRow(rows) {
+    const filled = r => (r || []).reduce((n, v) => n + (blank(v) ? 0 : 1), 0);
+    let max = 0;
+    for (let i = 0; i < rows.length && i < 30; i++) max = Math.max(max, filled(rows[i]));
+    if (!max) return -1;
+    const need = Math.max(Math.min(2, max), Math.ceil(max / 2));
+    for (let i = 0; i < rows.length && i < 30; i++) if (filled(rows[i]) >= need) return i;
+    return 0;
+  }
+
+  function fsDropPath(path) {
+    fdb.run('DELETE FROM f_rows WHERE sheet IN (SELECT id FROM f_sheets WHERE path = ?)', [path]);
+    fdb.run('DELETE FROM f_sheets WHERE path = ?', [path]);
+    fdb.run('DELETE FROM f_files WHERE path = ?', [path]);
+  }
+  function fsRemove(paths) {
+    fdb.run('BEGIN');
+    try { paths.forEach(fsDropPath); fdb.run('COMMIT'); } catch (e) { fdb.run('ROLLBACK'); throw e; }
+    return fsState().rows;
+  }
+  // 못 읽은 파일(암호·깨짐·너무 큼)도 f_files에 남긴다 — 다음 확인 때 같은 파일을 또 읽으려 하지 않고, 목록으로 알려 주게
+  function fsMark(f, status, error) {
+    fdb.run('BEGIN');
+    try {
+      fsDropPath(f.path);
+      fdb.run('INSERT INTO f_files VALUES (?, ?, ?, ?, ?, 0, 0)', [f.path, f.size, f.mtime, status, error || null]);
+      fdb.run('COMMIT');
+    } catch (e) { fdb.run('ROLLBACK'); throw e; }
+  }
+  function fsIndexFile(f) {
+    const t0 = performance.now();
+    let wb;
+    // .xlsx·.xlsm인데 zip(PK)도, 암호 걸린 엑셀(CFB)도 아니면 깨진 파일 — SheetJS는 아무 글자나 표로 읽어 버려서 미리 거른다.
+    // .xls는 HTML로 된 "가짜 xls"(업무 시스템이 내려주는 것)가 흔해서 그대로 읽어 본다.
+    if (/\.xls[xm]$/i.test(f.path)) {
+      const b = new Uint8Array(f.buffer, 0, Math.min(4, f.buffer.byteLength));
+      const zip = b[0] === 0x50 && b[1] === 0x4b, cfb = b[0] === 0xd0 && b[1] === 0xcf && b[2] === 0x11 && b[3] === 0xe0;
+      if (!zip && !cfb) { const why = '열 수 없어요(깨졌거나 엑셀 파일이 아님)'; fsMark(f, 'error', why); return { status: 'error', error: why }; }
+    }
+    try { wb = readBook({ name: f.path, buffer: f.buffer }, false); }
+    catch (e) {
+      const msg = String((e && e.message) || e);
+      const why = /password|encrypt/i.test(msg) ? '암호가 걸려 있어요' : '열 수 없어요(깨졌거나 엑셀 파일이 아님)';
+      fsMark(f, 'error', why);
+      return { status: 'error', error: why };
+    }
+    f.buffer = null;
+    const date1904 = !!(wb.Workbook && wb.Workbook.WBProps && wb.Workbook.WBProps.date1904);
+    const fileDate = new Date(f.mtime);
+    const fileISO = fileDate.getFullYear() + '-' + String(fileDate.getMonth() + 1).padStart(2, '0') + '-' + String(fileDate.getDate()).padStart(2, '0');
+    let total = 0, nSheets = 0;
+    fdb.run('BEGIN');
+    try {
+      fsDropPath(f.path);
+      const insSheet = fdb.prepare('INSERT INTO f_sheets (path, sheet, headers, header_row, date_col, date_name, rows) VALUES (?, ?, ?, ?, ?, ?, ?)');
+      const insRow = fdb.prepare('INSERT INTO f_rows VALUES (?, ?, ?, ?, ?)');
+      try {
+        wb.SheetNames.forEach((sn, si) => {
+          const ws = wb.Sheets[sn];
+          if (!ws || !ws['!ref']) return;
+          progress({ fs: true, file: f.path, sheet: sn, sheetIndex: si, sheetCount: wb.SheetNames.length });
+          const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '', blankrows: true });
+          let r0 = 0, c0 = 0;
+          try { const rg = XLSX.utils.decode_range(ws['!ref']); r0 = rg.s.r; c0 = rg.s.c; } catch (e) {}
+          const h = fsHeaderRow(rows);
+          if (h < 0) return;
+          // 값: 서식이 날짜인 숫자 칸만 'YYYY-MM-DD'로(모아보기와 같은 규칙), 나머지는 원래 값
+          const body = [];
+          let width = 0;
+          for (let i = h + 1; i < rows.length; i++) {
+            const row = rows[i] || [], srcRow = ws[r0 + i] || [];
+            let any = false;
+            const vals = row.map((v, j) => {
+              if (v === undefined || v === null) v = '';
+              else if (typeof v === 'number') {
+                const cell = srcRow[c0 + j];
+                if (cell && cell.t === 'n' && cell.z && XLSX.SSF.is_date(cell.z)) v = serialToISODate(v, date1904);
+              } else if (typeof v === 'boolean') v = v ? 'TRUE' : 'FALSE';
+              else if (typeof v === 'string') v = v.replace(/\r\n?/g, '\n');
+              if (!any && !blank(v)) any = true;
+              return v;
+            });
+            if (!any) continue; // 완전히 빈 줄만 뺀다(합계·메모 줄은 그대로 — 정리를 강요하지 않음)
+            while (vals.length && blank(vals[vals.length - 1])) vals.pop();
+            width = Math.max(width, vals.length);
+            body.push([r0 + i + 1, vals]);
+          }
+          const headers = makeHeader(rows[h]);
+          for (let j = headers.length; j < width; j++) headers.push('(제목 없음 ' + (j + 1) + ')');
+          if (!body.length && !headers.length) return;
+          const dc = pickDateCol(headers, body.map(b => b[1]));
+          const nameHit = dc >= 0 && DATE_NAME_RE.test(headers[dc]);
+          insSheet.run([f.path, sn, JSON.stringify(headers), r0 + h + 1, dc, dc >= 0 ? headers[dc] : null, body.length]);
+          const sid = fdb.exec('SELECT last_insert_rowid()')[0].values[0][0];
+          for (const [R, vals] of body) {
+            const d = (dc >= 0 && toISO(vals[dc], nameHit)) || fileISO;
+            insRow.run([sid, R, JSON.stringify(vals), rowNorm(vals, fnorm), d]);
+          }
+          total += body.length; nSheets++;
+        });
+      } finally { insSheet.free(); insRow.free(); }
+      fdb.run('INSERT INTO f_files VALUES (?, ?, ?, ?, NULL, ?, ?)', [f.path, f.size, f.mtime, 'ok', total, nSheets]);
+      fdb.run('COMMIT');
+    } catch (e) { fdb.run('ROLLBACK'); throw e; }
+    return { status: 'ok', rows: total, sheets: nSheets, ms: performance.now() - t0 };
+  }
+
+  // 설정의 "무시" 규칙이 바뀌면 검색용 글자만 다시 만든다
+  function fsRenorm(norm) {
+    fnorm = norm;
+    const t0 = performance.now();
+    const n = fdb.exec('SELECT COUNT(*) FROM f_rows')[0].values[0][0];
+    const sel = fdb.prepare('SELECT rowid, vals FROM f_rows');
+    const upd = fdb.prepare('UPDATE f_rows SET norm = ? WHERE rowid = ?');
+    let i = 0;
+    fdb.run('BEGIN');
+    try {
+      while (sel.step()) {
+        const [id, vals] = sel.get();
+        upd.run([rowNorm(JSON.parse(vals), norm), id]);
+        if (++i % 20000 === 0) progress({ fs: true, renorm: i, of: n });
+      }
+      fdb.run('COMMIT');
+    } catch (e) { fdb.run('ROLLBACK'); throw e; } finally { sel.free(); upd.free(); }
+    fsMetaSet('norm', normSig(norm));
+    return { rows: n, ms: performance.now() - t0 };
+  }
+
+  // 검색: terms(띄어 쓴 낱말)는 모두 포함(AND). from = 'YYYY-MM-DD'면 그 날짜 이후만.
+  // order: 'new' 최신순 · 'old' 오래된 순 · 'file' 파일별. cap을 넘으면 순서대로 앞의 cap줄만 돌려준다.
+  function fsSearch(o) {
+    const t0 = performance.now();
+    const terms = String(o.q || '').split(/\s+/).map(t => normText(t, fnorm)).filter(Boolean);
+    if (!terms.length) return { terms, total: 0, rows: [], sheets: {} };
+    const conds = terms.map(() => 'instr(r.norm, ?) > 0');
+    const args = terms.slice();
+    // 전체 기간 요약(기간을 좁혀도 "기간 밖에 몇 줄 더"를 알려 주려고)
+    const allAgg = fdb.exec('SELECT COUNT(*), MAX(r.d), MIN(r.d), SUM(r.d >= ?) FROM f_rows r WHERE ' + conds.join(' AND '), [o.from || '0000'].concat(args))[0].values[0];
+    const where = conds.slice(), wargs = args.slice();
+    if (o.from) { where.push('r.d >= ?'); wargs.push(o.from); }
+    const agg = fdb.exec('SELECT COUNT(*), COUNT(DISTINCT s.path), MAX(r.d), MIN(r.d) FROM f_rows r JOIN f_sheets s ON s.id = r.sheet WHERE ' + where.join(' AND '), wargs)[0].values[0];
+    const orderBy = o.order === 'old' ? 'r.d ASC, r.sheet, r.rowno' : o.order === 'file' ? 's.path, s.id, r.rowno' : 'r.d DESC, r.sheet, r.rowno';
+    const res = fdb.exec('SELECT r.sheet, r.rowno, r.vals, r.d FROM f_rows r JOIN f_sheets s ON s.id = r.sheet WHERE ' + where.join(' AND ') +
+      ' ORDER BY ' + orderBy + ' LIMIT ?', wargs.concat([o.cap]));
+    const rows = res.length ? res[0].values : [];
+    const ids = [...new Set(rows.map(r => r[0]))];
+    const sheets = {};
+    if (ids.length) {
+      const sres = fdb.exec('SELECT s.id, s.path, s.sheet, s.headers, s.header_row, s.date_col, s.date_name, f.mtime FROM f_sheets s JOIN f_files f ON f.path = s.path WHERE s.id IN (' + ids.join(',') + ')');
+      sres[0].values.forEach(v => { sheets[v[0]] = { path: v[1], sheet: v[2], headers: JSON.parse(v[3]), headerRow: v[4], dateCol: v[5], dateName: v[6], mtime: v[7] }; });
+    }
+    return {
+      terms, total: agg[0], files: agg[1], newest: agg[2], oldest: agg[3],
+      allTotal: allAgg[0], allNewest: allAgg[1], allOldest: allAgg[2],
+      rows, sheets, ms: performance.now() - t0
+    };
+  }
+  function fsExport(folder) {
+    if (folder !== undefined) fsMetaSet('folder', folder);
+    return fdb.export();
+  }
+
   self.onmessage = async e => {
     const { id, cmd } = e.data;
     try {
@@ -985,6 +1328,15 @@ function workerMain() {
         transfer = files.map(f => f.buffer.buffer || f.buffer);
       }
       else if (cmd === 'reset') { if (db) db.close(); db = null; result = true; }
+      // 폴더 찾아보기
+      else if (cmd === 'fsInit') result = fsInit(e.data.buffer, e.data.norm);
+      else if (cmd === 'fsIndex') result = fsIndexFile(e.data.file);
+      else if (cmd === 'fsMark') { fsMark(e.data.file, e.data.status, e.data.error); result = true; }
+      else if (cmd === 'fsRemove') result = fsRemove(e.data.paths);
+      else if (cmd === 'fsState') result = fsState();
+      else if (cmd === 'fsRenorm') result = fsRenorm(e.data.norm);
+      else if (cmd === 'fsSearch') result = fsSearch(e.data);
+      else if (cmd === 'fsExport') { const b = fsExport(e.data.folder); result = b.buffer; transfer = [result]; }
       self.postMessage({ type: 'reply', id, result }, transfer);
     } catch (err) {
       self.postMessage({ type: 'reply', id, error: String(err && err.message || err) });
@@ -1055,7 +1407,7 @@ function inkOn(hex) {
 }
 
 function show(id) {
-  ['#intro', '#progress', '#confirm', '#view'].forEach(s => { $(s).hidden = s !== id; });
+  ['#intro', '#progress', '#confirm', '#view', '#folder'].forEach(s => { $(s).hidden = s !== id; });
   $('#topActions').hidden = id !== '#view';
   $('#resetConfirm').hidden = true;
   if (id === '#intro') refreshResume();
@@ -1071,6 +1423,7 @@ function setProgress(text, ratio) {
   $('#progBar').style.width = Math.round(ratio * 100) + '%';
 }
 function onProgress(m) {
+  if (m.fs) return; // 폴더 찾아보기는 파일 단위로 따로 표시
   const base = m.fileIndex / m.fileCount;
   if (m.phase === 'open') setProgress('"' + m.file + '" 여는 중… (' + (m.fileIndex + 1) + '/' + m.fileCount + ')', base);
   else setProgress('"' + m.file + '" › 탭 "' + m.sheet + '" 합치는 중 (' + (m.sheetIndex + 1) + '/' + m.sheetCount + ')',
@@ -1958,6 +2311,7 @@ rowsEl.addEventListener('click', e => {
   if (r && r.__rid != null) openDetail(r);
 });
 function openDetail(r) {
+  $('#detailTitle').textContent = '줄 자세히 보기';
   const src = r[FILE] + ' › ' + r[SHEET] + ' · ' + r[ROWNO] + '행';
   $('#detailBody').innerHTML = '<div class="detailSource"><span>출처: <b>' + esc(src) + '</b></span><button type="button" class="ghost detailCopyBtn" data-copy="' + esc(src) + '">복사</button></div>' +
     columns.map(c => {
@@ -2471,9 +2825,629 @@ window.addEventListener('drop', e => {
   if (e.dataTransfer.files.length && $('#progress').hidden && $('#confirm').hidden) addFiles(e.dataTransfer.files);
 });
 
+// ===== 폴더 찾아보기 (docs/폴더찾아보기_기능정의.md) =====
+// 폴더를 한 번 연결해 두면 그 안의 엑셀을 탭마다 원래 제목 그대로 읽어 두고(작업 스레드의 fdb), 키워드로 그 줄을 최신순으로 찾는다.
+// 다음에 열면 저장본을 불러와 바뀐 파일(경로·크기·수정 시각)만 다시 읽는다. 저장본은 기본이 브라우저 안(OPFS), 설정에서 폴더로 바꿀 수 있다.
+const FS_SETTINGS_KEY = 'emv_folder_settings_v1';
+const FS_DEFAULTS = {
+  store: 'browser',      // 저장본 위치: browser(브라우저 안) | folder(내가 고른 폴더)
+  sub: true,             // 하위 폴더 포함
+  types: { xlsx: true, xlsm: true, xls: true, csv: true },
+  skip: '백업',          // 이름에 이 글자가 들어간 파일은 건너뜀(쉼표로 여러 개). ~$ 임시 파일·숨김 파일은 늘 건너뜀
+  maxMB: 200,            // 0 = 제한 없음
+  readOrder: 'recent',   // recent(최근에 고친 파일부터) | name
+  checkOnOpen: true,
+  watch: true,
+  space: true, caseI: true, comma: true, company: true,
+  order: 'new',          // new | old | file
+  period: 'all',         // all | 7 | 30 | 90 | 365
+  cap: 10000
+};
+const FS_DB_NAME = '엑셀모아보기_찾아보기.db';    // 폴더에 둘 때 파일 이름
+const FS_OPFS_NAME = 'folder-search.db';          // 브라우저 안(OPFS)에 둘 때
+const FS_SUPPORTED = typeof window.showDirectoryPicker === 'function';
+let fsCfg = loadFsSettings();
+const fs = {
+  dir: null,          // 연결한 폴더(FileSystemDirectoryHandle)
+  storeDir: null,     // 저장본을 둘 폴더(설정에서 고른 경우)
+  known: new Map(),   // 경로 → { size, mtime, status, error, rows }
+  rows: 0,
+  ready: false,       // 저장본을 불러왔는지(작업 스레드 fdb 준비)
+  syncing: false, again: false,
+  pendingOld: 0,      // 아직 못 읽은 파일 수
+  readThrough: null,  // 여기까지(수정일) 읽었음 — 최근 파일부터 읽는 중일 때 안내용
+  lastCheck: null, lastSave: 0, dirtySince: 0,
+  observer: null,
+  lastResult: null, shown: 0,
+  period: null
+};
+function loadFsSettings() {
+  try {
+    const v = JSON.parse(localStorage.getItem(FS_SETTINGS_KEY) || '{}') || {};
+    return Object.assign({}, FS_DEFAULTS, v, { types: Object.assign({}, FS_DEFAULTS.types, v.types || {}) });
+  } catch (e) { return JSON.parse(JSON.stringify(FS_DEFAULTS)); }
+}
+function saveFsSettings() { try { localStorage.setItem(FS_SETTINGS_KEY, JSON.stringify(fsCfg)); } catch (e) {} }
+const fsNorm = () => ({ space: fsCfg.space, caseI: fsCfg.caseI, comma: fsCfg.comma, company: fsCfg.company });
+
+// 폴더 핸들은 IndexedDB에 둔다(핸들은 localStorage에 못 넣음). 권한은 크롬이 따로 기억 — "방문할 때마다 허용"이면 다시 안 물음.
+function kvDb() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('emv_folder', 1);
+    req.onupgradeneeded = () => req.result.createObjectStore('kv');
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function kvGet(k) { try { const d = await kvDb(); return await new Promise(r => { const q = d.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => r(q.result); q.onerror = () => r(null); }); } catch (e) { return null; } }
+// 저장본(브라우저 안): OPFS가 되면 OPFS 파일, 안 되면(파일 더블클릭 file:// 화면 — 크롬이 OPFS를 막음) IndexedDB에 Blob으로.
+async function opfsRoot() { try { return await navigator.storage.getDirectory(); } catch (e) { return null; } }
+async function browserStoreRead() {
+  const root = await opfsRoot();
+  if (root) { try { return await (await (await root.getFileHandle(FS_OPFS_NAME)).getFile()).arrayBuffer(); } catch (e) { return null; } }
+  const b = await kvGet('store');
+  return b ? await b.arrayBuffer() : null;
+}
+async function browserStoreWrite(buf) {
+  const root = await opfsRoot();
+  if (root) { const w = await (await root.getFileHandle(FS_OPFS_NAME, { create: true })).createWritable(); await w.write(buf); await w.close(); return; }
+  const d = await kvDb();
+  await new Promise((resolve, reject) => {
+    const t = d.transaction('kv', 'readwrite');
+    t.objectStore('kv').put(new Blob([buf]), 'store');
+    t.oncomplete = resolve;
+    t.onerror = () => reject(t.error || new Error('브라우저 저장소에 쓰지 못했어요'));
+    t.onabort = () => reject(t.error || new Error('브라우저 저장소에 쓰지 못했어요(공간 부족일 수 있음)'));
+  });
+}
+async function browserStoreDelete() {
+  const root = await opfsRoot();
+  if (root) { try { await root.removeEntry(FS_OPFS_NAME); } catch (e) {} }
+  await kvSet('store', undefined);
+}
+async function kvSet(k, v) { try { const d = await kvDb(); await new Promise(r => { const t = d.transaction('kv', 'readwrite'); v === undefined ? t.objectStore('kv').delete(k) : t.objectStore('kv').put(v, k); t.oncomplete = r; t.onerror = r; }); } catch (e) {} }
+
+function fsMsg(html, kind) {
+  const el = $('#fsMsg');
+  el.innerHTML = html ? '<span style="flex:1">' + html + '</span><button class="ghost" id="fsMsgClose" style="padding:2px 10px">닫기</button>' : '';
+  el.className = kind || '';
+  el.hidden = !html;
+}
+function fsSetStatus(text, ratio) {
+  $('#fsStatusText').innerHTML = text;
+  $('#fsStatus').hidden = !text;
+  $('#fsBar').parentElement.hidden = ratio == null;
+  if (ratio != null) $('#fsBar').style.width = Math.round(ratio * 100) + '%';
+}
+const ymd = t => { const d = new Date(t); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+const hm = t => new Date(t).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+
+async function openFolderView() {
+  show('#folder');
+  if (!FS_SUPPORTED) {
+    $('#fsConnect').hidden = false;
+    $('#fsConnectBtn').disabled = true;
+    $('#fsConnectText').innerHTML = '이 브라우저는 폴더 연결을 지원하지 않아요. <b>크롬이나 엣지</b>에서 열어 주세요.';
+    return;
+  }
+  if (!fs.ready) await fsLoadStore();
+  if (fs.dir) { fsRenderTop(); $('#fsQ').focus(); return; }
+  const saved = await kvGet('dir');
+  if (!saved) return fsShowConnect(null);
+  let perm = 'prompt';
+  try { perm = await saved.queryPermission({ mode: 'read' }); } catch (e) {}
+  if (perm === 'granted') return fsUseDir(saved, false);
+  fsShowConnect(saved);
+}
+function fsShowConnect(saved) {
+  $('#fsConnect').hidden = false;
+  $('#fsMain').hidden = !fs.rows;
+  $('#fsAllowBtn').hidden = !saved;
+  $('#fsRescan').hidden = true;
+  if (fs.rows) fsRenderTop();
+  if (saved) {
+    $('#fsAllowBtn').textContent = '"' + saved.name + '" 폴더 다시 허용';
+    $('#fsConnectText').innerHTML = '지난번에 연결한 <b>' + esc(saved.name) + '</b> 폴더를 다시 읽으려면 허용이 필요해요. 크롬이 물으면 <b>"방문할 때마다 허용"</b>을 고르면 다음부터는 묻지 않아요.' +
+      (fs.rows ? '<br>허용하기 전에도 지난번에 읽어 둔 ' + fmt(fs.rows) + '줄에서 찾을 수 있어요(그 뒤에 바뀐 파일은 빠져 있을 수 있음).' : '');
+    $('#fsConnectBtn').textContent = '다른 폴더 연결';
+    $('#fsConnectBtn').className = 'ghost';
+  } else if (fs.rows) {
+    $('#fsConnectText').innerHTML = '지난번에 읽어 둔 <b>' + esc(fs.savedFolder || '') + '</b> 폴더 내용(' + fmt(fs.rows) + '줄)에서 바로 찾을 수 있어요. 폴더를 다시 연결하면 바뀐 파일만 다시 읽어요.';
+    $('#fsConnectBtn').textContent = '폴더 다시 연결';
+    $('#fsConnectBtn').className = '';
+  } else {
+    $('#fsConnectText').innerHTML = '엑셀이 쌓이는 폴더를 한 번 연결해 두면, 키워드 하나로 그 안의 모든 엑셀에서 그 줄을 찾아 최신순으로 보여 줘요. 제목 형식이 제각각이어도 괜찮아요.';
+    $('#fsConnectBtn').textContent = '폴더 연결';
+    $('#fsConnectBtn').className = '';
+  }
+}
+
+// 저장본 불러오기(작업 스레드에 넘김). 없으면 빈 DB로 시작.
+async function fsLoadStore() {
+  let buf = null, where = '';
+  try {
+    if (fsCfg.store === 'folder') {
+      fs.storeDir = fs.storeDir || await kvGet('storeDir');
+      if (fs.storeDir && await fs.storeDir.queryPermission({ mode: 'readwrite' }) === 'granted') {
+        try { buf = await (await (await fs.storeDir.getFileHandle(FS_DB_NAME)).getFile()).arrayBuffer(); where = '폴더'; } catch (e) {}
+      }
+    } else {
+      buf = await browserStoreRead();
+      if (buf) where = '브라우저';
+      if (buf) fs.savedBytes = buf.byteLength;
+    }
+  } catch (e) {}
+  const res = await call('fsInit', { buffer: buf, norm: fsNorm() }, buf ? [buf] : []);
+  fs.known = new Map(res.files.map(v => [v[0], { size: v[1], mtime: v[2], status: v[3], error: v[4], rows: v[5] }]));
+  fs.rows = res.rows;
+  fs.ready = true;
+  fs.savedFolder = res.folder;
+  if (res.reset) fsMsg(esc(res.reset), 'warn');
+  if (res.renormed) fs.dirtySince = Date.now();
+  return where;
+}
+
+async function fsPickFolder() {
+  let dir;
+  try { dir = await window.showDirectoryPicker({ id: 'emv-folder', mode: 'read' }); }
+  catch (e) { return; } // 취소
+  await fsUseDir(dir, true);
+}
+// 다른 폴더를 연결하면 저장본을 비우고 새로 읽는다(다른 폴더 내용이 섞이지 않게)
+async function fsUseDir(dir, picked) {
+  const same = fs.savedFolder && fs.savedFolder === dir.name;
+  if (picked && fs.known.size && !same) {
+    await call('fsRemove', { paths: [...fs.known.keys()] });
+    fs.known.clear(); fs.rows = 0;
+  }
+  fs.dir = dir;
+  fs.savedFolder = dir.name;
+  await kvSet('dir', dir);
+  $('#fsConnect').hidden = true;
+  $('#fsMain').hidden = false;
+  $('#fsRescan').hidden = false;
+  fsRenderTop();
+  fsStartWatch();
+  if (picked || fsCfg.checkOnOpen || !fs.known.size) fsSync('open');
+  $('#fsQ').focus();
+}
+
+// 폴더 훑기: 건너뛸 파일 규칙 적용, 경로·크기·수정 시각만(내용은 안 읽음)
+function fsWanted(name) {
+  if (name.startsWith('~$') || name.startsWith('.')) return false;
+  const m = name.toLowerCase().match(/\.(xlsx|xlsm|xls|csv)$/);
+  if (!m || !fsCfg.types[m[1]]) return false;
+  const skips = String(fsCfg.skip || '').split(',').map(s => s.trim()).filter(Boolean);
+  return !skips.some(s => name.includes(s));
+}
+async function fsWalk(dir, prefix, out) {
+  for await (const [name, h] of dir.entries()) {
+    if (h.kind === 'directory') {
+      if (fsCfg.sub && !name.startsWith('.') && !name.startsWith('$')) await fsWalk(h, prefix + name + '/', out);
+    } else if (fsWanted(name)) {
+      try { const f = await h.getFile(); out.push({ path: prefix + name, handle: h, size: f.size, mtime: f.lastModified }); }
+      catch (e) { out.push({ path: prefix + name, handle: h, size: 0, mtime: 0, err: '열 수 없어요(다른 프로그램이 쓰는 중이거나 권한 없음)' }); }
+    }
+  }
+  return out;
+}
+
+// 다시 확인: 새 파일·고친 파일만 다시 읽고, 없어진 파일은 뺀다. 최근에 고친 파일부터 읽어 그 사이에도 찾을 수 있게.
+async function fsSync(why) {
+  if (!fs.dir) return;
+  if (fs.syncing) { fs.again = true; return; }
+  fs.syncing = true;
+  $('#fsRescan').disabled = true;
+  try {
+    do {
+      fs.again = false;
+      await fsSyncOnce(why);
+    } while (fs.again);
+  } finally {
+    fs.syncing = false;
+    $('#fsRescan').disabled = false;
+  }
+}
+async function fsSyncOnce(why) {
+  const t0 = performance.now();
+  fsSetStatus('폴더를 살펴보는 중…', null);
+  let list;
+  try {
+    if (await fs.dir.queryPermission({ mode: 'read' }) !== 'granted') { fs.dir = null; return openFolderView(); }
+    list = await fsWalk(fs.dir, '', []);
+  } catch (e) { fsSetStatus(''); fsMsg('폴더를 읽을 수 없어요: ' + esc(e.message || e) + ' — 폴더가 옮겨졌거나 지워졌으면 [다른 폴더 연결]을 눌러 주세요.', 'warn'); return; }
+  const now = new Map(list.map(f => [f.path, f]));
+  const gone = [...fs.known.keys()].filter(p => !now.has(p));
+  const todo = list.filter(f => { const k = fs.known.get(f.path); return !k || k.size !== f.size || k.mtime !== f.mtime; });
+  const added = todo.filter(f => !fs.known.has(f.path)).length, changed = todo.length - added;
+  if (gone.length) {
+    fs.rows = await call('fsRemove', { paths: gone });
+    gone.forEach(p => fs.known.delete(p));
+    fs.dirtySince = fs.dirtySince || Date.now();
+  }
+  if (fsCfg.readOrder === 'name') todo.sort((a, b) => a.path.localeCompare(b.path, 'ko'));
+  else todo.sort((a, b) => b.mtime - a.mtime);
+  const maxB = fsCfg.maxMB > 0 ? fsCfg.maxMB * 1048576 : Infinity;
+  fs.pendingOld = todo.length;
+  let done = 0, readRows = 0;
+  for (const f of todo) {
+    const label = esc(f.path);
+    fsSetStatus('읽는 중 <b>' + (done + 1) + '/' + todo.length + '</b> · ' + label +
+      (fs.readThrough && fsCfg.readOrder === 'recent' && done ? '<br><span class="sub">' + ymd(fs.readThrough) + ' 이후에 고친 파일은 준비됨 — 그보다 옛 기간은 아직 결과가 덜 나올 수 있어요</span>' : ''), done / todo.length);
+    const meta = { path: f.path, size: f.size, mtime: f.mtime };
+    let res;
+    if (f.err) { await call('fsMark', { file: meta, status: 'error', error: f.err }); res = { status: 'error', error: f.err }; }
+    else if (f.size > maxB) {
+      const why = '파일이 너무 커요(' + mb(f.size) + ', 상한 ' + fsCfg.maxMB + 'MB — 설정에서 바꿀 수 있어요)';
+      await call('fsMark', { file: meta, status: 'big', error: why }); res = { status: 'big', error: why };
+    } else {
+      try {
+        const buf = await (await f.handle.getFile()).arrayBuffer();
+        res = await call('fsIndex', { file: Object.assign(meta, { buffer: buf }) }, [buf]);
+      } catch (e) {
+        const why = /NotReadable|NotFound/i.test(e.name || '') ? '열 수 없어요(다른 프로그램이 쓰는 중이거나 지워짐)' : '읽다가 문제가 생겼어요: ' + (e.message || e);
+        await call('fsMark', { file: meta, status: 'error', error: why }); res = { status: 'error', error: why };
+      }
+    }
+    fs.known.set(f.path, { size: f.size, mtime: f.mtime, status: res.status, error: res.error || null, rows: res.rows || 0 });
+    readRows += res.rows || 0;
+    fs.rows = (await call('fsState')).rows;
+    fs.readThrough = f.mtime;
+    fs.pendingOld = todo.length - ++done;
+    fs.dirtySince = fs.dirtySince || Date.now();
+    fsRenderTop();
+    // 처음 연결처럼 오래 걸리면 중간중간 저장(브라우저를 닫아도 다음에 이어서 읽게) + 검색 중이면 결과 갱신
+    if (Date.now() - fs.lastSave > 60000) await fsSave();
+    if (done % 5 === 0 || done === todo.length) fsRefreshResults();
+  }
+  fs.lastCheck = Date.now();
+  fs.readThrough = null;
+  const ms = performance.now() - t0;
+  if (todo.length || gone.length) {
+    await fsSave();
+    fsRefreshResults();
+  }
+  const parts = [];
+  if (added) parts.push('새 파일 ' + added);
+  if (changed) parts.push('고친 파일 ' + changed);
+  if (gone.length) parts.push('없어진 파일 ' + gone.length);
+  fsSetStatus(parts.length ? '확인 끝 — ' + parts.join(' · ') + '개' + (readRows ? ' (줄 ' + fmt(readRows) + '개 읽음)' : '') + ' · ' + sec(ms) : '', null);
+  if (!parts.length) fsSetStatus('');
+  fsRenderTop();
+}
+
+// 저장본 쓰기 — 브라우저 안(OPFS) 또는 고른 폴더. 용량 여유를 먼저 보고, 실패하면 화면에 알린다(조용히 넘어가지 않음).
+async function fsSave() {
+  if (!fs.dirtySince) return true;
+  const buf = await call('fsExport', { folder: fs.dir ? fs.dir.name : fs.savedFolder });
+  const bytes = buf.byteLength;
+  try {
+    if (fsCfg.store === 'folder') {
+      if (!fs.storeDir) throw new Error('저장할 폴더를 아직 고르지 않았어요(설정 → 저장본 위치).');
+      if (await fs.storeDir.queryPermission({ mode: 'readwrite' }) !== 'granted') throw new Error('저장할 폴더에 쓰기 허용이 없어요(설정에서 다시 골라 주세요).');
+      const w = await (await fs.storeDir.getFileHandle(FS_DB_NAME, { create: true })).createWritable();
+      await w.write(buf); await w.close();
+    } else {
+      if (navigator.storage.estimate) {
+        const est = await navigator.storage.estimate();
+        const had = fs.savedBytes || 0;
+        if (est.quota && est.quota - est.usage + had < bytes * 1.1) throw new Error('브라우저 저장 공간이 모자라요(필요 ' + mb(bytes) + ', 남은 공간 ' + mb(est.quota - est.usage) + '). 설정에서 저장본 위치를 폴더로 바꿔 주세요.');
+      }
+      if (navigator.storage.persist && !fs.persistAsked) { fs.persistAsked = true; try { fs.persisted = await navigator.storage.persist(); } catch (e) {} }
+      await browserStoreWrite(buf);
+    }
+    fs.savedBytes = bytes; fs.lastSave = Date.now(); fs.dirtySince = 0;
+    fs.saveError = null;
+    fsRenderStore();
+    return true;
+  } catch (e) {
+    fs.saveError = e.message || String(e);
+    fs.lastSave = Date.now();
+    fsMsg('<b>저장본을 저장하지 못했어요.</b> ' + esc(fs.saveError) + ' 지금 화면에서 찾기는 그대로 되지만, 다음에 열면 처음부터 다시 읽어요.', 'warn');
+    fsRenderStore();
+    return false;
+  }
+}
+
+// 열려 있는 동안 변경 감지 — FileSystemObserver가 있는 크롬에서만. 없으면 이 화면으로 돌아올 때(창 포커스) 다시 확인.
+function fsStartWatch() {
+  fsStopWatch();
+  if (!fsCfg.watch || !fs.dir) return;
+  if (typeof window.FileSystemObserver === 'function') {
+    try {
+      let tm = 0;
+      fs.observer = new FileSystemObserver(() => { clearTimeout(tm); tm = setTimeout(() => fsSync('watch'), 1500); });
+      fs.observer.observe(fs.dir, { recursive: !!fsCfg.sub }).catch(() => { fs.observer = null; });
+    } catch (e) { fs.observer = null; }
+  }
+}
+function fsStopWatch() { if (fs.observer) { try { fs.observer.disconnect(); } catch (e) {} fs.observer = null; } }
+window.addEventListener('focus', () => {
+  if (!$('#folder').hidden && fs.dir && fsCfg.watch && !fs.observer && fs.lastCheck && Date.now() - fs.lastCheck > 30000) fsSync('focus');
+});
+window.addEventListener('pagehide', () => { if (fs.dirtySince) fsSave(); });
+
+function fsRenderTop() {
+  const files = [...fs.known.values()];
+  const ok = files.filter(f => f.status === 'ok').length;
+  const bad = [...fs.known.entries()].filter(([, f]) => f.status !== 'ok');
+  $('#fsFolderName').textContent = fs.dir ? fs.dir.name : (fs.savedFolder || '');
+  $('#fsFolderInfo').innerHTML = '파일 <b>' + fmt(ok) + '</b>개 · 줄 <b>' + fmt(fs.rows) + '</b>개' +
+    (fs.pendingOld ? ' · <span class="warnTxt">아직 ' + fmt(fs.pendingOld) + '개 읽는 중</span>' : '') +
+    (fs.lastCheck ? ' · 마지막 확인 ' + hm(fs.lastCheck) : '') +
+    (fs.observer ? ' · <span title="파일이 생기거나 바뀌면 바로 다시 읽어요">변경 감지 켜짐</span>' : '');
+  const pb = $('#fsProblems');
+  pb.hidden = !bad.length;
+  if (bad.length) {
+    pb.innerHTML = '<details><summary>못 읽은 파일 ' + bad.length + '개 — 이 파일들의 내용은 찾기에 나오지 않아요</summary><ul>' +
+      bad.sort((a, b) => a[0].localeCompare(b[0], 'ko')).map(([p, f]) => '<li><b>' + esc(p) + '</b> — ' + esc(f.error || '읽지 못했어요') + '</li>').join('') + '</ul></details>';
+  }
+}
+
+// ---- 찾기 ----
+const PERIODS = [['all', '전체'], ['7', '7일'], ['30', '30일'], ['90', '90일'], ['365', '1년']];
+function fsFromDate() {
+  const p = fs.period || fsCfg.period;
+  if (p === 'all') return null;
+  return ymd(Date.now() - (parseInt(p, 10) - 1) * 86400000);
+}
+let fsTimer = 0, fsSeq = 0;
+function fsRefreshResults() { if ($('#fsQ').value.trim()) fsRun(); }
+async function fsRun() {
+  const qv = $('#fsQ').value.trim();
+  const my = ++fsSeq;
+  if (!qv) { fs.lastResult = null; $('#fsSummary').innerHTML = ''; $('#fsResults').innerHTML = fsHintHtml(); return; }
+  const res = await call('fsSearch', { q: qv, from: fsFromDate(), order: fsCfg.order, cap: fsCfg.cap });
+  if (my !== fsSeq) return; // 그 사이에 검색어가 바뀜
+  fs.lastResult = res; fs.shown = 0;
+  fsRenderSummary(res);
+  $('#fsResults').innerHTML = '';
+  fsRenderMore();
+}
+function fsHintHtml() {
+  if (!fs.rows) return '';
+  return '<div class="fsHint">업체명·상품코드·송장번호처럼 찾을 말을 넣어 보세요. 띄어 쓰면 모두 들어간 줄만 찾아요.' +
+    '<br><span class="sub">' + [fsCfg.space && '띄어쓰기', fsCfg.caseI && '대소문자', fsCfg.comma && '숫자 쉼표', fsCfg.company && '회사 표기((주)·주식회사 등)'].filter(Boolean).join('·') + ' 차이는 무시하고 찾아요(설정에서 바꿈).</span></div>';
+}
+function fsRenderSummary(r) {
+  const p = fs.period || fsCfg.period;
+  let h;
+  if (!r.total) {
+    h = '<b>찾은 줄이 없어요</b>';
+    if (r.allTotal) h += ' — 기간을 넓히면 <b>' + fmt(r.allTotal) + '</b>줄 있어요(가장 최근 ' + esc(r.allNewest) + '). <button class="linkBtn" data-period="all">전체 기간으로</button>';
+    else if (fs.pendingOld) h += ' — 아직 ' + fmt(fs.pendingOld) + '개 파일을 읽는 중이라 끝나면 더 나올 수 있어요.';
+  } else {
+    h = '일치 <b>' + fmt(r.total) + '</b>줄 · 파일 <b>' + fmt(r.files) + '</b>개 · 가장 최근 <b>' + esc(r.newest) + '</b>' + (r.oldest !== r.newest ? ' · 가장 오래된 <b>' + esc(r.oldest) + '</b>' : '') +
+      ' <span class="sub">(' + sec(r.ms) + ')</span>';
+    if (p !== 'all' && r.allTotal > r.total) h += '<br><span class="sub">기간 밖에 ' + fmt(r.allTotal - r.total) + '줄 더 있어요(가장 오래된 ' + esc(r.allOldest) + ').</span> <button class="linkBtn" data-period="all">전체 기간으로</button>';
+    if (r.total > r.rows.length) h += '<br><span class="warnTxt">너무 많아서 ' + (fsCfg.order === 'old' ? '오래된' : fsCfg.order === 'file' ? '파일 순서로 앞쪽' : '최신') + ' ' + fmt(r.rows.length) + '줄만 보여요.</span> 낱말을 더 넣거나 기간을 좁혀 보세요.';
+    if (fs.pendingOld) h += '<br><span class="warnTxt">아직 ' + fmt(fs.pendingOld) + '개 파일을 읽는 중이에요 — 끝나면 결과가 더 나올 수 있어요.</span>';
+  }
+  $('#fsSummary').innerHTML = h;
+}
+// 결과는 300줄씩 그린다. 같은 탭의 줄이 이어지면 한 묶음(그 탭 제목 그대로)으로.
+const FS_PAGE = 300;
+function fsCellHit(v, terms) {
+  if (!terms.length || v === '' || v == null) return false;
+  const n = fsNormJs(String(v));
+  return terms.some(t => n.includes(t));
+}
+function fsNormJs(s) {
+  if (fsCfg.caseI) s = s.toLowerCase();
+  if (fsCfg.space) s = s.replace(/[\s 　​﻿]+/g, '');
+  if (fsCfg.company) s = s.replace(fsCfg.space ? /\(주\)|㈜|주식회사|\(유\)|㈲|유한회사/g : /\(\s*주\s*\)|㈜|주식회사|\(\s*유\s*\)|㈲|유한회사/g, '');
+  if (fsCfg.comma) s = s.replace(/(\d),(?=\d)/g, '$1');
+  return s;
+}
+function fsFmt(v) { return typeof v === 'number' ? (Number.isInteger(v) ? String(v) : String(Math.round(v * 1e6) / 1e6)) : String(v); }
+function fsRenderMore() {
+  const r = fs.lastResult;
+  if (!r) return;
+  const box = $('#fsResults');
+  const more = box.querySelector('.fsMore');
+  if (more) more.remove();
+  const end = Math.min(r.rows.length, fs.shown + FS_PAGE);
+  let html = '', i = fs.shown;
+  // 앞 묶음과 같은 탭이면 이어 붙인다
+  let lastTable = box.lastElementChild && box.lastElementChild.classList.contains('fsGroup') ? box.lastElementChild : null;
+  while (i < end) {
+    const sid = r.rows[i][0];
+    let j = i;
+    while (j < end && r.rows[j][0] === sid) j++;
+    const s = r.sheets[sid];
+    const body = r.rows.slice(i, j).map((row, k) => fsRowHtml(row, s, r.terms, i + k)).join('');
+    if (i === fs.shown && lastTable && lastTable.dataset.sid === String(sid)) {
+      lastTable.querySelector('tbody').insertAdjacentHTML('beforeend', body);
+    } else {
+      const dateTitle = s.dateCol >= 0 ? esc(s.dateName) : '파일 날짜';
+      html += '<div class="fsGroup" data-sid="' + sid + '"><div class="fsGroupHead"><b>' + esc(s.path) + '</b> › ' + esc(s.sheet) +
+        (s.dateCol < 0 ? ' <span class="sub" title="이 탭에서 날짜 칸을 못 찾아 파일 수정일로 정렬해요">· 날짜 칸 없음(파일 수정일 기준)</span>' : '') + '</div>' +
+        '<div class="fsTableWrap"><table class="fsTable"><thead><tr><th class="fsD">' + dateTitle + '</th><th class="fsR">행</th>' +
+        s.headers.map(t => '<th>' + esc(t) + '</th>').join('') + '</tr></thead><tbody>' + body + '</tbody></table></div></div>';
+    }
+    i = j;
+  }
+  box.insertAdjacentHTML('beforeend', html);
+  fs.shown = end;
+  if (end < r.rows.length) box.insertAdjacentHTML('beforeend', '<div class="fsMore"><button class="ghost" id="fsMoreBtn">' + fmt(Math.min(FS_PAGE, r.rows.length - end)) + '줄 더 보기</button> <span class="sub">' + fmt(end) + ' / ' + fmt(r.rows.length) + '</span></div>');
+}
+function fsRowHtml(row, s, terms, idx) {
+  const vals = JSON.parse(row[2]);
+  const n = Math.max(s.headers.length, vals.length);
+  let tds = '';
+  for (let j = 0; j < n; j++) {
+    const v = vals[j] == null ? '' : vals[j];
+    tds += '<td' + (fsCellHit(v, terms) ? ' class="hit"' : typeof v === 'number' ? ' class="num"' : '') + '>' + esc(fsFmt(v)) + '</td>';
+  }
+  return '<tr data-i="' + idx + '"><td class="fsD">' + esc(row[3]) + '</td><td class="fsR">' + row[1] + '</td>' + tds + '</tr>';
+}
+function fsOpenDetail(idx) {
+  const r = fs.lastResult, row = r.rows[idx], s = r.sheets[row[0]];
+  const vals = JSON.parse(row[2]);
+  const folder = fs.dir ? fs.dir.name : (fs.savedFolder || '');
+  const src = (folder ? folder + '/' : '') + s.path + ' › ' + s.sheet + ' · ' + row[1] + '행';
+  $('#detailTitle').textContent = '찾은 줄 자세히 보기';
+  $('#detailBody').innerHTML = '<div class="detailSource"><span>출처: <b>' + esc(src) + '</b></span><button type="button" class="ghost detailCopyBtn" data-copy="' + esc(src) + '">위치 복사</button></div>' +
+    '<div class="detailRow"><div class="detailLabel">날짜</div><div class="detailValue">' + esc(row[3]) + ' <span class="sub">(' + (s.dateCol >= 0 ? '"' + esc(s.dateName) + '" 칸' : '파일 수정일 — 날짜 칸을 못 찾음') + ')</span></div></div>' +
+    s.headers.map((h, j) => {
+      const v = vals[j] == null ? '' : fsFmt(vals[j]);
+      return '<div class="detailRow"><div class="detailLabel">' + esc(h) + '</div><div class="detailValue' + (fsCellHit(v, r.terms) ? ' hit' : '') + '">' +
+        (v === '' ? '<span style="color:var(--faint)">-</span>' : esc(v)) + '</div></div>';
+    }).join('') +
+    '<div class="detailRow"><div class="detailLabel">제목 줄</div><div class="detailValue sub">엑셀 ' + s.headerRow + '행 · 파일 수정 ' + esc(when(s.mtime)) + '</div></div>';
+  $('#detailOverlay').hidden = false;
+}
+
+// ---- 설정 ----
+function fsRenderSettings() {
+  const c = fsCfg;
+  const ck = (k, label, note) => '<label class="fsCk"><input type="checkbox" data-k="' + k + '"' + (c[k] ? ' checked' : '') + '> ' + label + (note ? ' <span class="sub">' + note + '</span>' : '') + '</label>';
+  $('#fsSettingsBody').innerHTML =
+    '<div class="fsSet"><h4>저장본 위치</h4>' +
+      '<label class="fsCk"><input type="radio" name="fsStore" value="browser"' + (c.store === 'browser' ? ' checked' : '') + '> 브라우저 안 <span class="sub">(기본 · 크롬이 정한 이 화면 전용 공간)</span></label>' +
+      '<label class="fsCk"><input type="radio" name="fsStore" value="folder"' + (c.store === 'folder' ? ' checked' : '') + '> 내가 고른 폴더 <span class="sub">(' + esc(FS_DB_NAME) + ' 파일로)</span></label>' +
+      '<div class="row"><button class="ghost" id="fsStorePick"' + (c.store === 'folder' ? '' : ' hidden') + '>저장할 폴더 고르기</button> <span id="fsStoreDirName" class="sub"></span></div>' +
+      '<div id="fsStoreInfo" class="sub"></div>' +
+      '<div class="row"><button class="ghost" id="fsStoreDel">저장본 지우기</button></div></div>' +
+    '<div class="fsSet"><h4>읽을 파일</h4>' + ck('sub', '하위 폴더 포함') +
+      '<div class="row">' + ['xlsx', 'xlsm', 'xls', 'csv'].map(t => '<label class="fsCk"><input type="checkbox" data-type="' + t + '"' + (c.types[t] ? ' checked' : '') + '> ' + t + '</label>').join('') + '</div>' +
+      '<label>이름에 이 글자가 들어간 파일은 건너뛰기 <span class="sub">(쉼표로 여러 개 · ~$ 임시 파일과 숨김 파일은 늘 건너뜀)</span><input type="text" data-k="skip" value="' + esc(c.skip) + '"></label>' +
+      '<label>파일 크기 상한 <select data-k="maxMB">' + [[50, '50MB'], [100, '100MB'], [200, '200MB'], [500, '500MB'], [0, '제한 없음']].map(([v, t]) => '<option value="' + v + '"' + (c.maxMB === v ? ' selected' : '') + '>' + t + '</option>').join('') + '</select></label>' +
+      '<label>읽는 순서 <select data-k="readOrder"><option value="recent"' + (c.readOrder === 'recent' ? ' selected' : '') + '>최근에 고친 파일부터</option><option value="name"' + (c.readOrder === 'name' ? ' selected' : '') + '>이름순</option></select></label>' +
+      ck('checkOnOpen', '열 때 바뀐 파일 다시 확인') + ck('watch', '열려 있는 동안 변경 감지', typeof window.FileSystemObserver === 'function' ? '' : '(이 브라우저는 바로 감지를 못 해서, 이 창으로 돌아올 때 확인)') + '</div>' +
+    '<div class="fsSet"><h4>찾을 때 무시할 차이</h4>' + ck('space', '띄어쓰기', '"테스트 상사" = "테스트상사"') + ck('caseI', '대소문자', 'abc-1 = ABC-1') + ck('comma', '숫자 쉼표', '1,000 = 1000') + ck('company', '회사 표기', '(주)·㈜·주식회사·(유)·유한회사') + '</div>' +
+    '<div class="fsSet"><h4>결과</h4>' +
+      '<label>순서 <select data-k="order"><option value="new"' + (c.order === 'new' ? ' selected' : '') + '>최신순</option><option value="old"' + (c.order === 'old' ? ' selected' : '') + '>오래된 순</option><option value="file"' + (c.order === 'file' ? ' selected' : '') + '>파일별</option></select></label>' +
+      '<label>기본 기간 <select data-k="period">' + PERIODS.map(([v, t]) => '<option value="' + v + '"' + (c.period === v ? ' selected' : '') + '>' + t + '</option>').join('') + '</select></label>' +
+      '<label>최대 몇 줄까지 보일지 <select data-k="cap">' + [1000, 5000, 10000, 50000, 100000].map(v => '<option value="' + v + '"' + (c.cap === v ? ' selected' : '') + '>' + fmt(v) + '줄</option>').join('') + '</select></label></div>' +
+    '<div class="fsSet wide row"><button class="ghost" id="fsDefaults">기본값으로</button><span class="sub">바꾼 설정은 이 PC의 이 브라우저에 기억돼요.</span></div>';
+  fsRenderStore();
+}
+async function fsRenderStore() {
+  const info = $('#fsStoreInfo');
+  if (!info) return;
+  if ($('#fsStoreDirName')) $('#fsStoreDirName').textContent = fsCfg.store === 'folder' ? (fs.storeDir ? '고른 폴더: ' + fs.storeDir.name : '아직 고르지 않았어요') : '';
+  let t = '';
+  if (fsCfg.store === 'browser') {
+    t = '이 PC 브라우저에 읽어 둔 내용의 사본이 저장돼요. 크롬의 사이트 데이터를 지우면 같이 지워져요(원본 엑셀이 있으니 다시 읽으면 됨).';
+    try {
+      const est = await navigator.storage.estimate();
+      t += '<br>저장본 ' + (fs.savedBytes ? mb(fs.savedBytes) : '없음') + ' · 브라우저 여유 공간 ' + mb(est.quota - est.usage);
+    } catch (e) {}
+    if (fs.persisted === false) t += '<br><span class="warnTxt">크롬이 "지우지 말아 달라" 요청을 받아 주지 않았어요 — 저장 공간이 모자라면 크롬이 지울 수 있어요.</span>';
+  } else {
+    t = '고른 폴더에 ' + esc(FS_DB_NAME) + ' 파일로 저장해요. 그 폴더를 볼 수 있는 사람은 이 파일도 볼 수 있어요.' + (fs.savedBytes ? '<br>저장본 ' + mb(fs.savedBytes) : '');
+  }
+  if (fs.saveError) t += '<br><span class="warnTxt">마지막 저장 실패: ' + esc(fs.saveError) + '</span>';
+  else if (fs.lastSave && !fs.dirtySince) t += '<br>마지막 저장 ' + hm(fs.lastSave);
+  info.innerHTML = t;
+}
+async function fsSettingChanged(k, before) {
+  saveFsSettings();
+  if (['space', 'caseI', 'comma', 'company'].includes(k)) {
+    fsSetStatus('찾기용 글자를 새 설정으로 다시 만드는 중…', null);
+    await call('fsRenorm', { norm: fsNorm() });
+    fs.dirtySince = Date.now();
+    fsSetStatus('');
+    await fsSave();
+    fsRefreshResults();
+  } else if (['sub', 'types', 'skip', 'maxMB'].includes(k)) {
+    // 읽을 파일 규칙이 바뀌면: 크기 상한 때문에 못 읽었던 파일은 다시 읽어 보고, 이제 빠지는 파일은 결과에서 뺀다
+    if (k === 'maxMB') for (const [p, f] of fs.known) if (f.status === 'big') f.size = -1;
+    fsSync('settings');
+  } else if (k === 'watch') fsStartWatch();
+  else if (k === 'order' || k === 'period' || k === 'cap') { if (k === 'period') { fs.period = null; fsRenderPeriod(); } fsRefreshResults(); }
+}
+function fsRenderPeriod() {
+  const p = fs.period || fsCfg.period;
+  $('#fsPeriod').innerHTML = PERIODS.map(([v, t]) => '<button type="button" class="' + (v === p ? 'on' : 'ghost') + '" data-period="' + v + '">' + t + '</button>').join('');
+}
+
+// ---- 이벤트 ----
+$('#openFolderBtn').addEventListener('click', openFolderView);
+$('#fsBack').addEventListener('click', () => { if (fs.dirtySince) fsSave(); show('#intro'); });
+$('#fsConnectBtn').addEventListener('click', fsPickFolder);
+$('#fsAllowBtn').addEventListener('click', async () => {
+  const saved = await kvGet('dir');
+  if (!saved) return fsPickFolder();
+  let perm = 'denied';
+  try { perm = await saved.requestPermission({ mode: 'read' }); } catch (e) {}
+  if (perm === 'granted') fsUseDir(saved, false);
+  else fsMsg('폴더 읽기를 허용하지 않았어요. 다시 누르거나 [다른 폴더 연결]을 눌러 주세요.', 'warn');
+});
+$('#fsRescan').addEventListener('click', () => fsSync('manual'));
+$('#fsSettingsBtn').addEventListener('click', () => {
+  const p = $('#fsSettings');
+  p.hidden = !p.hidden;
+  if (!p.hidden) fsRenderSettings();
+});
+$('#fsQ').addEventListener('input', () => { clearTimeout(fsTimer); fsTimer = setTimeout(fsRun, 200); });
+$('#fsQ').addEventListener('keydown', e => { if (e.key === 'Enter') { clearTimeout(fsTimer); fsRun(); } });
+$('#folder').addEventListener('click', e => {
+  const pb = e.target.closest('[data-period]');
+  if (pb) { fs.period = pb.dataset.period; fsRenderPeriod(); fsRun(); return; }
+  if (e.target.id === 'fsMoreBtn') { fsRenderMore(); return; }
+  if (e.target.id === 'fsMsgClose') { fsMsg(''); return; }
+  const tr = e.target.closest('.fsTable tbody tr');
+  if (tr) fsOpenDetail(parseInt(tr.dataset.i, 10));
+});
+$('#fsSettings').addEventListener('change', async e => {
+  const t = e.target;
+  if (t.name === 'fsStore') {
+    fsCfg.store = t.value; saveFsSettings();
+    if (t.value === 'folder' && !fs.storeDir) fs.storeDir = await kvGet('storeDir');
+    fs.dirtySince = Date.now();
+    fsRenderSettings();
+    if (t.value === 'browser' || fs.storeDir) await fsSave();
+    return;
+  }
+  if (t.dataset.type) { fsCfg.types[t.dataset.type] = t.checked; return fsSettingChanged('types'); }
+  const k = t.dataset.k;
+  if (!k) return;
+  fsCfg[k] = t.type === 'checkbox' ? t.checked : (k === 'maxMB' || k === 'cap') ? parseInt(t.value, 10) : t.value;
+  fsSettingChanged(k);
+});
+$('#fsSettings').addEventListener('click', async e => {
+  if (e.target.id === 'fsDefaults') {
+    const prev = fsCfg;
+    fsCfg = JSON.parse(JSON.stringify(FS_DEFAULTS));
+    saveFsSettings();
+    fs.period = null; fsRenderPeriod(); fsRenderSettings(); fsStartWatch();
+    if (fsNormJsSig(prev) !== fsNormJsSig(fsCfg)) await fsSettingChanged('space');
+    if (prev.sub !== fsCfg.sub || prev.skip !== fsCfg.skip || prev.maxMB !== fsCfg.maxMB || JSON.stringify(prev.types) !== JSON.stringify(fsCfg.types)) fsSync('settings');
+    if (prev.store !== fsCfg.store) { fs.dirtySince = Date.now(); await fsSave(); }
+    fsRefreshResults();
+  } else if (e.target.id === 'fsStorePick') {
+    try {
+      const d = await window.showDirectoryPicker({ id: 'emv-store', mode: 'readwrite' });
+      fs.storeDir = d; await kvSet('storeDir', d);
+      fs.dirtySince = Date.now();
+      fsRenderSettings();
+      await fsSave();
+    } catch (err) {}
+  } else if (e.target.id === 'fsStoreDel') {
+    try {
+      if (fsCfg.store === 'folder') { if (fs.storeDir) await fs.storeDir.removeEntry(FS_DB_NAME); }
+      else await browserStoreDelete();
+    } catch (err) {}
+    // 화면의 내용도 비운다 — 다시 찾으려면 폴더를 다시 읽음
+    await call('fsRemove', { paths: [...fs.known.keys()] });
+    fs.known.clear(); fs.rows = 0; fs.savedBytes = 0; fs.dirtySince = 0; fs.lastCheck = null;
+    fs.lastResult = null; $('#fsSummary').innerHTML = ''; $('#fsResults').innerHTML = '';
+    fsRenderTop(); fsRenderStore();
+    fsMsg('저장본을 지웠어요. [다시 확인]을 누르면 폴더를 처음부터 다시 읽어요.', '');
+  }
+});
+const fsNormJsSig = c => [c.space, c.caseI, c.comma, c.company].join();
+fsRenderPeriod();
+
+// 자동 테스트용: 폴더 고르기 창 없이 폴더 핸들을 넘겨 연결(헤드리스 크롬은 고르기 창을 못 띄움). 화면에서는 쓰지 않음.
+window.__fsTest = { useDir: async d => { if (!fs.ready) await fsLoadStore(); show('#folder'); return fsUseDir(d, true); }, sync: () => fsSync('test'), state: () => fs, save: fsSave };
+
 if (!BUNDLES_OK) {
   $('#drop').innerHTML = '<strong>필요한 파일(vendor 폴더)을 찾지 못했어요</strong><span>압축을 푼 폴더 안에서 이 파일을 열어 주세요.</span>';
   $('#sampleBtn').disabled = true;
+  $('#openFolderBtn').disabled = true;
 } else {
   startWorker();
   refreshResume();

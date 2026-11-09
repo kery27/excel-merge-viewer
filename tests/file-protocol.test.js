@@ -307,6 +307,8 @@ async function main() {
   await page.click('#staffBtn');
   await page.waitForSelector('#staffPanel:not([hidden])');
   await page.selectOption('#roleCol', '담당자');
+  // 값 목록을 불러와 직원 칸을 다시 그린 뒤에 이름을 넣는다(그 전에 넣으면 다시 그릴 때 옛 칸에 넣은 셈이 되어 가끔 이름이 빠졌음)
+  await page.waitForSelector('.role input[data-kind="v"][value="샘플담당자A"]');
   const r1 = page.locator('.role').nth(0);
   await r1.locator('.rname').fill('김테스트');
   await r1.locator('input[data-f="pw"]').fill('staff1');
