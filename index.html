@@ -1141,7 +1141,7 @@ function workerMain() {
   }
   function fsState() {
     const files = fdb.exec('SELECT path, size, mtime, status, error, rows, sheets, checks FROM f_files');
-    const tot = fdb.exec('SELECT COUNT(*) FROM f_rows')[0].values[0][0];
+    const tot = fdb.exec('SELECT COALESCE(SUM(rows), 0) FROM f_files')[0].values[0][0]; // 표 데이터 줄만(안내 글 제외)
     return { files: files.length ? files[0].values : [], rows: tot };
   }
 
@@ -1330,7 +1330,7 @@ function workerMain() {
               above = aboveRows.length;
             }
           }
-          total += body.length + above; nSheets++;
+          total += body.length; nSheets++; // 줄 수는 표 데이터만 센다(안내 글 줄은 건수가 아님)
         });
       } finally { insSheet.free(); insRow.free(); }
       const hasCk = fck.err || fck.inv || fck.merge;
@@ -1370,10 +1370,11 @@ function workerMain() {
     const conds = terms.map(() => 'instr(r.norm, ?) > 0');
     const args = terms.slice();
     // 전체 기간 요약(기간을 좁혀도 "기간 밖에 몇 줄 더"를 알려 주려고)
-    const allAgg = fdb.exec('SELECT COUNT(*), MAX(r.d), MIN(r.d), SUM(r.d >= ?) FROM f_rows r WHERE ' + conds.join(' AND '), [o.from || '0000'].concat(args))[0].values[0];
+    // 건수는 표 데이터 줄만(part IS NULL). 제목 줄 위 안내 글은 above로 따로 센다.
+    const allAgg = fdb.exec('SELECT SUM(s.part IS NULL), MAX(CASE WHEN s.part IS NULL THEN r.d END), MIN(CASE WHEN s.part IS NULL THEN r.d END), SUM(r.d >= ? AND s.part IS NULL) FROM f_rows r JOIN f_sheets s ON s.id = r.sheet WHERE ' + conds.join(' AND '), [o.from || '0000'].concat(args))[0].values[0];
     const where = conds.slice(), wargs = args.slice();
     if (o.from) { where.push('r.d >= ?'); wargs.push(o.from); }
-    const agg = fdb.exec('SELECT COUNT(*), COUNT(DISTINCT s.path), MAX(r.d), MIN(r.d) FROM f_rows r JOIN f_sheets s ON s.id = r.sheet WHERE ' + where.join(' AND '), wargs)[0].values[0];
+    const agg = fdb.exec('SELECT SUM(s.part IS NULL), COUNT(DISTINCT s.path), MAX(CASE WHEN s.part IS NULL THEN r.d END), MIN(CASE WHEN s.part IS NULL THEN r.d END), SUM(s.part IS NOT NULL) FROM f_rows r JOIN f_sheets s ON s.id = r.sheet WHERE ' + where.join(' AND '), wargs)[0].values[0];
     const orderBy = o.order === 'old' ? 'r.d ASC, r.sheet, r.rowno' : o.order === 'file' ? 's.path, s.id, r.rowno' : 'r.d DESC, r.sheet, r.rowno';
     const res = fdb.exec('SELECT r.sheet, r.rowno, r.vals, r.d FROM f_rows r JOIN f_sheets s ON s.id = r.sheet WHERE ' + where.join(' AND ') +
       ' ORDER BY ' + orderBy + ' LIMIT ?', wargs.concat([o.cap]));
@@ -1385,8 +1386,8 @@ function workerMain() {
       sres[0].values.forEach(v => { sheets[v[0]] = { path: v[1], sheet: v[2], headers: JSON.parse(v[3]), headerRow: v[4], dateCol: v[5], dateName: v[6], mtime: v[7], part: v[8] }; });
     }
     return {
-      terms, total: agg[0], files: agg[1], newest: agg[2], oldest: agg[3],
-      allTotal: allAgg[0], allNewest: allAgg[1], allOldest: allAgg[2],
+      terms, total: agg[0] || 0, above: agg[4] || 0, files: agg[1], newest: agg[2], oldest: agg[3],
+      allTotal: allAgg[0] || 0, allNewest: allAgg[1], allOldest: allAgg[2],
       rows, sheets, ms: performance.now() - t0
     };
   }
@@ -3366,15 +3367,18 @@ function fsHintHtml() {
 function fsRenderSummary(r) {
   const p = fs.period || fsCfg.period;
   let h;
-  if (!r.total) {
+  const aboveTxt = r.above ? ' · <span title="표의 제목 줄보다 위에 있는 안내 글(거래처·기간 등) — 건수에는 넣지 않아요">표 위 안내 글 <b>' + fmt(r.above) + '</b>줄</span>' : '';
+  if (!r.total && r.above) {
+    h = '표 안에서는 일치하는 줄이 없고, 표 위 안내 글 <b>' + fmt(r.above) + '</b>줄에서 찾았어요 · 파일 <b>' + fmt(r.files) + '</b>개 <span class="sub">(' + sec(r.ms) + ')</span>';
+  } else if (!r.total) {
     h = '<b>찾은 줄이 없어요</b>';
     if (r.allTotal) h += ' — 기간을 넓히면 <b>' + fmt(r.allTotal) + '</b>줄 있어요(가장 최근 ' + esc(r.allNewest) + '). <button class="linkBtn" data-period="all">전체 기간으로</button>';
     else if (fs.pendingOld) h += ' — 아직 ' + fmt(fs.pendingOld) + '개 파일을 읽는 중이라 끝나면 더 나올 수 있어요.';
   } else {
-    h = '일치 <b>' + fmt(r.total) + '</b>줄 · 파일 <b>' + fmt(r.files) + '</b>개 · 가장 최근 <b>' + esc(r.newest) + '</b>' + (r.oldest !== r.newest ? ' · 가장 오래된 <b>' + esc(r.oldest) + '</b>' : '') +
+    h = '일치 <b>' + fmt(r.total) + '</b>줄' + aboveTxt + ' · 파일 <b>' + fmt(r.files) + '</b>개 · 가장 최근 <b>' + esc(r.newest) + '</b>' + (r.oldest !== r.newest ? ' · 가장 오래된 <b>' + esc(r.oldest) + '</b>' : '') +
       ' <span class="sub">(' + sec(r.ms) + ')</span>';
     if (p !== 'all' && r.allTotal > r.total) h += '<br><span class="sub">기간 밖에 ' + fmt(r.allTotal - r.total) + '줄 더 있어요(가장 오래된 ' + esc(r.allOldest) + ').</span> <button class="linkBtn" data-period="all">전체 기간으로</button>';
-    if (r.total > r.rows.length) h += '<br><span class="warnTxt">너무 많아서 ' + (fsCfg.order === 'old' ? '오래된' : fsCfg.order === 'file' ? '파일 순서로 앞쪽' : '최신') + ' ' + fmt(r.rows.length) + '줄만 보여요.</span> 낱말을 더 넣거나 기간을 좁혀 보세요.';
+    if (r.total + r.above > r.rows.length) h += '<br><span class="warnTxt">너무 많아서 ' + (fsCfg.order === 'old' ? '오래된' : fsCfg.order === 'file' ? '파일 순서로 앞쪽' : '최신') + ' ' + fmt(r.rows.length) + '줄만 보여요.</span> 낱말을 더 넣거나 기간을 좁혀 보세요.';
     if (fs.pendingOld) h += '<br><span class="warnTxt">아직 ' + fmt(fs.pendingOld) + '개 파일을 읽는 중이에요 — 끝나면 결과가 더 나올 수 있어요.</span>';
   }
   $('#fsSummary').innerHTML = h;

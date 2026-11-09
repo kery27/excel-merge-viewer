@@ -117,11 +117,15 @@ async function main() {
   assert.match(await page.$eval('.fsGroup thead', e => e.innerText.replace(/\s+/g, ' ')), /일자 행 일자 품목 수량 단가 금액/);
   // 제목 줄 위 안내 글도 찾기에 걸리고, 날짜는 그 표의 가장 최근 날짜
   await page.fill('#fsQ', '안내상사'); await page.press('#fsQ', 'Enter'); await settle();
-  assert.match(await text('#fsSummary'), /일치 1줄 · 파일 1개 · 가장 최근 2026-11-05/);
+  assert.match(await text('#fsSummary'), /표 안에서는 일치하는 줄이 없고, 표 위 안내 글 1줄에서 찾았어요 · 파일 1개/); // 건수에 안내 글을 섞지 않음
+  assert.equal(await page.$eval('#fsResults tbody td.fsD', e => e.textContent), '2026-11-05'); // 날짜는 그 표의 가장 최근 날짜
   assert.match(await text('.fsGroupHead'), /명세서\.xlsx › 명세 · 표 위쪽 안내 글/);
   assert.match(await text('#fsResults tbody'), /거래처: 안내상사 · 기간: 2026년 11월 · 담당: 샘플담당/);
-  await page.fill('#fsQ', '거래명세서'); await page.press('#fsQ', 'Enter'); await settle();
-  assert.match(await text('#fsSummary'), /일치 1줄/);
+  // 표 안과 안내 글 둘 다에 걸리면: 건수는 표 줄만, 안내 글은 따로
+  await page.fill('#fsQ', '샘플'); await page.press('#fsQ', 'Enter'); await settle();
+  assert.match(await text('#fsSummary'), /일치 2줄 · 표 위 안내 글 1줄 · 파일 1개 · 가장 최근 2026-11-05 · 가장 오래된 2026-11-02/);
+  // 위쪽 "줄 N개"도 표 데이터만(점검.xlsx 5줄 + 명세서 2줄, 안내 글 2줄은 빼고)
+  assert.match(await text('#fsFolderInfo'), /파일 2개 · 줄 7개/);
   await page.fill('#fsQ', '보이지않는상사'); await page.press('#fsQ', 'Enter'); await settle();
   assert.match(await text('#fsSummary'), /일치 1줄/);
   await page.fill('#fsQ', '100'); await page.press('#fsQ', 'Enter'); await settle();
