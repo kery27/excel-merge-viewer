@@ -17,7 +17,7 @@ async function main() {
     if (!f.startsWith(PUB)) { res.writeHead(404); return res.end(); }
     if (nfs.existsSync(f) && nfs.statSync(f).isDirectory()) f = path.join(f, 'index.html');
     if (!nfs.existsSync(f)) { res.writeHead(404); return res.end(); }
-    res.writeHead(200, { 'Content-Type': f.endsWith('.html') ? 'text/html; charset=utf-8' : f.endsWith('.png') ? 'image/png' : 'application/javascript' });
+    res.writeHead(200, { 'Content-Type': f.endsWith('.html') ? 'text/html; charset=utf-8' : f.endsWith('.png') ? 'image/png' : f.endsWith('.woff2') ? 'font/woff2' : f.endsWith('.txt') ? 'text/plain; charset=utf-8' : 'application/javascript' });
     nfs.createReadStream(f).pipe(res);
   }).listen(0);
   const base = 'http://localhost:' + server.address().port + '/';
@@ -47,13 +47,17 @@ async function main() {
   assert.equal(await visible('maker'), 1);
   assert.equal(await visible('office'), 1);
   assert.equal(await visible('all'), 7);
-  // 외부로 나가는 요청이 없는지(글꼴·분석 도구 없음)
+  // 제목 명조(fonts/emv-serif.woff2)가 실제로 불러와지는지 — 없으면 기본 글꼴로 조용히 바뀌어 디자인이 깨짐
+  const serifLoaded = () => page.evaluate(async () => { await document.fonts.ready; await document.fonts.load('700 20px "EMV Serif"', '사건'); return document.fonts.check('700 20px "EMV Serif"', '사건'); });
+  assert.equal(await serifLoaded(), true, '소개 페이지 제목 글꼴');
+  // 외부로 나가는 요청이 없는지(분석 도구 없음, 글꼴도 같은 곳에서)
   const external = await page.evaluate(() => performance.getEntriesByType('resource').map(r => r.name).filter(u => !u.startsWith(location.origin)));
   assert.deepEqual(external, []);
 
   // ---- 카드로 보기(카드뉴스 9장) ----
   assert.equal(await page.$eval('meta[property="og:image"]', e => e.content), 'https://kery27.github.io/excel-jsgg/cards/img/card-01.png');
   await page.goto(base + 'cards/');
+  assert.equal(await serifLoaded(), true, '카드 페이지 제목 글꼴');
   const slides = await page.$$eval('.slide', x => x.map(s => ({ q: s.dataset.q || null, img: s.dataset.img })));
   assert.equal(slides.length, 9);
   const cardQs = slides.filter(x => x.q).map(x => x.q).sort();

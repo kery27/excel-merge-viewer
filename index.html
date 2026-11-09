@@ -9,30 +9,31 @@
 <script src="vendor/xlsx/xlsx-bundle.js"></script>
 <script src="vendor/sqljs/sqljs-bundle.js"></script>
 <style>
+  /* 색: 소개 페이지(에디토리얼 "사건 기록")와 같은 계열 — 종이 바탕 + 짙은 초록 강조(2026-11-09, 파란색에서 바꿈) */
   :root {
-    --bg: #f4f5f8; --panel: #ffffff; --ink: #1d2433; --sub: #5d6678; --faint: #9aa2b1;
-    --line: #e2e5ec; --accent: #4257e8; --accent-soft: #eef0fe; --warn: #b5541c; --warn-soft: #fff4ec;
-    --row-alt: #fafbfd; --row-hover: #f1f3fe;
-    --field: #ffffff; --head-bg: #f7f8fb; --line-soft: #eef0f4; --drop-line: #c3c9d6; --on-accent: #ffffff;
-    --focus: rgba(66,87,232,.15);
+    --bg: #f5f2eb; --panel: #ffffff; --ink: #1e1d1b; --sub: #5e5a52; --faint: #99938a;
+    --line: #e3ded3; --accent: #1d6b3f; --accent-soft: #e5efe7; --warn: #b5541c; --warn-soft: #fff4ec;
+    --row-alt: #fbfaf6; --row-hover: #eef4ef;
+    --field: #ffffff; --head-bg: #f7f5f0; --line-soft: #efebe3; --drop-line: #cbc3b2; --on-accent: #ffffff;
+    --focus: rgba(29,107,63,.18);
     --fc-filter: none; /* 원본 글자색만 있는 칸 — 어두운 화면에서는 밝게 보정 */
   }
   /* 어두운 화면 — 같은 토큰만 다시 정의(시스템 설정, data-theme 둘 다 따름) */
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #14161c; --panel: #1c1f27; --ink: #e6e8ee; --sub: #a3aaba; --faint: #737b8c;
-      --line: #2e323d; --accent: #7b8cff; --accent-soft: #252b4a; --warn: #f0a36e; --warn-soft: #3a2a1e;
-      --row-alt: #1f222b; --row-hover: #262b3d;
-      --field: #15171d; --head-bg: #21242d; --line-soft: #262a33; --drop-line: #3d4250; --on-accent: #0f1220;
-      --focus: rgba(123,140,255,.25); --fc-filter: brightness(1.8) saturate(1.2); color-scheme: dark;
+      --bg: #161512; --panel: #1e1d19; --ink: #ece7dc; --sub: #b3ac9e; --faint: #807a6e;
+      --line: #34312a; --accent: #7cc59a; --accent-soft: #1f2c23; --warn: #f0a36e; --warn-soft: #3a2a1e;
+      --row-alt: #201f1b; --row-hover: #232b25;
+      --field: #151411; --head-bg: #23221d; --line-soft: #2a2823; --drop-line: #47433a; --on-accent: #10170f;
+      --focus: rgba(124,197,154,.25); --fc-filter: brightness(1.8) saturate(1.2); color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
-    --bg: #14161c; --panel: #1c1f27; --ink: #e6e8ee; --sub: #a3aaba; --faint: #737b8c;
-    --line: #2e323d; --accent: #7b8cff; --accent-soft: #252b4a; --warn: #f0a36e; --warn-soft: #3a2a1e;
-    --row-alt: #1f222b; --row-hover: #262b3d;
-    --field: #15171d; --head-bg: #21242d; --line-soft: #262a33; --drop-line: #3d4250; --on-accent: #0f1220;
-    --focus: rgba(123,140,255,.25); --fc-filter: brightness(1.8) saturate(1.2); color-scheme: dark;
+    --bg: #161512; --panel: #1e1d19; --ink: #ece7dc; --sub: #b3ac9e; --faint: #807a6e;
+    --line: #34312a; --accent: #7cc59a; --accent-soft: #1f2c23; --warn: #f0a36e; --warn-soft: #3a2a1e;
+    --row-alt: #201f1b; --row-hover: #232b25;
+    --field: #151411; --head-bg: #23221d; --line-soft: #2a2823; --drop-line: #47433a; --on-accent: #10170f;
+    --focus: rgba(124,197,154,.25); --fc-filter: brightness(1.8) saturate(1.2); color-scheme: dark;
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; } /* display:flex를 준 요소도 hidden이면 확실히 숨김 */
