@@ -23,7 +23,11 @@
 - 완전히 빈 줄은 넣지 않는다. 엑셀은 한 번만 다 읽어 두고(미리보기) 합칠 때 그대로 쓴다.
 - [가짜 데이터로 체험]: 쇼핑몰 주문 가짜 데이터(탭 하나에 5년치 파일 + 월별 탭 60개 파일)를 실제 xlsx로 만들어 같은 과정으로 읽는다.
 
-## 웹에서 체험
+## 공개 체험판
+
+https://kery27.github.io/excel-jsgg/ (공개 저장소 `kery27/excel-jsgg`). main에 화면 코드를 올리면 `bash scripts/publish-public.sh ../excel-jsgg`로 바로 반영.
+
+## 웹에서 체험 (claude.ai 페이지 — 2026-11-09 지움, 아래는 기록)
 
 `bash scripts/make-web.sh` → `dist/web/`(웹 페이지용 사본: 바깥 틀 태그를 빼고, SheetJS 번들의 제어 문자를 `\uXXXX`로 바꿈)을 claude.ai 페이지로 올린다. 올린 페이지 안에서는 `alert`/`confirm` 창이 안 뜨므로 알림·확인은 화면 안에서 한다.
 

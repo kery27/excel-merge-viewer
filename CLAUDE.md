@@ -35,6 +35,12 @@
 
 실측 수치는 [README.md](README.md) 참고. 수치를 바꾸면 날짜와 데이터 조건(가짜 데이터, 칸 수, 파일·탭 수)을 같이 적는다.
 
+## 공개 체험판 (2026-11-09, 사용자 결정)
+
+- 공개 저장소 `kery27/excel-jsgg`(GitHub Pages https://kery27.github.io/excel-jsgg/)가 체험판이다. 이 저장소는 비공개로 둔다(의뢰인 이름·내부 메모·이력 때문).
+- **화면 코드(`index.html`·`vendor/`)를 main에 올리면 바로 `bash scripts/publish-public.sh <excel-jsgg 클론 경로>`로 공개 체험판도 갱신한다.** 공개 쪽엔 체험판 index.html·vendor/·README만.
+- claude.ai 웹 체험 페이지(아티팩트)는 지웠다 — 다시 만들지 않는다.
+
 ## projectA와의 관계
 
 개발 근본(SQLite 저장, 필터 패널, 합치기·나누기, 암호화, vendor 번들 스크립트)은
