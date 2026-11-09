@@ -17,7 +17,7 @@ async function main() {
     if (!f.startsWith(PUB)) { res.writeHead(404); return res.end(); }
     if (nfs.existsSync(f) && nfs.statSync(f).isDirectory()) f = path.join(f, 'index.html');
     if (!nfs.existsSync(f)) { res.writeHead(404); return res.end(); }
-    res.writeHead(200, { 'Content-Type': f.endsWith('.html') ? 'text/html; charset=utf-8' : 'application/javascript' });
+    res.writeHead(200, { 'Content-Type': f.endsWith('.html') ? 'text/html; charset=utf-8' : f.endsWith('.png') ? 'image/png' : 'application/javascript' });
     nfs.createReadStream(f).pipe(res);
   }).listen(0);
   const base = 'http://localhost:' + server.address().port + '/';
@@ -50,6 +50,25 @@ async function main() {
   // 외부로 나가는 요청이 없는지(글꼴·분석 도구 없음)
   const external = await page.evaluate(() => performance.getEntriesByType('resource').map(r => r.name).filter(u => !u.startsWith(location.origin)));
   assert.deepEqual(external, []);
+
+  // ---- 카드로 보기(카드뉴스 9장) ----
+  assert.equal(await page.$eval('meta[property="og:image"]', e => e.content), 'https://kery27.github.io/excel-jsgg/cards/img/card-01.png');
+  await page.goto(base + 'cards/');
+  const slides = await page.$$eval('.slide', x => x.map(s => ({ q: s.dataset.q || null, img: s.dataset.img })));
+  assert.equal(slides.length, 9);
+  const cardQs = slides.filter(x => x.q).map(x => x.q).sort();
+  const landingQs = cards.map(c => new URLSearchParams(c.href.split('?')[1]).get('q')).sort();
+  assert.deepEqual(cardQs, landingQs, '카드뉴스의 장면 = 소개 페이지의 장면');
+  for (const sl of slides) {
+    const st = await page.evaluate(async u => (await fetch(u)).status, sl.img);
+    assert.equal(st, 200, sl.img);
+  }
+  assert.equal(await page.$eval('#try', e => e.getAttribute('href')), '../app/?demo=1');
+  await page.click('.nav.next'); await page.waitForTimeout(700);
+  assert.equal(await page.$eval('#count', e => e.textContent), '2 / 9');
+  assert.equal(await page.$eval('#try', e => e.getAttribute('href')), '../app/?demo=1&q=TS-88412');
+  assert.equal(await page.$eval('#dl', e => e.getAttribute('href')), 'img/card-02.png');
+  await page.goto(base);
 
   // ---- 장면마다 직접 해 보기 ----
   for (const c of cards) {

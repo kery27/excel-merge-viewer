@@ -8,6 +8,9 @@
 <meta property="og:title" content="엑셀 모아보기 — 못 찾아서 손해 보던 일, 10초면">
 <meta property="og:description" content="반품 출고일, 이름 잘린 입금, 지난번 단가, 몇 년 전 계약… 폴더 속 엑셀 수백 개에서 그 줄을 10초 안에. 업종별 장면을 가짜 데이터로 바로 해 보세요.">
 <meta property="og:url" content="https://kery27.github.io/excel-jsgg/">
+<meta property="og:image" content="https://kery27.github.io/excel-jsgg/cards/img/card-01.png">
+<meta property="og:image:width" content="1080">
+<meta property="og:image:height" content="1080">
 <!-- 소개 페이지 — 공개 체험판(kery27/excel-jsgg)의 첫 화면. 앱은 app/ 아래. 외부 글꼴·스크립트·분석 도구 없음(외부 요청 0).
      장면 카드의 찾을 말·결과는 앱의 가짜 회사 폴더(index.html makeDemoTree)와 맞춘다 — 바꾸면 둘 다, tests/intro.test.js도. -->
 <style>
@@ -62,6 +65,9 @@
   h1 { font-size: clamp(27px, 3.4vw, 37px); line-height: 1.3; letter-spacing: -0.6px; margin: 0 0 16px; }
   .lead { font-size: 17px; color: var(--sub); margin: 0 0 26px; }
   .ctaRow { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+  .cardsLink { margin: -6px 0 16px; font-size: 14.5px; }
+  .cardsLink a { font-weight: 700; text-decoration: none; }
+  .cardsLink a:hover { text-decoration: underline; }
   .chips { display: flex; gap: 8px 14px; flex-wrap: wrap; font-size: 13.5px; color: var(--sub); padding: 0; margin: 0; list-style: none; }
   .chips li::before { content: '✓'; color: var(--ok); font-weight: 800; margin-right: 5px; }
 
@@ -199,7 +205,7 @@
 <header class="nav">
   <div class="wrap">
     <a class="brand" href="./"><span class="logo">▦</span>엑셀 모아보기</a>
-    <nav aria-label="이 페이지"><a href="#scenes">이럴 때</a><a href="#how">쓰는 법</a><a href="#safe">안심</a><a href="#faq">자주 묻는 것</a></nav>
+    <nav aria-label="이 페이지"><a href="#scenes">이럴 때</a><a href="#how">쓰는 법</a><a href="#safe">안심</a><a href="#faq">자주 묻는 것</a><a href="cards/">카드로 보기</a></nav>
     <a class="btn small" href="app/">무료로 써 보기</a>
   </div>
 </header>
@@ -216,6 +222,7 @@
           <a class="btn" href="app/?demo=1">가짜 회사 폴더로 해 보기</a>
           <a class="btn ghost" href="app/">내 엑셀로 무료로 써 보기</a>
         </div>
+        <p class="cardsLink"><a href="cards/">카드 9장으로 한눈에 보기 →</a></p>
         <ul class="chips">
           <li>설치 없음</li><li>인터넷 없어도</li><li>파일이 내 PC 밖으로 안 나가요</li><li>양식 정리 필요 없음</li>
         </ul>
@@ -482,7 +489,7 @@
 
 <footer>
   <div class="wrap">
-    <span>엑셀 모아보기 · 만든 곳 <a href="https://johnsongarage.github.io/">존슨거라지</a></span>
+    <span>엑셀 모아보기 · <a href="cards/">카드로 보기</a> · 만든 곳 <a href="https://johnsongarage.github.io/">존슨거라지</a></span>
     <span>이 페이지의 모든 예시는 가짜 데이터예요.</span>
   </div>
 </footer>

@@ -42,6 +42,7 @@
 - claude.ai 웹 체험 페이지(아티팩트)는 지웠다 — 다시 만들지 않는다.
 - 공개 체험판 첫 화면은 **소개 페이지**(`intro/index.html`, 업종별 "못 찾아서 손해 보던 장면")이고 앱은 `app/`(2026-11-09). 장면 카드의 찾을 말·결과는 앱의 가짜 회사 폴더(`makeDemoTree`)와 맞춘다 — 바꾸면 `tests/intro.test.js`로 확인.
 - 어필은 "엑셀 검색"이 아니라 **업무에서 못 찾아 손해 보던 장면**으로(hq DECISIONS 2026-11-09).
+- 카드뉴스(`intro/cards/`, 공개 `/cards/`): 소개 페이지를 9장으로 줄인 것. 카드 글을 고치면 `node intro/cards/render.js`로 이미지(`intro/cards/img/`)를 다시 만들어 같이 커밋한다.
 
 ## projectA와의 관계
 
