@@ -85,7 +85,19 @@ async function main() {
   await page.click('#openFolderBtn');
   await page.evaluate(async src => {
     const data = (0, eval)('(' + src + ')')();
-    const tree = { '점검.xlsx': new File([data], '점검.xlsx', { lastModified: 1700000000000 }) };
+    // 거래명세서 꼴: 맨 위 한 칸 제목 + 칸 3개에 걸친 안내 글(거래처·기간·담당) + 빈 줄 + 표
+    const X = __xlsxFactory();
+    const wb2 = X.utils.book_new();
+    X.utils.book_append_sheet(wb2, X.utils.aoa_to_sheet([
+      ['거래명세서'],
+      ['거래처: 안내상사', '', '기간: 2026년 11월', '', '담당: 샘플담당'],
+      [],
+      ['일자', '품목', '수량', '단가', '금액'],
+      ['2026-11-02', '샘플품목A', 2, 1000, 2000],
+      ['2026-11-05', '샘플품목B', 1, 3000, 3000],
+    ]), '명세');
+    const tree = { '점검.xlsx': new File([data], '점검.xlsx', { lastModified: 1700000000000 }),
+      '명세서.xlsx': new File([X.write(wb2, { type: 'array', bookType: 'xlsx' })], '명세서.xlsx', { lastModified: 1700000000000 }) };
     const dir = (name, t) => ({ kind: 'directory', name, queryPermission: async () => 'granted',
       async *entries() { for (const [n, v] of Object.entries(t)) yield [n, { kind: 'file', name: n, getFile: async () => v }]; } });
     await window.__fsTest.useDir(dir('점검폴더', tree));
@@ -100,6 +112,16 @@ async function main() {
   assert.match(pb2, /거래 2행 업체명\(오류값\)/);
   await page.fill('#fsQ', '병합상사'); await page.press('#fsQ', 'Enter'); await settle();
   assert.match(await text('#fsSummary'), /일치 3줄/);
+  // 제목 줄 고르기: 칸 3개에 걸친 안내 글이 아니라 4행 "일자·품목…"이 제목 줄
+  await page.fill('#fsQ', '샘플품목A'); await page.press('#fsQ', 'Enter'); await settle();
+  assert.match(await page.$eval('.fsGroup thead', e => e.innerText.replace(/\s+/g, ' ')), /일자 행 일자 품목 수량 단가 금액/);
+  // 제목 줄 위 안내 글도 찾기에 걸리고, 날짜는 그 표의 가장 최근 날짜
+  await page.fill('#fsQ', '안내상사'); await page.press('#fsQ', 'Enter'); await settle();
+  assert.match(await text('#fsSummary'), /일치 1줄 · 파일 1개 · 가장 최근 2026-11-05/);
+  assert.match(await text('.fsGroupHead'), /명세서\.xlsx › 명세 · 표 위쪽 안내 글/);
+  assert.match(await text('#fsResults tbody'), /거래처: 안내상사 · 기간: 2026년 11월 · 담당: 샘플담당/);
+  await page.fill('#fsQ', '거래명세서'); await page.press('#fsQ', 'Enter'); await settle();
+  assert.match(await text('#fsSummary'), /일치 1줄/);
   await page.fill('#fsQ', '보이지않는상사'); await page.press('#fsQ', 'Enter'); await settle();
   assert.match(await text('#fsSummary'), /일치 1줄/);
   await page.fill('#fsQ', '100'); await page.press('#fsQ', 'Enter'); await settle();

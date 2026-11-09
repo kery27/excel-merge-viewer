@@ -1095,11 +1095,11 @@ function workerMain() {
   // 모아보기(위 data 표)와 따로 쓰는 DB(fdb). 탭끼리 제목을 맞추지 않는다 — 줄마다 칸 값 목록(JSON)과
   // 검색용 글자(norm: 설정의 "무시" 규칙을 적용한 글자), 날짜(d: 그 탭의 날짜 칸 값, 없으면 파일 수정일)만 따로 둔다.
   // 설정을 바꾸면 norm만 다시 만든다(원본 값은 vals에 그대로 있어 엑셀을 다시 읽을 필요 없음).
-  const FS_APP = 'excel-merge-viewer-folder', FS_VERSION = 2; // 2: 엑셀 점검 결과(f_files.checks)
+  const FS_APP = 'excel-merge-viewer-folder', FS_VERSION = 3; // 2: 엑셀 점검 결과(f_files.checks) 3: 제목 줄 위 안내 글(f_sheets.part)
   let fdb = null, fnorm = null, fsFill = false; // fsFill: 병합 칸 채우기(설정)
   function fsCreate(d) {
     d.run('CREATE TABLE IF NOT EXISTS f_files (path TEXT PRIMARY KEY, size INTEGER, mtime INTEGER, status TEXT, error TEXT, rows INTEGER, sheets INTEGER, checks TEXT)');
-    d.run('CREATE TABLE IF NOT EXISTS f_sheets (id INTEGER PRIMARY KEY, path TEXT, sheet TEXT, headers TEXT, header_row INTEGER, date_col INTEGER, date_name TEXT, rows INTEGER)');
+    d.run('CREATE TABLE IF NOT EXISTS f_sheets (id INTEGER PRIMARY KEY, path TEXT, sheet TEXT, headers TEXT, header_row INTEGER, date_col INTEGER, date_name TEXT, rows INTEGER, part TEXT)'); // part: NULL = 표, 'above' = 제목 줄 위 안내 글
     d.run('CREATE INDEX IF NOT EXISTS f_sheets_path ON f_sheets (path)');
     d.run('CREATE TABLE IF NOT EXISTS f_rows (sheet INTEGER, rowno INTEGER, vals TEXT, norm TEXT, d TEXT)');
     d.run('CREATE INDEX IF NOT EXISTS f_rows_sheet ON f_rows (sheet)');
@@ -1179,16 +1179,33 @@ function workerMain() {
     });
     return best;
   }
-  // 제목 줄 찾기(찾아보기용): 위쪽 30줄 중 칸이 가장 많이 찬 줄의 절반 이상이 찬 첫 줄 — 맨 위 "2026년 11월 출고 내역" 같은
-  // 한 칸짜리 제목은 건너뛴다. 못 찾으면 첫 줄.
+  // 제목 줄 찾기(찾아보기용, 2026-11-09 개정): 위쪽 30줄 중
+  //  ① 칸이 가장 많이 찬 줄의 절반 이상(최소 2칸, 다 1칸이면 1칸)이 찼고
+  //  ② 그 아래 줄들(값 있는 줄 10개까지)의 값이 이 줄이 차지한 칸 안에 80% 이상 들어오는 첫 줄.
+  // ②가 "거래처: 테스트상사 · 기간: 11월 · 담당: …"처럼 칸 몇 개에 걸친 안내 글을 제목으로 잡지 않게 한다(아래 표는 그 칸들 사이도 씀).
+  // 둘 다 맞는 줄이 없으면 ①만 맞는 첫 줄, 그것도 없으면 첫 줄. 위쪽 30줄이 다 비면 -1(빈 탭).
   function fsHeaderRow(rows) {
-    const filled = r => (r || []).reduce((n, v) => n + (blank(v) ? 0 : 1), 0);
+    const lim = Math.min(rows.length, 30);
+    const colsOf = r => { const a = []; (r || []).forEach((v, j) => { if (!blank(v)) a.push(j); }); return a; };
+    const C = [];
     let max = 0;
-    for (let i = 0; i < rows.length && i < 30; i++) max = Math.max(max, filled(rows[i]));
+    for (let i = 0; i < lim; i++) { C[i] = colsOf(rows[i]); max = Math.max(max, C[i].length); }
     if (!max) return -1;
     const need = Math.max(Math.min(2, max), Math.ceil(max / 2));
-    for (let i = 0; i < rows.length && i < 30; i++) if (filled(rows[i]) >= need) return i;
-    return 0;
+    let first = -1;
+    for (let i = 0; i < lim; i++) {
+      if (C[i].length < need) continue;
+      if (first < 0) first = i;
+      const set = new Set(C[i]);
+      let tot = 0, inside = 0, seen = 0;
+      for (let k = i + 1; k < rows.length && seen < 10; k++) {
+        const c = k < lim ? C[k] : colsOf(rows[k]);
+        if (!c.length) continue;
+        seen++; tot += c.length; inside += c.filter(j => set.has(j)).length;
+      }
+      if (seen && inside / tot >= 0.8) return i;
+    }
+    return first >= 0 ? first : 0;
   }
 
   function fsDropPath(path) {
@@ -1236,7 +1253,7 @@ function workerMain() {
     fdb.run('BEGIN');
     try {
       fsDropPath(f.path);
-      const insSheet = fdb.prepare('INSERT INTO f_sheets (path, sheet, headers, header_row, date_col, date_name, rows) VALUES (?, ?, ?, ?, ?, ?, ?)');
+      const insSheet = fdb.prepare('INSERT INTO f_sheets (path, sheet, headers, header_row, date_col, date_name, rows, part) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
       const insRow = fdb.prepare('INSERT INTO f_rows VALUES (?, ?, ?, ?, ?)');
       try {
         wb.SheetNames.forEach((sn, si) => {
@@ -1282,13 +1299,38 @@ function workerMain() {
           if (!body.length && !headers.length) return;
           const dc = pickDateCol(headers, body.map(b => b[1]));
           const nameHit = dc >= 0 && DATE_NAME_RE.test(headers[dc]);
-          insSheet.run([f.path, sn, JSON.stringify(headers), r0 + h + 1, dc, dc >= 0 ? headers[dc] : null, body.length]);
+          insSheet.run([f.path, sn, JSON.stringify(headers), r0 + h + 1, dc, dc >= 0 ? headers[dc] : null, body.length, null]);
           const sid = fdb.exec('SELECT last_insert_rowid()')[0].values[0][0];
+          let newest = null;
           for (const [R, vals] of body) {
-            const d = (dc >= 0 && toISO(vals[dc], nameHit)) || fileISO;
-            insRow.run([sid, R, JSON.stringify(vals), rowNorm(vals, fnorm), d]);
+            const dd = dc >= 0 && toISO(vals[dc], nameHit);
+            if (dd && (!newest || dd > newest)) newest = dd;
+            insRow.run([sid, R, JSON.stringify(vals), rowNorm(vals, fnorm), dd || fileISO]);
           }
-          total += body.length; nSheets++;
+          // 제목 줄 위의 줄(거래명세서의 "거래처: … · 기간: …" 같은 안내 글)도 빠지지 않게 따로 저장한다 — 줄마다 칸 글자를 ' · '로 이어 한 칸으로.
+          // 날짜는 그 탭 표의 가장 최근 날짜(없으면 파일 수정일) — 안내 글은 그 표에 딸린 것이라.
+          let above = 0;
+          if (h > 0) {
+            const aboveRows = [];
+            for (let i = 0; i < h; i++) {
+              const row = rows[i] || [], srcRow = ws[r0 + i] || [];
+              const parts = [];
+              row.forEach((v, j) => {
+                const cell = srcRow[c0 + j];
+                if (cell && cell.t === 'e') v = errText(cell);
+                else if (typeof v === 'number' && cell && cell.t === 'n' && cell.z && XLSX.SSF.is_date(cell.z)) v = serialToISODate(v, date1904);
+                if (!blank(v)) parts.push(String(v).replace(/\r\n?/g, '\n').trim());
+              });
+              if (parts.length) aboveRows.push([r0 + i + 1, [parts.join(' · ')]]);
+            }
+            if (aboveRows.length) {
+              insSheet.run([f.path, sn, JSON.stringify(['제목 줄 위 안내 글']), null, -1, null, aboveRows.length, 'above']);
+              const aid = fdb.exec('SELECT last_insert_rowid()')[0].values[0][0];
+              for (const [R, vals] of aboveRows) insRow.run([aid, R, JSON.stringify(vals), rowNorm(vals, fnorm), newest || fileISO]);
+              above = aboveRows.length;
+            }
+          }
+          total += body.length + above; nSheets++;
         });
       } finally { insSheet.free(); insRow.free(); }
       const hasCk = fck.err || fck.inv || fck.merge;
@@ -1339,8 +1381,8 @@ function workerMain() {
     const ids = [...new Set(rows.map(r => r[0]))];
     const sheets = {};
     if (ids.length) {
-      const sres = fdb.exec('SELECT s.id, s.path, s.sheet, s.headers, s.header_row, s.date_col, s.date_name, f.mtime FROM f_sheets s JOIN f_files f ON f.path = s.path WHERE s.id IN (' + ids.join(',') + ')');
-      sres[0].values.forEach(v => { sheets[v[0]] = { path: v[1], sheet: v[2], headers: JSON.parse(v[3]), headerRow: v[4], dateCol: v[5], dateName: v[6], mtime: v[7] }; });
+      const sres = fdb.exec('SELECT s.id, s.path, s.sheet, s.headers, s.header_row, s.date_col, s.date_name, f.mtime, s.part FROM f_sheets s JOIN f_files f ON f.path = s.path WHERE s.id IN (' + ids.join(',') + ')');
+      sres[0].values.forEach(v => { sheets[v[0]] = { path: v[1], sheet: v[2], headers: JSON.parse(v[3]), headerRow: v[4], dateCol: v[5], dateName: v[6], mtime: v[7], part: v[8] }; });
     }
     return {
       terms, total: agg[0], files: agg[1], newest: agg[2], oldest: agg[3],
@@ -3372,9 +3414,11 @@ function fsRenderMore() {
     if (i === fs.shown && lastTable && lastTable.dataset.sid === String(sid)) {
       lastTable.querySelector('tbody').insertAdjacentHTML('beforeend', body);
     } else {
-      const dateTitle = s.dateCol >= 0 ? esc(s.dateName) : '파일 날짜';
+      const above = s.part === 'above';
+      const dateTitle = above ? '표 날짜' : s.dateCol >= 0 ? esc(s.dateName) : '파일 날짜';
       html += '<div class="fsGroup" data-sid="' + sid + '"><div class="fsGroupHead"><b>' + esc(s.path) + '</b> › ' + esc(s.sheet) +
-        (s.dateCol < 0 ? ' <span class="sub" title="이 탭에서 날짜 칸을 못 찾아 파일 수정일로 정렬해요">· 날짜 칸 없음(파일 수정일 기준)</span>' : '') + '</div>' +
+        (above ? ' <span class="sub">· 표 위쪽 안내 글(제목 줄 위)</span>'
+          : s.dateCol < 0 ? ' <span class="sub" title="이 탭에서 날짜 칸을 못 찾아 파일 수정일로 정렬해요">· 날짜 칸 없음(파일 수정일 기준)</span>' : '') + '</div>' +
         '<div class="fsTableWrap"><table class="fsTable"><thead><tr><th class="fsD">' + dateTitle + '</th><th class="fsR">행</th>' +
         s.headers.map(t => '<th>' + esc(t) + '</th>').join('') + '</tr></thead><tbody>' + body + '</tbody></table></div></div>';
     }
@@ -3401,13 +3445,13 @@ function fsOpenDetail(idx) {
   const src = (folder ? folder + '/' : '') + s.path + ' › ' + s.sheet + ' · ' + row[1] + '행';
   $('#detailTitle').textContent = '찾은 줄 자세히 보기';
   $('#detailBody').innerHTML = '<div class="detailSource"><span>출처: <b>' + esc(src) + '</b></span><button type="button" class="ghost detailCopyBtn" data-copy="' + esc(src) + '">위치 복사</button></div>' +
-    '<div class="detailRow"><div class="detailLabel">날짜</div><div class="detailValue">' + esc(row[3]) + ' <span class="sub">(' + (s.dateCol >= 0 ? '"' + esc(s.dateName) + '" 칸' : '파일 수정일 — 날짜 칸을 못 찾음') + ')</span></div></div>' +
+    '<div class="detailRow"><div class="detailLabel">날짜</div><div class="detailValue">' + esc(row[3]) + ' <span class="sub">(' + (s.part === 'above' ? '이 탭 표의 가장 최근 날짜' : s.dateCol >= 0 ? '"' + esc(s.dateName) + '" 칸' : '파일 수정일 — 날짜 칸을 못 찾음') + ')</span></div></div>' +
     s.headers.map((h, j) => {
       const v = vals[j] == null ? '' : fsFmt(vals[j]);
       return '<div class="detailRow"><div class="detailLabel">' + esc(h) + '</div><div class="detailValue' + (fsCellHit(v, r.terms) ? ' hit' : isErrVal(v) ? ' errv' : '') + '">' +
         (v === '' ? '<span style="color:var(--faint)">-</span>' : esc(v)) + '</div></div>';
     }).join('') +
-    '<div class="detailRow"><div class="detailLabel">제목 줄</div><div class="detailValue sub">엑셀 ' + s.headerRow + '행 · 파일 수정 ' + esc(when(s.mtime)) + '</div></div>';
+    '<div class="detailRow"><div class="detailLabel">제목 줄</div><div class="detailValue sub">' + (s.part === 'above' ? '표 위쪽 안내 글 — 표의 제목 줄보다 위에 있는 줄' : '엑셀 ' + s.headerRow + '행') + ' · 파일 수정 ' + esc(when(s.mtime)) + '</div></div>';
   $('#detailOverlay').hidden = false;
 }
 
