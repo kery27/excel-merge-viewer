@@ -119,6 +119,7 @@
   .mini li { display: grid; grid-template-columns: 96px 1fr; gap: 12px; padding: 9px 0; border-top: 1.5px dashed var(--rule-soft); font-size: 14px; }
   .mini li .dt { font-family: var(--serif); font-weight: 700; font-variant-numeric: tabular-nums; }
   .mini li .src { display: block; color: var(--faint); font-size: 12.5px; }
+  .moreScenes { display: none; width: 100%; margin: 4px 0 26px; }
   .try { align-self: flex-start; font-weight: 700; font-size: 15px; text-decoration: none; color: var(--green); border-bottom: 1.5px solid currentColor; }
   .note { font-size: 13px; color: var(--faint); margin: 8px 0 0; }
 
@@ -190,6 +191,38 @@
     .bigNo { font-size: 80px; }
     .ctaRow .btn { flex: 1 1 100%; }
     .faq p { margin-left: 0; }
+    /* ---- 휴대폰 다시 점검(2026-11-10): 페이지 길이 줄이기 · 누르기 쉽게 ---- */
+    .mast .wrap { height: 54px; gap: 12px; }
+    .wordmark { font-size: 17px; white-space: nowrap; }
+    .mast .btn { padding: 9px 14px; }
+    .hero { padding: 24px 0 40px; }
+    .heroGrid { margin-top: 20px; }
+    .lead { font-size: 15.5px; margin-bottom: 20px; }
+    .ctaRow .btn { padding: 12px 16px; }
+    .cardsLink a { display: inline-block; padding: 9px 0 3px; } /* 누르는 곳 넓게 */
+    section.block { padding: 40px 0; }
+    .secHead { margin-bottom: 16px; }
+    #scenes .secLead { display: none; } /* 카드마다 지금은·손해·이렇게가 보여서 */
+    .tabs { flex-wrap: wrap; overflow: visible; gap: 0 16px; } /* 옆으로 숨는 업종이 없게 줄바꿈 */
+    .tabs button { padding: 9px 0 7px; }
+    .scene { padding: 14px 0 28px; gap: 12px; }
+    .scene h3 { font-size: 24px; }
+    .flow { font-size: 14.5px; }
+    .flow div { grid-template-columns: 52px 1fr; gap: 10px; }
+    .try { align-self: stretch; text-align: center; padding: 12px; border: 1.5px solid currentColor; } /* 단추처럼 — 누르는 곳 44px 넘게 */
+    /* '전체'에서는 사건 3개만 먼저, 나머지는 [사건 N개 더 보기](업종을 고르면 그 업종 사건은 다 보임). .clip은 첫 화면 쪽지 카드 이름이라 다른 이름 */
+    .scenes.firstThree .scene:nth-child(n+4) { display: none; }
+    .scenes.firstThree + .moreScenes { display: flex; }
+    .steps li { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 14px; }
+    .steps li::before { grid-row: 1 / span 2; font-size: 34px; margin: 0; }
+    .safe div { padding: 12px 0 14px; }
+    .quote { font-size: 17px; line-height: 1.5; padding-left: 28px; }
+    .quote::before { font-size: 44px; top: -8px; }
+    .flow { line-height: 1.55; }
+    .mini .q { padding: 10px 14px 6px; }
+    .mini ul { padding: 0 14px 6px; }
+    .mini li { padding: 7px 0; line-height: 1.5; }
+    footer a { display: inline-block; padding: 6px 0; } /* 누르는 곳 넓게 */
   }
 </style>
 </head>
@@ -388,6 +421,7 @@
           <a class="try" href="app/?demo=1&amp;q=%ED%95%9C%EB%B9%9B%EC%83%98%ED%94%8C">이 장면 직접 해 보기 →</a>
         </article>
       </div>
+      <button type="button" class="btn ghost moreScenes">사건 더 보기 ↓</button>
       <p class="note">모든 예시는 가짜 데이터예요. 사건은 실제로 들은 이야기와, 같은 일을 하는 업종에서 흔히 생길 만한 일을 바탕으로 만들었어요.</p>
     </div>
   </section>
@@ -453,7 +487,7 @@
         <details><summary>공유 폴더(NAS)에 있어요.</summary>
           <p>PC에서 폴더로 열리면 연결할 수 있어요. 다만 공유 폴더는 회사마다 환경이 달라서, 회사에 맞춰 세팅할 때 같이 확인해요.</p></details>
         <details><summary>어떤 브라우저에서 되나요?</summary>
-          <p>내 폴더 연결은 크롬·엣지에서 돼요. 가짜 회사 폴더 체험은 휴대폰 크롬에서도 볼 수 있어요.</p></details>
+          <p>내 폴더 연결은 PC의 크롬·엣지에서 돼요. 가짜 회사 폴더 체험은 휴대폰 크롬에서도 볼 수 있어요.</p></details>
         <details><summary>엑셀 파일이 바뀌거나 지워지지 않나요?</summary>
           <p>읽기만 해요. 원본 파일은 그대로예요. 찾기용으로 읽어 둔 내용은 이 PC 브라우저 안(또는 직접 고른 폴더)에만 두고, 언제든 지울 수 있어요.</p></details>
         <details><summary>직원 여러 명이 같이 쓰거나, 우리 일에 맞추고 싶어요.</summary>
@@ -496,11 +530,18 @@
 
   // 업종 고르기
   var tabs = document.querySelectorAll('.tabs button'), cards = document.querySelectorAll('.scene');
+  // 휴대폰에서 '전체'는 사건 3개만 먼저(나머지는 [사건 N개 더 보기] — 화면 크기 규칙은 CSS .scenes.firstThree). 한 번 펼치면 계속 펼침
+  var grid = document.querySelector('.scenes'), more = document.querySelector('.moreScenes'), opened = false;
+  function clip(ind) { grid.classList.toggle('firstThree', ind === 'all' && !opened); }
+  more.textContent = '사건 ' + (cards.length - 3) + '개 더 보기 ↓';
+  more.addEventListener('click', function () { opened = true; clip('all'); cards[3].scrollIntoView({ block: 'start', behavior: 'smooth' }); });
+  clip('all');
   tabs.forEach(function (b) {
     b.addEventListener('click', function () {
       var ind = b.getAttribute('data-ind');
       tabs.forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
       cards.forEach(function (c) { c.hidden = ind !== 'all' && c.getAttribute('data-ind').split(' ').indexOf(ind) < 0; });
+      clip(ind);
     });
   });
 })();

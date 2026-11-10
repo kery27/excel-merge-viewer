@@ -157,6 +157,21 @@ async function main() {
   const sticking = () => mp.evaluate(() => { const W = document.documentElement.clientWidth; const bad = []; document.querySelectorAll('body *').forEach(e => { if (e.closest('.tw, .tabs, .fsTableWrap, #fsDemoQs')) return; const r = e.getBoundingClientRect(); if (r.width && r.right > W + 1) bad.push((e.id || e.className || e.tagName) + ':' + Math.round(r.right)); }); return bad.slice(0, 5); });
   await mp.goto(base);
   assert.deepEqual(await sticking(), [], '소개 페이지');
+  // 휴대폰 소개 페이지(2026-11-10 점검): 업종 탭이 옆으로 숨지 않음, '전체'는 사건 3개 + [사건 4개 더 보기], 장면 단추는 누르기 쉽게
+  assert.ok(await mp.$eval('.tabs', e => e.scrollWidth <= e.clientWidth + 1), '업종 탭이 화면 밖으로 숨지 않음');
+  const shown = () => mp.$$eval('.scene', x => x.filter(e => e.offsetParent).length);
+  assert.equal(await shown(), 3, "휴대폰 '전체'는 사건 3개 먼저");
+  assert.equal(await mp.$eval('.moreScenes', e => e.innerText.trim()), '사건 4개 더 보기 ↓');
+  assert.ok(await mp.evaluate(() => document.documentElement.scrollHeight) < 7600, '휴대폰 소개 페이지 길이(전 9,900px)');
+  assert.ok(await mp.$$eval('.scene .try', x => x.filter(e => e.offsetParent).every(e => e.getBoundingClientRect().height >= 44)), '이 장면 직접 해 보기: 누르는 곳 44px 이상');
+  await mp.click('.moreScenes');
+  assert.equal(await shown(), 7);
+  assert.equal(await mp.isVisible('.moreScenes'), false);
+  await mp.click('.tabs button[data-ind="shop"]'); assert.equal(await shown(), 1);
+  await mp.click('.tabs button[data-ind="all"]'); assert.equal(await shown(), 7, '한 번 펼치면 계속 펼침');
+  await mp.goto(base + 'cards/');
+  assert.equal(await mp.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, '카드 페이지: 가로로 밀리지 않음(카드 넘기기 줄만 옆으로)');
+  assert.ok(await mp.$eval('#try', e => e.getBoundingClientRect().height) >= 40, '카드 페이지 직접 해 보기: 누르기 쉽게');
   await mp.goto(base + 'app/?demo=1&q=1250000');
   await mp.waitForFunction(() => window.__fsTest && window.__fsTest.state().lastCheck, null, { timeout: 60000 });
   await mp.waitForTimeout(300);
