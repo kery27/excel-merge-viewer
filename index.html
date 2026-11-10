@@ -268,6 +268,12 @@
   .siteBar a { color: var(--accent); font-weight: 700; text-decoration: none; }
   .siteBar .sbContact { margin-left: auto; }
   .mShort { display: none; } /* 휴대폰에서만 보이는 짧은 글(긴 글은 .mLong) */
+  /* 휴대폰·태블릿(html.phone — 화면 너비가 아니라 기기로 판단): 폴더 연결이 아예 안 되니 PC 안내로 바꿈 */
+  .phoneOnly { display: none; }
+  html.phone .phoneOnly { display: revert; }
+  html.phone .pcOnly { display: none !important; }
+  #fsDemoBar .pcNote b { color: var(--accent); }
+  button.entry .phoneOnly { color: var(--accent); font-weight: 600; }
   .nw { white-space: nowrap; }
   #folder.demo #fsRescan { display: none; } /* 가짜 폴더는 바뀌지 않음 */
   .fsLink { background: none; border: 0; border-radius: 0; padding: 0; font: inherit; color: var(--accent); text-decoration: underline dotted; text-underline-offset: 3px; cursor: pointer; }
@@ -347,7 +353,7 @@
     #fsFiles .fh .sub { display: none; } /* 설명 줄은 컴퓨터에서만 */
     #fsDemoBar .dmTop { flex-wrap: nowrap; gap: 8px; }
     #fsDemoBar .dmTop > span { min-width: 0; }
-    #fsDemoExit { flex: none; padding: 4px 9px; font-size: 12px; }
+    #fsDemoExit, #fsDemoSend { flex: none; padding: 4px 9px; font-size: 12px; }
     /* 장면 단추는 한 줄로 옆으로 밀기(오른쪽 끝을 흐리게 해 더 있다는 표시) */
     #fsDemoQs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; -webkit-mask-image: linear-gradient(to right, #000 85%, transparent); mask-image: linear-gradient(to right, #000 85%, transparent); }
     #fsDemoQs::-webkit-scrollbar { display: none; }
@@ -388,8 +394,8 @@
     <h1>엑셀 여러 개를 던지면, 하나로 모아 바로 찾아봅니다</h1>
     <p class="lead">월별 탭, 연도별 파일로 흩어진 데이터를 한 화면에서 조건으로 걸러 보세요.<br>파일은 이 PC 밖으로 나가지 않아요. 인터넷이 없어도 됩니다.</p>
     <div class="entries">
-      <div class="entry on"><b>파일 모아보기</b><span>같은 구조의 엑셀을 하나로 합쳐 칸 조건으로 걸러 봐요 — 아래에 파일을 끌어다 놓으세요</span></div>
-      <button type="button" class="entry" id="openFolderBtn"><b>폴더 찾아보기 →</b><span>폴더를 한 번 연결해 두면 키워드 하나로 그 안의 모든 엑셀에서 그 줄을 찾아요. 제목 형식이 달라도 돼요</span></button>
+      <div class="entry on"><b>파일 모아보기</b><span>같은 구조의 엑셀을 하나로 합쳐 칸 조건으로 걸러 봐요 — <span class="mLong">아래에 파일을 끌어다 놓으세요</span><span class="mShort">아래를 눌러 파일을 고르세요</span></span></div>
+      <button type="button" class="entry" id="openFolderBtn"><b>폴더 찾아보기 →</b><span class="phoneOnly">폴더 연결은 PC에서 돼요 · 휴대폰에서는 가짜 회사 폴더로 체험</span><span>폴더를 한 번 연결해 두면 키워드 하나로 그 안의 모든 엑셀에서 그 줄을 찾아요. 제목 형식이 달라도 돼요</span></button>
     </div>
     <div id="drop">
       <strong><span class="mLong">엑셀·CSV 파일을 여기로 끌어다 놓으세요</span><span class="mShort">눌러서 엑셀·CSV 파일 고르기</span></strong>
@@ -421,7 +427,7 @@
       <button id="fsSettingsBtn" class="ghost">설정</button>
     </div>
     <div id="fsDemoBar" hidden>
-      <div class="dmTop"><span><span class="mLong"><b>가짜 회사 폴더</b>로 체험 중이에요 · 출고·반품·청구·통장·영업·쇼핑몰·생산·고객관리 폴더의 <button type="button" class="fsLink" data-fs-files aria-controls="fsFiles"><span id="fsDemoInfo"></span></button> · 모두 가짜 데이터, 아무것도 저장하지 않아요</span><span class="mShort"><b>가짜 회사 폴더</b>로 체험 중</span></span><button id="fsDemoExit">내 폴더 연결하기</button></div>
+      <div class="dmTop"><span><span class="mLong"><b>가짜 회사 폴더</b>로 체험 중이에요 · 출고·반품·청구·통장·영업·쇼핑몰·생산·고객관리 폴더의 <button type="button" class="fsLink" data-fs-files aria-controls="fsFiles"><span id="fsDemoInfo"></span></button> · 모두 가짜 데이터, 아무것도 저장하지 않아요</span><span class="mShort"><b>가짜 회사 폴더</b>로 체험 중</span><span class="phoneOnly pcNote"> · 내 엑셀 폴더는 <b>PC</b>에서 연결해요</span></span><button id="fsDemoExit" class="pcOnly">내 폴더 연결하기</button><button id="fsDemoSend" class="phoneOnly" type="button" title="PC의 크롬·엣지에서 열 주소를 카톡·메일로 보내요">PC로 주소 보내기</button></div>
       <div class="dmHow"><span class="mLong"><b>이렇게 해 보세요</b>아래 버튼은 일하다 자주 생기는 장면이에요. 하나를 누르면 그 장면에서 찾는 말(송장번호·금액·거래처…)로 이 폴더의 엑셀을 한 번에 찾아요. 검색창에 직접 넣어 봐도 돼요.</span><span class="mShort"><b>장면을 눌러 보세요</b>그 일에서 찾는 말로 바로 찾아요</span></div>
       <div id="fsDemoQs"></div>
       <div id="fsDemoScene" hidden></div>
@@ -3082,6 +3088,7 @@ const FS_OPFS_NAME = 'folder-search.db';          // 브라우저 안(OPFS)에 �
 const FS_SUPPORTED = typeof window.showDirectoryPicker === 'function';
 // 휴대폰·태블릿(아이패드는 맥처럼 보이지만 터치가 됨): 폴더 고르기 기능이 아예 없다(안드로이드 크롬 포함) — "크롬에서 열어 주세요" 대신 PC로 안내
 const IS_PHONE = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+document.documentElement.classList.toggle('phone', IS_PHONE); // CSS .phoneOnly / .pcOnly
 let fsCfg = loadFsSettings();
 const fs = {
   dir: null,          // 연결한 폴더(FileSystemDirectoryHandle)
@@ -3959,15 +3966,16 @@ async function fsExitDemo() {
 $('#fsDemoExit').addEventListener('click', fsExitDemo);
 $('#fsDemoTry').addEventListener('click', () => fsStartDemo(''));
 // 휴대폰 → PC: 공유(카톡 나에게 보내기·메일 등)가 되면 공유, 안 되면 주소 복사. 체험 장면이 아니라 앱 첫 화면 주소
-$('#fsSendLink').addEventListener('click', async e => {
-  const btn = e.currentTarget;
+async function fsSendToPc(btn) {
   const url = /^https?:$/.test(location.protocol) ? location.origin + location.pathname : location.href;
   try {
     if (navigator.share) { await navigator.share({ title: '엑셀 모아보기', text: 'PC의 크롬·엣지에서 열어 내 폴더를 연결해 보세요', url }); return; }
   } catch (err) { if (err && err.name === 'AbortError') return; }
   try { await navigator.clipboard.writeText(url); btn.textContent = '주소를 복사했어요 — PC로 보내 주세요'; }
   catch (err) { prompt('이 주소를 PC로 보내 주세요', url); }
-});
+}
+$('#fsSendLink').addEventListener('click', e => fsSendToPc(e.currentTarget));
+$('#fsDemoSend').addEventListener('click', e => fsSendToPc(e.currentTarget)); // 휴대폰 체험 띠
 $('#fsDemoQs').addEventListener('click', e => {
   const b = e.target.closest('[data-demo-q]');
   if (!b) return;

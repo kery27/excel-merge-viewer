@@ -120,6 +120,12 @@
   .mini li .dt { font-family: var(--serif); font-weight: 700; font-variant-numeric: tabular-nums; }
   .mini li .src { display: block; color: var(--faint); font-size: 12.5px; }
   .moreScenes { display: none; width: 100%; margin: 4px 0 26px; }
+  .phoneOnly { display: none; }
+  html.phone .phoneOnly { display: revert; }
+  html.phone .pcOnly { display: none !important; }
+  .pcNote { margin: 0 0 14px; padding: 10px 12px; border-left: 3px solid var(--green); background: var(--card); font-size: 14.5px; line-height: 1.6; color: var(--ink); }
+  .pcNote b { color: var(--green); }
+  .pcNote button { font: inherit; font-weight: 700; color: var(--green); background: none; border: 0; border-bottom: 1.5px solid currentColor; padding: 6px 0 2px; margin-top: 4px; cursor: pointer; }
   .try { align-self: flex-start; font-weight: 700; font-size: 15px; text-decoration: none; color: var(--green); border-bottom: 1.5px solid currentColor; }
   .note { font-size: 13px; color: var(--faint); margin: 8px 0 0; }
 
@@ -225,6 +231,10 @@
     footer a { display: inline-block; padding: 6px 0; } /* 누르는 곳 넓게 */
   }
 </style>
+<script>
+// 휴대폰·태블릿이면 html.phone — 폴더 연결은 PC에서만 되니 '내 엑셀로 써 보기' 대신 PC 안내(.phoneOnly / .pcOnly)
+if (/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1)) document.documentElement.classList.add('phone');
+</script>
 </head>
 <body>
 <header class="mast">
@@ -247,8 +257,9 @@
             폴더 속 엑셀 수백 개에서 그 줄을 10초 안에 찾아요.</p>
           <div class="ctaRow">
             <a class="btn" href="app/?demo=1">가짜 회사 폴더로 해 보기</a>
-            <a class="btn ghost" href="app/">내 엑셀로 무료로 써 보기</a>
+            <a class="btn ghost pcOnly" href="app/">내 엑셀로 무료로 써 보기</a>
           </div>
+          <p class="pcNote phoneOnly">내 엑셀 폴더 연결은 <b>PC의 크롬·엣지</b>에서 돼요. 휴대폰에서는 가짜 회사 폴더로 먼저 해 보세요.<br><button type="button" id="sendPc">PC로 주소 보내기 →</button></p>
           <p class="cardsLink"><a href="cards/">카드 9장으로 한눈에 보기 →</a></p>
           <ul class="chips"><li>설치 없음</li><li>인터넷 없어도</li><li>파일이 내 PC 밖으로 안 나가요</li><li>양식 정리 필요 없음</li></ul>
         </div>
@@ -458,7 +469,7 @@
       <div class="secHead"><span class="kicker">쓰는 법</span><h2>폴더를 한 번 연결하면 끝이에요</h2>
         <p class="secLead">엑셀을 고치거나 한곳에 모아 둘 필요가 없어요. 쓰던 폴더 그대로예요.</p></div>
       <ol class="steps">
-        <li><h3>폴더 연결</h3><p>엑셀이 쌓이는 폴더를 한 번 골라요(크롬·엣지). 다음부터는 새로 생기거나 바뀐 파일만 다시 읽어요.</p></li>
+        <li><h3>폴더 연결</h3><p>엑셀이 쌓이는 폴더를 한 번 골라요(PC의 크롬·엣지). 다음부터는 새로 생기거나 바뀐 파일만 다시 읽어요.</p></li>
         <li><h3>찾을 말 넣기</h3><p>송장번호, 거래처, 금액, 로트번호… 띄어 쓴 그대로 찾고, 여러 말을 같이 찾을 땐 + 로 이어요.</p></li>
         <li><h3>그 줄과 출처</h3><p>최신순으로, 어느 파일 어느 탭 몇 번째 줄인지까지. 파일마다 다른 칸 제목도 원래 그대로 보여요.</p></li>
       </ol>
@@ -527,6 +538,16 @@
   function iso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   document.querySelectorAll('[data-ago]').forEach(function (e) { e.textContent = iso(new Date(t.getFullYear(), t.getMonth(), t.getDate() - Number(e.getAttribute('data-ago')))); });
   document.querySelectorAll('[data-month-ago]').forEach(function (e) { e.textContent = iso(new Date(t.getFullYear(), t.getMonth() - Number(e.getAttribute('data-month-ago')), 1)).slice(0, 7); });
+
+  // 휴대폰: PC로 주소 보내기(공유가 되면 카톡·메일 등으로, 안 되면 주소 복사) — 앱 첫 화면 주소
+  var send = document.getElementById('sendPc');
+  if (send) send.addEventListener('click', function () {
+    var url = new URL('app/', location.href).href;
+    function copied() { send.textContent = '주소를 복사했어요 — PC로 보내 주세요'; }
+    function copy() { if (navigator.clipboard) navigator.clipboard.writeText(url).then(copied, function () { prompt('이 주소를 PC로 보내 주세요', url); }); else prompt('이 주소를 PC로 보내 주세요', url); }
+    if (navigator.share) navigator.share({ title: '엑셀 모아보기', text: 'PC의 크롬·엣지에서 열어 내 엑셀 폴더를 연결해 보세요', url: url }).catch(function (e) { if (!e || e.name !== 'AbortError') copy(); });
+    else copy();
+  });
 
   // 업종 고르기
   var tabs = document.querySelectorAll('.tabs button'), cards = document.querySelectorAll('.scene');

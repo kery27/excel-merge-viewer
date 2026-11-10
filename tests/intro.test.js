@@ -152,6 +152,7 @@ async function main() {
   // persistent context에서는 기기 흉내를 못 바꿔서 따로 띄움
   const b2 = await chromium.launch();
   const m = await b2.newContext({ ...devices['Pixel 7'] });
+  await m.addInitScript(() => { navigator.share = async d => { window.__shared = d; }; });
   const mp = await m.newPage();
   mp.on('pageerror', e => errors.push(e.message));
   const sticking = () => mp.evaluate(() => { const W = document.documentElement.clientWidth; const bad = []; document.querySelectorAll('body *').forEach(e => { if (e.closest('.tw, .tabs, .fsTableWrap, #fsDemoQs')) return; const r = e.getBoundingClientRect(); if (r.width && r.right > W + 1) bad.push((e.id || e.className || e.tagName) + ':' + Math.round(r.right)); }); return bad.slice(0, 5); });
@@ -159,6 +160,11 @@ async function main() {
   assert.deepEqual(await sticking(), [], '소개 페이지');
   // 휴대폰 소개 페이지(2026-11-10 점검): 업종 탭이 옆으로 숨지 않음, '전체'는 사건 3개 + [사건 4개 더 보기], 장면 단추는 누르기 쉽게
   assert.ok(await mp.$eval('.tabs', e => e.scrollWidth <= e.clientWidth + 1), '업종 탭이 화면 밖으로 숨지 않음');
+  // 휴대폰은 폴더 연결이 안 됨 → 첫 화면에 '내 엑셀로 써 보기' 대신 PC 안내 + [PC로 주소 보내기](앱 주소)
+  assert.equal(await mp.isVisible('.hero a.btn[href="app/"]'), false, '휴대폰: 내 엑셀로 써 보기 숨김');
+  assert.match(await mp.$eval('.hero .pcNote', e => e.innerText), /내 엑셀 폴더 연결은 PC의 크롬·엣지에서 돼요/);
+  await mp.click('#sendPc');
+  assert.equal(await mp.evaluate(() => window.__shared && window.__shared.url), base + 'app/', '소개 페이지: 앱 주소를 PC로');
   const shown = () => mp.$$eval('.scene', x => x.filter(e => e.offsetParent).length);
   assert.equal(await shown(), 3, "휴대폰 '전체'는 사건 3개 먼저");
   assert.equal(await mp.$eval('.moreScenes', e => e.innerText.trim()), '사건 4개 더 보기 ↓');
@@ -187,6 +193,11 @@ async function main() {
   assert.equal(await mp.$$eval('#fsDemoQs button', x => new Set(x.map(b => b.offsetTop)).size), 1, '휴대폰: 장면 단추는 한 줄');
   assert.equal(await mp.isVisible('#offlineBtn'), false, '휴대폰: 오프라인용 내려받기는 숨김');
   assert.equal(await mp.isVisible('#fsRescan'), false, '가짜 폴더에선 다시 확인 없음');
+  assert.equal(await mp.isVisible('#fsDemoExit'), false, '휴대폰: 내 폴더 연결하기 대신');
+  assert.match(await mp.$eval('#fsDemoBar .dmTop', e => e.innerText), /내 엑셀 폴더는 PC에서 연결해요/);
+  await mp.evaluate(() => { window.__shared = null; });
+  await mp.click('#fsDemoSend');
+  assert.equal(await mp.evaluate(() => window.__shared && window.__shared.url), base + 'app/', '체험 띠: 체험 장면이 아니라 앱 첫 화면 주소');
   // 가장 작은 휴대폰(320×568)도 내리지 않고 결과 줄, 검색창은 한 줄 통째로
   const se = await b2.newContext({ ...devices['iPhone SE'] });
   const sp = await se.newPage();
@@ -197,16 +208,15 @@ async function main() {
   assert.ok(await sp.evaluate(() => { const r = document.querySelector('#fsSummary').getBoundingClientRect(); return scrollY === 0 && r.bottom <= innerHeight; }), '320×568: 결과 줄이 첫 화면에');
   assert.ok(await sp.$eval('#fsQ', e => e.getBoundingClientRect().width) > 250, '320×568: 검색창이 눌리지 않음');
   await se.close();
-  // 진짜 휴대폰에는 폴더 고르기 기능이 없음(안드로이드 크롬 포함) → [내 폴더 연결하기]를 누르면 "PC에서" 안내 + 주소 보내기
+  // 진짜 휴대폰에는 폴더 고르기 기능이 없음(안드로이드 크롬 포함) → 처음 화면 '폴더 찾아보기'를 누르면 "PC에서" 안내 + 주소 보내기
   const m2 = await b2.newContext({ ...devices['Pixel 7'] });
   await m2.addInitScript(() => { delete window.showDirectoryPicker; navigator.share = async d => { window.__shared = d; }; });
   const mp2 = await m2.newPage();
   mp2.on('pageerror', e => errors.push(e.message));
-  await mp2.goto(base + 'app/?demo=1&q=1250000');
-  await mp2.waitForFunction(() => window.__fsTest && window.__fsTest.state().lastCheck, null, { timeout: 60000 });
-  await mp2.click('#fsDemoExit');
+  await mp2.goto(base + 'app/');
+  assert.match(await mp2.$eval('#openFolderBtn', e => e.innerText), /폴더 연결은 PC에서 돼요/, '처음 화면 카드에 미리 알림');
+  await mp2.click('#openFolderBtn');
   await mp2.waitForSelector('#fsConnect:not([hidden])');
-  assert.equal(await mp2.$eval('#fsFolderInfo', e => e.innerText.trim()), '', '체험을 끝내면 위쪽 줄의 가짜 폴더 정보도 지움');
   assert.equal(await mp2.isVisible('#fsQ'), false, '폴더 연결이 안 되는 곳에선 검색창 숨김');
   assert.match(await mp2.$eval('#fsConnectText', e => e.innerText), /휴대폰·태블릿에서는 폴더 연결이 안 돼요. PC의 크롬이나 엣지/);
   assert.equal(await mp2.isVisible('#fsConnectBtn'), false, '휴대폰에서는 누를 수 없는 [폴더 연결]을 안 보임');
@@ -224,6 +234,9 @@ async function main() {
   await dp2.waitForFunction(() => window.__fsTest && window.__fsTest.state().lastCheck, null, { timeout: 60000 });
   await dp2.click('#fsDemoExit');
   await dp2.waitForSelector('#fsConnect:not([hidden])');
+  assert.equal(await dp2.$eval('#fsFolderInfo', e => e.innerText.trim()), '', '체험을 끝내면 위쪽 줄의 가짜 폴더 정보도 지움');
+  assert.equal(await dp2.isVisible('#fsQ'), false, '폴더 연결이 안 되는 곳에선 검색창 숨김');
+  assert.equal(await dp2.isVisible('#openFolderBtn .phoneOnly'), false);
   assert.match(await dp2.$eval('#fsConnectText', e => e.innerText), /이 브라우저는 폴더 연결을 지원하지 않아요. 크롬이나 엣지/);
   assert.equal(await dp2.isVisible('#fsSendLink'), false);
   await b2.close();
