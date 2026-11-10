@@ -371,7 +371,7 @@
     <div id="fsMsg" hidden></div>
     <div id="fsConnect" hidden>
       <div id="fsConnectText"></div>
-      <div class="row"><button id="fsAllowBtn" hidden></button><button id="fsConnectBtn">폴더 연결</button></div>
+      <div class="row"><button id="fsAllowBtn" hidden></button><button id="fsConnectBtn">폴더 연결</button><button id="fsSendLink" hidden>PC로 주소 보내기</button><button id="fsDemoTry" class="ghost" hidden>가짜 회사 폴더로 해 보기</button></div>
     </div>
     <div id="fsSettings" hidden><div id="fsSettingsBody"></div></div>
     <div id="fsMain" hidden style="display:contents">
@@ -3014,6 +3014,8 @@ const FS_DEFAULTS = {
 const FS_DB_NAME = '엑셀모아보기_찾아보기.db';    // 폴더에 둘 때 파일 이름
 const FS_OPFS_NAME = 'folder-search.db';          // 브라우저 안(OPFS)에 둘 때
 const FS_SUPPORTED = typeof window.showDirectoryPicker === 'function';
+// 휴대폰·태블릿(아이패드는 맥처럼 보이지만 터치가 됨): 폴더 고르기 기능이 아예 없다(안드로이드 크롬 포함) — "크롬에서 열어 주세요" 대신 PC로 안내
+const IS_PHONE = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
 let fsCfg = loadFsSettings();
 const fs = {
   dir: null,          // 연결한 폴더(FileSystemDirectoryHandle)
@@ -3097,7 +3099,12 @@ async function openFolderView() {
   if (!FS_SUPPORTED) {
     $('#fsConnect').hidden = false;
     $('#fsConnectBtn').disabled = true;
-    $('#fsConnectText').innerHTML = '이 브라우저는 폴더 연결을 지원하지 않아요. <b>크롬이나 엣지</b>에서 열어 주세요.';
+    $('#fsDemoTry').hidden = false; // 폴더 연결이 안 되는 곳에서도 가짜 회사 폴더 체험은 됨
+    if (IS_PHONE) {
+      $('#fsConnectBtn').hidden = true;
+      $('#fsSendLink').hidden = false;
+      $('#fsConnectText').innerHTML = '휴대폰·태블릿에서는 폴더 연결이 안 돼요. <b>PC의 크롬이나 엣지</b>에서 이 주소를 열어 주세요. 가짜 회사 폴더 체험은 여기서도 돼요.';
+    } else $('#fsConnectText').innerHTML = '이 브라우저는 폴더 연결을 지원하지 않아요. <b>크롬이나 엣지</b>에서 열어 주세요. 가짜 회사 폴더 체험은 여기서도 돼요.';
     return;
   }
   if (!fs.ready) await fsLoadStore();
@@ -3806,6 +3813,17 @@ async function fsExitDemo() {
   await openFolderView(); // 진짜 저장본을 다시 불러오고, 기억한 폴더가 있으면 그대로
 }
 $('#fsDemoExit').addEventListener('click', fsExitDemo);
+$('#fsDemoTry').addEventListener('click', () => fsStartDemo(''));
+// 휴대폰 → PC: 공유(카톡 나에게 보내기·메일 등)가 되면 공유, 안 되면 주소 복사. 체험 장면이 아니라 앱 첫 화면 주소
+$('#fsSendLink').addEventListener('click', async e => {
+  const btn = e.currentTarget;
+  const url = /^https?:$/.test(location.protocol) ? location.origin + location.pathname : location.href;
+  try {
+    if (navigator.share) { await navigator.share({ title: '엑셀 모아보기', text: 'PC의 크롬·엣지에서 열어 내 폴더를 연결해 보세요', url }); return; }
+  } catch (err) { if (err && err.name === 'AbortError') return; }
+  try { await navigator.clipboard.writeText(url); btn.textContent = '주소를 복사했어요 — PC로 보내 주세요'; }
+  catch (err) { prompt('이 주소를 PC로 보내 주세요', url); }
+});
 $('#fsDemoQs').addEventListener('click', e => {
   const b = e.target.closest('[data-demo-q]');
   if (!b) return;

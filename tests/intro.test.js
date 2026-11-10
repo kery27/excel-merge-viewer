@@ -2,6 +2,7 @@
 // 실행: LANG=C.UTF-8 node tests/intro.test.js   (Playwright + Chromium 필요)
 // 장면 카드마다: "이 장면 직접 해 보기" → 앱이 가짜 회사 폴더로 열리고, 카드에 적은 "일치 N줄 · 파일 N개"·날짜가 실제 결과와 같은지.
 // 체험은 아무것도 저장하지 않는지, [내 폴더 연결하기]로 나오는지, 예전 주소(?sample=1)가 앱으로 가는지, 휴대폰 화면에서 안 삐져나가는지.
+// 공개 주소(excel.johnsongarage.co.kr): CNAME·검색 파일, 공유 주소, 예전 주소(github.io)가 안 남았는지. 휴대폰에서 [내 폴더 연결하기] → PC 안내.
 const { chromium, devices } = require('playwright');
 const assert = require('assert');
 const path = require('path'), http = require('http'), nfs = require('fs'), os = require('os');
@@ -55,7 +56,15 @@ async function main() {
   assert.deepEqual(external, []);
 
   // ---- 카드로 보기(카드뉴스 9장) ----
-  assert.equal(await page.$eval('meta[property="og:image"]', e => e.content), 'https://kery27.github.io/excel-jsgg/cards/img/card-01.png');
+  assert.equal(await page.$eval('meta[property="og:image"]', e => e.content), 'https://excel.johnsongarage.co.kr/cards/img/card-01.png');
+  assert.equal(await page.$eval('link[rel="canonical"]', e => e.href), 'https://excel.johnsongarage.co.kr/');
+  assert.equal(await page.$eval('a.btn[href*="#contact"]', e => e.href), 'https://johnsongarage.co.kr/#contact', '문의는 홈페이지 연락으로');
+  // 공개 주소 파일: CNAME이 빠지면 GitHub Pages가 주소 연결을 풀어 버림
+  assert.equal(nfs.readFileSync(path.join(PUB, 'CNAME'), 'utf8').trim(), 'excel.johnsongarage.co.kr');
+  assert.match(nfs.readFileSync(path.join(PUB, 'robots.txt'), 'utf8'), /Sitemap: https:\/\/excel\.johnsongarage\.co\.kr\/sitemap\.xml/);
+  assert.equal((nfs.readFileSync(path.join(PUB, 'sitemap.xml'), 'utf8').match(/<loc>https:\/\/excel\.johnsongarage\.co\.kr\//g) || []).length, 3);
+  for (const f of ['index.html', 'cards/index.html', 'app/index.html', 'README.md'])
+    assert.ok(!/kery27\.github\.io|johnsongarage\.github\.io/.test(nfs.readFileSync(path.join(PUB, f), 'utf8')), f + ': 예전 주소가 남아 있음');
   await page.goto(base + 'cards/');
   assert.equal(await serifLoaded(), true, '카드 페이지 제목 글꼴');
   const slides = await page.$$eval('.slide', x => x.map(s => ({ q: s.dataset.q || null, img: s.dataset.img })));
@@ -129,6 +138,33 @@ async function main() {
   await mp.waitForFunction(() => window.__fsTest && window.__fsTest.state().lastCheck, null, { timeout: 60000 });
   await mp.waitForTimeout(300);
   assert.deepEqual(await sticking(), [], '체험 화면');
+  // 진짜 휴대폰에는 폴더 고르기 기능이 없음(안드로이드 크롬 포함) → [내 폴더 연결하기]를 누르면 "PC에서" 안내 + 주소 보내기
+  const m2 = await b2.newContext({ ...devices['Pixel 7'] });
+  await m2.addInitScript(() => { delete window.showDirectoryPicker; navigator.share = async d => { window.__shared = d; }; });
+  const mp2 = await m2.newPage();
+  mp2.on('pageerror', e => errors.push(e.message));
+  await mp2.goto(base + 'app/?demo=1&q=1250000');
+  await mp2.waitForFunction(() => window.__fsTest && window.__fsTest.state().lastCheck, null, { timeout: 60000 });
+  await mp2.click('#fsDemoExit');
+  await mp2.waitForSelector('#fsConnect:not([hidden])');
+  assert.match(await mp2.$eval('#fsConnectText', e => e.innerText), /휴대폰·태블릿에서는 폴더 연결이 안 돼요. PC의 크롬이나 엣지/);
+  assert.equal(await mp2.isVisible('#fsConnectBtn'), false, '휴대폰에서는 누를 수 없는 [폴더 연결]을 안 보임');
+  await mp2.click('#fsSendLink');
+  assert.equal(await mp2.evaluate(() => window.__shared && window.__shared.url), base + 'app/', '체험 장면이 아니라 앱 첫 화면 주소를 보냄');
+  await mp2.click('#fsDemoTry');
+  await mp2.waitForFunction(() => window.__fsTest && window.__fsTest.state().lastCheck, null, { timeout: 60000 });
+  assert.equal(await mp2.isVisible('#fsDemoBar'), true, '여기서 다시 가짜 회사 폴더 체험');
+  // 폴더 연결이 안 되는 PC 브라우저(파이어폭스·사파리 등)는 예전처럼 "크롬이나 엣지" 안내
+  const d2 = await b2.newContext();
+  await d2.addInitScript(() => { delete window.showDirectoryPicker; });
+  const dp2 = await d2.newPage();
+  dp2.on('pageerror', e => errors.push(e.message));
+  await dp2.goto(base + 'app/?demo=1');
+  await dp2.waitForFunction(() => window.__fsTest && window.__fsTest.state().lastCheck, null, { timeout: 60000 });
+  await dp2.click('#fsDemoExit');
+  await dp2.waitForSelector('#fsConnect:not([hidden])');
+  assert.match(await dp2.$eval('#fsConnectText', e => e.innerText), /이 브라우저는 폴더 연결을 지원하지 않아요. 크롬이나 엣지/);
+  assert.equal(await dp2.isVisible('#fsSendLink'), false);
   await b2.close();
 
   // ---- 파일 더블클릭(file://)으로 연 앱에서도 체험됨 ----

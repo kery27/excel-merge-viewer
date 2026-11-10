@@ -1,19 +1,18 @@
 #!/usr/bin/env bash
-# 홈페이지(johnsongarage.github.io)에 올릴 공개 체험판을 dist/site/에 만든다.
-# 사용: bash scripts/make-site.sh  → dist/site/ 통째로 홈페이지 저장소의 excel/ 폴더에 복사
-# 공개 체험판(kery27/excel-jsgg)은 scripts/make-public.sh가 이걸 불러 app/ 아래에 넣는다.
-#   SITE_URL: 공유용 주소(기본은 홈페이지 excel/). INTRO_URL: 띠에 "어디에 쓰나요" 링크(소개 페이지, 선택).
+# 공개 체험판의 앱(https://excel.johnsongarage.co.kr/app/)을 dist/site/에 만든다 — scripts/make-public.sh가 불러 app/ 아래에 넣는다.
+# 사용: bash scripts/make-site.sh
+#   SITE_URL: 공유용 주소(기본 https://excel.johnsongarage.co.kr/app/). INTRO_URL: 띠에 "어디에 쓰나요" 링크(소개 페이지, 선택).
 #   WEB_PW_HASH: 들어갈 때 비밀번호(scripts/make-web.sh와 같은 방식, 선택)
-# 바꾸는 것: 검색·공유용 제목·설명, 맨 위 "체험판" 띠(만든 곳 링크). 기능 코드는 index.html 그대로.
+# 바꾸는 것: 검색·공유용 제목·설명, 맨 위 "체험판" 띠(문의 → 홈페이지 johnsongarage.co.kr 연락). 기능 코드는 index.html 그대로.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 out=dist/site
-home='https://johnsongarage.github.io/'
+home='https://johnsongarage.co.kr/'
 rm -rf "$out" && mkdir -p "$out"
 cp -r vendor "$out/vendor"
-python3 - "$out/index.html" "$home" "${SITE_URL:-}" "${INTRO_URL:-}" <<'PY'
+python3 - "$out/index.html" "$home" "${SITE_URL:-https://excel.johnsongarage.co.kr/app/}" "${INTRO_URL:-}" <<'PY'
 import sys
-out, home, url, intro = sys.argv[1], sys.argv[2], sys.argv[3] or sys.argv[2] + 'excel/', sys.argv[4]
+out, home, url, intro = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 s = open('index.html', encoding='utf-8').read()
 def sub(a, b):
     global s
@@ -46,4 +45,4 @@ open(p, 'w', encoding='utf-8').write(s.replace('<header class="top">', gate + '<
 PY
   echo "비밀번호 화면 넣음"
 fi
-echo "만듦: $out/ (index.html + vendor/) → 홈페이지 저장소 excel/ 에 복사"
+echo "만듦: $out/ (index.html + vendor/)"

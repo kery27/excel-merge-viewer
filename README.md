@@ -25,14 +25,16 @@
 
 ## 공개 체험판
 
-https://kery27.github.io/excel-jsgg/ (공개 저장소 `kery27/excel-jsgg`). main에 화면 코드를 올리면 `bash scripts/publish-public.sh ../excel-jsgg`로 바로 반영.
+https://excel.johnsongarage.co.kr/ (공개 저장소 `johnsongarage/excel-moabogi`, 2026-11-10~). main에 화면 코드를 올리면 `bash scripts/publish-public.sh ../excel-moabogi`로 바로 반영.
+예전 주소 https://kery27.github.io/excel-jsgg/ (`kery27/excel-jsgg`)에는 새 주소의 같은 곳(장면 링크·카드 포함)으로 넘겨주는 페이지만 있다(`scripts/old-address/` — `index.html`과 같은 내용의 `404.html`).
+홈페이지(johnsongarage.co.kr)와 주소를 나눈 이유: 브라우저 저장 공간이 주소별이라, 연결한 폴더의 엑셀 내용(찾기용 색인)이 다른 앱(오브젯도 — 바깥 서버·방문 통계 사용)과 한 공간에 섞이지 않게. 공개 쪽 `CNAME`(주소)·`robots.txt`·`sitemap.xml`은 `make-public.sh`가 만든다.
 모양(2026-11-09~, `scripts/make-public.sh`): **`/` = 소개 페이지**(`intro/index.html`), **`/app/` = 앱**(`make-site.sh` 결과), README는 `intro/README-public.md`. 예전 주소의 `?sample=1` 등은 소개 페이지가 `app/`으로 넘김.
 
 **소개 페이지**: "엑셀 검색"이 아니라 **못 찾아서 손해 보던 장면**으로 어필(hq DECISIONS 11/9). 업종 탭(물류·창고/도매·유통/쇼핑몰/제조·납품/사무·고객 관리)마다 장면 카드 — 상황 → 지금은 → 못 찾으면 → 이렇게 → 찾은 모습 → **[이 장면 직접 해 보기]**. 외부 글꼴·스크립트·분석 도구 없음.
 **디자인(2026-11-09~)**: 에디토리얼 — "사건 기록"(가르시아가 "디자인 톤 28가지" 중 고름). 종이색 바탕, 명조 제목, CASE 번호, 빨간 "손해" 도장, 찾은 줄은 오려 붙인 쪽지. 엑셀은 짙은 초록(#1D6B3F) 포인트로만 — 장면이 주인공. 앱도 같은 색(종이 바탕 + 초록, 파란색에서 바꿈).
 제목 명조는 `intro/fonts/emv-serif.woff2` — Noto Serif KR Bold에서 **두 페이지에 쓰는 글자만** 뽑고 이름을 바꾼 것(OFL, `intro/fonts/OFL.txt`). **소개 페이지·카드 글을 고치면 `python3 scripts/make-fonts.py`를 다시 돌린다**(새 글자가 빠지면 그 글자만 다른 글꼴로 보임). 본문 고딕은 기기 글꼴, 카드 이미지만 Pretendard로 찍음(찍을 때만 쓰고 배포 안 함).
 **카드로 보기**(`/cards/`, 원본 `intro/cards/index.html`): 소개 페이지를 카드뉴스 9장(표지 · 장면 7 · 쓰는 법)으로 줄인 것. 웹에서는 옆으로 넘겨 보고(장면마다 [이 장면 직접 해 보기]·[이미지로 받기]), `?render=N`이면 N번째 카드만 1080×1080 — `node intro/cards/render.js`가 `intro/cards/img/card-0N.png`로 찍는다(SNS·카톡에 올리는 용, 표지는 소개 페이지 링크 미리보기 그림). 날짜는 "12일 전"처럼 써서 이미지가 오래돼도 안 틀림. **카드 글을 고치면 render.js를 다시 돌려 이미지도 같이 커밋.**
-**가짜 회사 폴더 체험**: 앱 주소에 `?demo=1&q=찾을 말` → 메모리 안 가짜 폴더(출고·반품·청구·통장·영업·쇼핑몰·납품·옛 계약, 엑셀·CSV 약 50개, 날짜는 오늘 기준)를 연결하고 바로 찾음. 아무것도 저장하지 않음(저장본·폴더 기억·변경 감지 끔), 폴더 고르기가 없는 브라우저에서도 됨. 데이터는 `index.html` `makeDemoTree()`, 장면 카드의 찾을 말·결과와 맞춰 둠 — 둘 중 하나를 바꾸면 `tests/intro.test.js`가 잡음.
+**가짜 회사 폴더 체험**: 앱 주소에 `?demo=1&q=찾을 말` → 메모리 안 가짜 폴더(출고·반품·청구·통장·영업·쇼핑몰·납품·옛 계약, 엑셀·CSV 약 50개, 날짜는 오늘 기준)를 연결하고 바로 찾음. 아무것도 저장하지 않음(저장본·폴더 기억·변경 감지 끔), 폴더 고르기가 없는 브라우저에서도 됨. 휴대폰·태블릿에서 [내 폴더 연결하기]를 누르면 "PC의 크롬이나 엣지에서" 안내와 **[PC로 주소 보내기]**(공유 창, 안 되면 주소 복사)·[가짜 회사 폴더로 해 보기]가 나옴(안드로이드 크롬도 폴더 고르기가 없어서 "크롬에서 열어 주세요"는 헷갈림). 데이터는 `index.html` `makeDemoTree()`, 장면 카드의 찾을 말·결과와 맞춰 둠 — 둘 중 하나를 바꾸면 `tests/intro.test.js`가 잡음.
 웹 주소로 열면 위쪽에 **[오프라인용 내려받기]** — 화면을 zip 하나(`엑셀모아보기/index.html` + `vendor/` + 여는 법)로 내려받아, 풀어서 더블클릭하면 인터넷 없이 그대로 동작(폴더 찾아보기 포함). 파일로 연 화면에서는 단추를 숨김.
 
 ## 웹에서 체험 (claude.ai 페이지 — 2026-11-09 지움, 아래는 기록)
@@ -42,9 +44,9 @@ https://kery27.github.io/excel-jsgg/ (공개 저장소 `kery27/excel-jsgg`). mai
 들어갈 때 비밀번호(2026-11-09~): `WEB_PW_HASH=$(printf 'excel-moa:%s' '비밀번호' | sha256sum | cut -d' ' -f1) bash scripts/make-web.sh` — 비밀번호 화면(`scripts/web-gate.html`)을 사본에만 넣는다. 비밀번호·해시는 저장소에 안 넣음.
 가벼운 장치다(페이지 코드는 받아 볼 수 있고 짧은 비밀번호는 해시에서 맞혀 볼 수 있음) — 이 페이지엔 가짜 데이터만. 한 번 맞히면 그 탭을 닫을 때까지 다시 안 물음.
 
-## 홈페이지 공개 체험판
+## 앱 사본 만들기(make-site.sh)
 
-`bash scripts/make-site.sh` → `dist/site/`(index.html + vendor/)를 홈페이지 저장소(`johnsongarage/johnsongarage.github.io`)의 `excel/` 폴더에 그대로 복사 → https://johnsongarage.github.io/excel/
+`bash scripts/make-site.sh` → `dist/site/`(index.html + vendor/) — 공개 체험판의 `app/`이 이것(`make-public.sh`가 부름). 예전엔 홈페이지 저장소 `excel/`에 복사하려던 것인데(2026-11-06, 합치지 않음), 2026-11-10부터 체험판은 `excel.johnsongarage.co.kr`에 따로 둔다.
 - 바꾸는 것은 제목·검색/공유 설명과 맨 위 "체험판" 띠(문의 링크)뿐. 기능 코드는 index.html 그대로.
 - `?sample=1`을 붙이면 들어오자마자 가짜 데이터(약 1만 건)가 열림(예: `.../excel/?sample=1`). `?sample=100000`처럼 목록에 있는 건수도 됨.
 - 공개 페이지라 코드도 누구나 볼 수 있다(브라우저에서 소스 보기).

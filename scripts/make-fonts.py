@@ -51,8 +51,15 @@ def main():
         if rec.nameID in (1, 3, 4, 6, 16, 17, 21, 22):
             new = {1: 'EMV Serif', 3: 'EMV Serif Bold subset', 4: 'EMV Serif Bold', 6: 'EMVSerif-Bold', 16: 'EMV Serif', 17: 'Bold', 21: 'EMV Serif', 22: 'Bold'}[rec.nameID]
             rec.string = new
-    font.save(OUT)
-    print('만듦:', os.path.relpath(OUT, ROOT), os.path.getsize(OUT) // 1024, 'KB ·', sum(1 for c in text if ord(c) > 127), '글자')
+    # 쓰는 글자가 그대로면 다시 쓰지 않는다 — 저장할 때마다 글꼴 안의 날짜만 바뀌어 같은 216KB가 또 커밋되는 것 방지
+    same = False
+    if os.path.exists(OUT):
+        try: same = set(TTFont(OUT).getBestCmap()) == set(font.getBestCmap())
+        except Exception: same = False
+    if same: print('그대로:', os.path.relpath(OUT, ROOT), '(쓰는 글자가 같음)')
+    else:
+        font.save(OUT)
+        print('만듦:', os.path.relpath(OUT, ROOT), os.path.getsize(OUT) // 1024, 'KB ·', sum(1 for c in text if ord(c) > 127), '글자')
     if missing:
         print('원본 글꼴에 없는 글자(다른 글꼴로 보임):', ''.join(missing[:40]))
 
