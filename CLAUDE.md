@@ -41,6 +41,7 @@
   - 예전 `kery27/excel-jsgg`(kery27.github.io/excel-jsgg/)에는 새 주소의 같은 곳으로 넘겨주는 페이지(`scripts/old-address/`)만 둔다 — 거기에 앱을 다시 올리지 않는다(`publish-public.sh`가 막음).
   - 홈페이지(johnsongarage.co.kr) 아래 `/excel/`이 아니라 따로 `excel.` 주소로 둔 이유: 앱이 연결한 폴더의 엑셀 내용(찾기용 색인)을 브라우저 저장 공간에 두는데, 저장 공간은 주소별이라 바깥 서버·방문 통계를 쓰는 오브젯도와 한 공간에 섞이지 않게.
 - **화면 코드(`index.html`·`vendor/`)를 main에 올리면 바로 `bash scripts/publish-public.sh <excel-moabogi 클론 경로>`로 공개 체험판도 갱신한다.** 공개 쪽엔 체험판 index.html·vendor/·README와 `CNAME`·`robots.txt`·`sitemap.xml`만. `CNAME`은 `make-public.sh`가 만든다(빠진 채 올리면 주소 연결이 풀림). 공유 주소를 바꾸면 소개·카드·README의 og·canonical·카드 9번 주소를 같이 바꾸고 카드 이미지를 다시 찍는다(`make-public.sh`가 안 맞으면 멈춤).
+- **공개판은 폴더 찾아보기만(2026-11-10 가르시아 결정)** — 파일 모아보기(합치기·칸 필터·셀 색깔·저장·직원별 파일)는 projectA 납품본 조회 화면에서 온 것이고 의뢰인 대표의 동의를 받지 않았으므로, 동의 전까지 공개판에서 숨긴다: `make-public.sh`가 `FOLDER_ONLY=1`로 `make-site.sh`를 부름 → `<html class="folderOnly">`, 들어가는 곳(처음 화면 카드·끌어다 놓기·가짜 데이터·`?sample=`·이어서 보기, `.mergeOnly`)을 숨기고 `?sample=`은 가짜 회사 폴더로. 소개 페이지의 부록 '매달 하는 정리'도 뺐다. **숨김일 뿐 코드는 공개 페이지 소스에 남아 있다.** 동의를 받으면 `FOLDER_ONLY=1`을 빼고 부록을 git 이력에서 되살린다. 동의 없이 공개판에 파일 모아보기를 다시 보이게 하지 않는다. 개발 저장소의 전체 버전(크몽·납품용)은 그대로.
 - claude.ai 웹 체험 페이지(아티팩트)는 지웠다 — 다시 만들지 않는다.
 - 공개 체험판 첫 화면은 **소개 페이지**(`intro/index.html`, 업종별 "못 찾아서 손해 보던 장면")이고 앱은 `app/`(2026-11-09). 장면 카드의 찾을 말·결과는 앱의 가짜 회사 폴더(`makeDemoTree`)와 맞춘다 — 바꾸면 `tests/intro.test.js`로 확인.
 - 어필은 "엑셀 검색"이 아니라 **업무에서 못 찾아 손해 보던 장면**으로(hq DECISIONS 2026-11-09).

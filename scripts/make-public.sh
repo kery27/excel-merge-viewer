@@ -20,7 +20,8 @@ for f in intro/index.html intro/cards/index.html intro/README-public.md; do
   grep -q "$base" "$f" || { echo "$f 에 $base 가 없어요(공유 주소 확인)"; exit 1; }
   if grep -qE 'kery27\.github\.io|johnsongarage\.github\.io' "$f"; then echo "$f 에 예전 주소가 남아 있어요"; exit 1; fi
 done
-SITE_URL="${base}app/" INTRO_URL=../ bash scripts/make-site.sh >/dev/null
+# 의뢰인 동의 전까지 공개판은 폴더 찾아보기만(2026-11-10 가르시아 결정 — 파일 모아보기는 납품본 조회 화면에서 온 것). 동의를 받으면 FOLDER_ONLY=1만 빼면 됨
+FOLDER_ONLY=1 SITE_URL="${base}app/" INTRO_URL=../ bash scripts/make-site.sh >/dev/null
 rm -rf "$out" && mkdir -p "$out/app"
 cp -r dist/site/. "$out/app/"
 cp intro/index.html "$out/index.html"

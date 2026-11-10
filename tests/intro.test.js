@@ -143,10 +143,29 @@ async function main() {
   // 앱 띠의 "어디에 쓰나요" → 소개 페이지
   assert.equal(await page.$eval('a[href="../"]', e => e.textContent.includes('업종별 장면')), true);
 
-  // 예전 주소(?sample=1) → 앱으로 가서 가짜 데이터 체험
+  // 예전 주소(?sample=1) → 앱으로. 공개판은 폴더 찾아보기만이라 파일 모아보기 대신 가짜 회사 폴더로(2026-11-10)
   await page.goto(base + '?sample=1');
-  await page.waitForSelector('#view:not([hidden])', { timeout: 60000 });
+  await page.waitForFunction(() => window.__fsTest && window.__fsTest.state().demo && window.__fsTest.state().lastCheck, null, { timeout: 60000 });
   assert.match(page.url(), /\/app\/\?sample=1$/);
+  assert.equal(await page.isVisible('#view'), false, '공개판: 파일 모아보기 화면은 안 열림');
+  // 공개판 처음 화면: 파일 모아보기(납품본 조회 화면에서 온 것)로 들어가는 곳이 안 보임 — 의뢰인 동의 전까지
+  await page.goto(base + 'app/');
+  await page.waitForTimeout(300);
+  assert.equal(await page.evaluate(() => document.documentElement.classList.contains('folderOnly')), true);
+  for (const sel of ['#drop', '.sampleRow', '.entry.on', '.rules', '#fillMergedIntro'])
+    assert.equal(await page.isVisible(sel), false, '공개판에서 숨김: ' + sel);
+  assert.equal(await page.isVisible('#openFolderBtn'), true);
+  assert.match(await page.$eval('#intro h1', e => e.innerText), /^폴더 속 엑셀 수백 개에서, 찾던 그 줄을 바로$/);
+  // 떨어뜨린 파일도 받지 않음
+  await page.evaluate(() => { const dt = new DataTransfer(); dt.items.add(new File(['a,b\n1,2'], '흉내.csv', { type: 'text/csv' })); window.dispatchEvent(new DragEvent('drop', { dataTransfer: dt, cancelable: true })); });
+  await page.waitForTimeout(500);
+  assert.equal(await page.isVisible('#view') || await page.isVisible('#confirm') || await page.isVisible('#progress'), false, '공개판: 떨어뜨린 파일로 파일 모아보기가 열리지 않음');
+  await page.click('#demoEntryBtn');
+  await page.waitForFunction(() => window.__fsTest && window.__fsTest.state().demo && window.__fsTest.state().lastCheck, null, { timeout: 60000 });
+  // 소개 페이지에도 파일 모아보기 소개(부록)가 없음
+  await page.goto(base);
+  assert.equal(await page.$('#merge'), null);
+  assert.equal(await page.$('a[href*="sample"]'), null);
 
   // ---- 휴대폰: 소개 페이지·체험 화면이 화면 밖으로 안 삐져나감 ----
   // persistent context에서는 기기 흉내를 못 바꿔서 따로 띄움

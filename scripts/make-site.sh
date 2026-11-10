@@ -3,6 +3,7 @@
 # 사용: bash scripts/make-site.sh
 #   SITE_URL: 공유용 주소(기본 https://excel.johnsongarage.co.kr/app/). INTRO_URL: 띠에 "어디에 쓰나요" 링크(소개 페이지, 선택).
 #   WEB_PW_HASH: 들어갈 때 비밀번호(scripts/make-web.sh와 같은 방식, 선택)
+#   FOLDER_ONLY=1: 폴더 찾아보기만(<html class="folderOnly"> — 파일 모아보기로 들어가는 곳을 숨김). 공개 체험판은 의뢰인 동의 전까지 이것(2026-11-10)
 # 바꾸는 것: 검색·공유용 제목·설명, 맨 위 "체험판" 띠(문의 → 홈페이지 johnsongarage.co.kr 연락). 기능 코드는 index.html 그대로.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -10,15 +11,18 @@ out=dist/site
 home='https://johnsongarage.co.kr/'
 rm -rf "$out" && mkdir -p "$out"
 cp -r vendor "$out/vendor"
-python3 - "$out/index.html" "$home" "${SITE_URL:-https://excel.johnsongarage.co.kr/app/}" "${INTRO_URL:-}" <<'PY'
+python3 - "$out/index.html" "$home" "${SITE_URL:-https://excel.johnsongarage.co.kr/app/}" "${INTRO_URL:-}" "${FOLDER_ONLY:-}" <<'PY'
 import sys
-out, home, url, intro = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+out, home, url, intro, folder_only = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5] == '1'
 s = open('index.html', encoding='utf-8').read()
 def sub(a, b):
     global s
     assert s.count(a) == 1, a
     s = s.replace(a, b)
 desc = '월별 탭·연도별 파일로 흩어진 엑셀을 끌어다 놓으면 하나로 모아 조건으로 바로 걸러 봐요. 설치 없이, 파일은 내 PC 밖으로 나가지 않아요. 가짜 데이터로 바로 체험.'
+if folder_only:
+    desc = '폴더 속 엑셀 수백 개에서 찾던 그 줄을 10초 안에. 설치 없이, 파일은 내 PC 밖으로 나가지 않아요. 가짜 회사 폴더로 바로 체험.'
+    sub('<html lang="ko">', '<html lang="ko" class="folderOnly">')
 sub('<title>엑셀 모아보기</title>',
     '<title>엑셀 모아보기 체험 · 존슨거라지</title>\n'
     '<meta name="description" content="' + desc + '">\n'

@@ -268,6 +268,11 @@
   .siteBar a { color: var(--accent); font-weight: 700; text-decoration: none; }
   .siteBar .sbContact { margin-left: auto; }
   .mShort { display: none; } /* 휴대폰에서만 보이는 짧은 글(긴 글은 .mLong) */
+  /* 공개 체험판(make-site.sh FOLDER_ONLY=1 → <html class="folderOnly">, 2026-11-10): 의뢰인 동의 전까지 폴더 찾아보기만.
+     파일 모아보기(납품본 조회 화면에서 온 것 — 합치기·칸 필터·셀 색깔·저장·직원별 파일)로 들어가는 곳은 숨김(.mergeOnly). 코드는 그대로라 '숨김'일 뿐 */
+  .folderOnlyShow { display: none; }
+  html.folderOnly .folderOnlyShow { display: revert; }
+  html.folderOnly .mergeOnly { display: none !important; }
   /* 휴대폰·태블릿(html.phone — 화면 너비가 아니라 기기로 판단): 폴더 연결이 아예 안 되니 PC 안내로 바꿈 */
   .phoneOnly { display: none; }
   html.phone .phoneOnly { display: revert; }
@@ -386,22 +391,22 @@
 <main>
   <div id="notice" role="alert" hidden><span id="noticeText"></span><button id="noticeClose" class="ghost">닫기</button></div>
   <section id="intro">
-    <div id="resume" hidden>
+    <div id="resume" class="mergeOnly" hidden>
       <div class="what"><b>지난번에 이 브라우저에 저장한 데이터가 있어요</b><br><span id="resumeInfo"></span></div>
       <button id="resumeBtn">이어서 보기</button>
       <button id="resumeDel" class="ghost">지우기</button>
     </div>
-    <h1>엑셀 여러 개를 던지면, 하나로 모아 바로 찾아봅니다</h1>
-    <p class="lead">월별 탭, 연도별 파일로 흩어진 데이터를 한 화면에서 조건으로 걸러 보세요.<br>파일은 이 PC 밖으로 나가지 않아요. 인터넷이 없어도 됩니다.</p>
+    <h1><span class="mergeOnly">엑셀 여러 개를 던지면, 하나로 모아 바로 찾아봅니다</span><span class="folderOnlyShow">폴더 속 엑셀 수백 개에서, 찾던 그 줄을 바로</span></h1>
+    <p class="lead"><span class="mergeOnly">월별 탭, 연도별 파일로 흩어진 데이터를 한 화면에서 조건으로 걸러 보세요.<br></span><span class="folderOnlyShow">엑셀이 쌓이는 폴더를 한 번 연결해 두면, 찾을 말 하나로 그 안의 모든 엑셀에서 그 줄을 최신순으로 찾아요.<br></span>파일은 이 PC 밖으로 나가지 않아요. 인터넷이 없어도 됩니다.</p>
     <div class="entries">
-      <div class="entry on"><b>파일 모아보기</b><span>같은 구조의 엑셀을 하나로 합쳐 칸 조건으로 걸러 봐요 — <span class="mLong">아래에 파일을 끌어다 놓으세요</span><span class="mShort">아래를 눌러 파일을 고르세요</span></span></div>
-      <button type="button" class="entry" id="openFolderBtn"><b>폴더 찾아보기 →</b><span class="phoneOnly">폴더 연결은 PC에서 돼요 · 휴대폰에서는 가짜 회사 폴더로 체험</span><span>폴더를 한 번 연결해 두면 키워드 하나로 그 안의 모든 엑셀에서 그 줄을 찾아요. 제목 형식이 달라도 돼요</span></button>
+      <div class="entry on mergeOnly"><b>파일 모아보기</b><span>같은 구조의 엑셀을 하나로 합쳐 칸 조건으로 걸러 봐요 — <span class="mLong">아래에 파일을 끌어다 놓으세요</span><span class="mShort">아래를 눌러 파일을 고르세요</span></span></div>
+      <button type="button" class="entry" id="demoEntryBtn" hidden><b>가짜 회사 폴더로 해 보기 →</b><span>출고·반품·청구·통장 같은 가짜 엑셀 52개로, 일하다 자주 생기는 장면을 바로 찾아봐요</span></button><button type="button" class="entry" id="openFolderBtn"><b>폴더 찾아보기 →</b><span class="phoneOnly">폴더 연결은 PC에서 돼요 · 휴대폰에서는 가짜 회사 폴더로 체험</span><span>폴더를 한 번 연결해 두면 키워드 하나로 그 안의 모든 엑셀에서 그 줄을 찾아요. 제목 형식이 달라도 돼요</span></button>
     </div>
-    <div id="drop">
+    <div id="drop" class="mergeOnly">
       <strong><span class="mLong">엑셀·CSV 파일을 여기로 끌어다 놓으세요</span><span class="mShort">눌러서 엑셀·CSV 파일 고르기</span></strong>
       <span>여러 개를 한꺼번에 넣어도 돼요 · 저장해 둔 .db 파일도<span class="mLong"> 여기로 · 또는 눌러서 파일 고르기</span></span>
     </div>
-    <div class="sampleRow">
+    <div class="sampleRow mergeOnly">
       파일이 없으면
       <select id="sampleSize">
         <option value="10000">약 1만 건</option>
@@ -411,8 +416,8 @@
       </select>
       <button id="sampleBtn">가짜 데이터로 체험</button>
     </div>
-    <label class="introOpt"><input type="checkbox" id="fillMergedIntro"> 병합된 칸은 위(왼쪽) 칸과 같은 값으로 채워 넣기 <span class="sub">— 끄면 병합 칸은 첫 칸에만 값이 들어가요. 어느 쪽이든 몇 곳인지 알려 드려요</span></label>
-    <ul class="rules">
+    <label class="introOpt mergeOnly"><input type="checkbox" id="fillMergedIntro"> 병합된 칸은 위(왼쪽) 칸과 같은 값으로 채워 넣기 <span class="sub">— 끄면 병합 칸은 첫 칸에만 값이 들어가요. 어느 쪽이든 몇 곳인지 알려 드려요</span></label>
+    <ul class="rules mergeOnly">
       <li><b>같은 구조</b>끼리 합쳐요 — 첫 줄(제목 줄)의 칸 이름이 같은 탭·파일. 칸 순서는 달라도 괜찮아요.</li>
       <li>제목이 몇 칸만 다르면(오타·새 칸) 어떻게 맞출지 물어보고 합쳐요. 제목이 아예 다른 탭(메모·요약 탭 등)은 빼고, 무엇을 뺐는지 알려 드려요.</li>
       <li>같은 이름의 파일을 다시 넣으면 새 파일 내용으로 바꿔요.</li>
@@ -3051,15 +3056,18 @@ $('#resetYes').addEventListener('click', async () => {
   show('#intro');
 });
 
+// 공개 체험판: 폴더 찾아보기만(파일 모아보기로 들어가는 처음 화면 카드·끌어다 놓기·?sample= 은 막음 — 위 CSS .mergeOnly)
+const FOLDER_ONLY = document.documentElement.classList.contains('folderOnly');
 // 화면 어디에 떨어뜨려도 받기(조회 중에 파일을 더 넣을 때도)
 let dragDepth = 0;
-window.addEventListener('dragenter', e => { e.preventDefault(); dragDepth++; document.body.classList.add('dragging'); });
+window.addEventListener('dragenter', e => { e.preventDefault(); if (FOLDER_ONLY) return; dragDepth++; document.body.classList.add('dragging'); });
 window.addEventListener('dragleave', () => { if (--dragDepth <= 0) { dragDepth = 0; document.body.classList.remove('dragging'); } });
 window.addEventListener('dragover', e => e.preventDefault());
 window.addEventListener('drop', e => {
   e.preventDefault();
   dragDepth = 0;
   document.body.classList.remove('dragging');
+  if (FOLDER_ONLY) return; // 공개판: 떨어뜨린 파일은 받지 않음(브라우저가 파일을 여는 것만 막음)
   if (e.dataTransfer.files.length && $('#progress').hidden && $('#confirm').hidden) addFiles(e.dataTransfer.files);
 });
 
@@ -3631,7 +3639,7 @@ function fsRenderSettings() {
       '<label>이름에 이 글자가 들어간 파일은 건너뛰기 <span class="sub">(쉼표로 여러 개 · ~$ 임시 파일과 숨김 파일은 늘 건너뜀)</span><input type="text" data-k="skip" value="' + esc(c.skip) + '"></label>' +
       '<label>파일 크기 상한 <select data-k="maxMB">' + [[50, '50MB'], [100, '100MB'], [200, '200MB'], [500, '500MB'], [0, '제한 없음']].map(([v, t]) => '<option value="' + v + '"' + (c.maxMB === v ? ' selected' : '') + '>' + t + '</option>').join('') + '</select></label>' +
       '<label>읽는 순서 <select data-k="readOrder"><option value="recent"' + (c.readOrder === 'recent' ? ' selected' : '') + '>최근에 고친 파일부터</option><option value="name"' + (c.readOrder === 'name' ? ' selected' : '') + '>이름순</option></select></label>' +
-      ck('fillMerged', '병합된 칸은 같은 값으로 채우기', '(바꾸면 전부 다시 읽음 · 파일 모아보기에도 같이 적용)') +
+      ck('fillMerged', '병합된 칸은 같은 값으로 채우기', '(바꾸면 전부 다시 읽음<span class="mergeOnly"> · 파일 모아보기에도 같이 적용</span>)') +
       ck('checkOnOpen', '열 때 바뀐 파일 다시 확인') + ck('watch', '열려 있는 동안 변경 감지', typeof window.FileSystemObserver === 'function' ? '' : '(이 브라우저는 바로 감지를 못 해서, 이 창으로 돌아올 때 확인)') + '</div>' +
     '<div class="fsSet"><h4>찾을 때 무시할 차이</h4>' + ck('space', '띄어쓰기', '"테스트 상사" = "테스트상사" — 기본은 끔(띄어 쓴 그대로 찾기)') + ck('caseI', '대소문자', 'abc-1 = ABC-1') + ck('comma', '숫자 쉼표', '1,000 = 1000') + ck('company', '회사 표기', '(주)·㈜·주식회사·(유)·유한회사') + '</div>' +
     '<div class="fsSet"><h4>결과</h4>' +
@@ -3965,6 +3973,7 @@ async function fsExitDemo() {
 }
 $('#fsDemoExit').addEventListener('click', fsExitDemo);
 $('#fsDemoTry').addEventListener('click', () => fsStartDemo(''));
+$('#demoEntryBtn').addEventListener('click', () => fsStartDemo(''));
 // 휴대폰 → PC: 공유(카톡 나에게 보내기·메일 등)가 되면 공유, 안 되면 주소 복사. 체험 장면이 아니라 앱 첫 화면 주소
 async function fsSendToPc(btn) {
   const url = /^https?:$/.test(location.protocol) ? location.origin + location.pathname : location.href;
@@ -3998,7 +4007,8 @@ if (!BUNDLES_OK) {
   // ?demo=1(&q=찾을 말) → 가짜 회사 폴더로 폴더 찾아보기(소개 페이지의 장면 카드에서 옴)
   const params = new URLSearchParams(location.search);
   const sp = params.get('sample');
-  if (params.has('demo')) fsStartDemo(params.get('q') || '');
+  if (FOLDER_ONLY) $('#demoEntryBtn').hidden = false;
+  if (params.has('demo') || (FOLDER_ONLY && sp)) fsStartDemo(params.get('q') || ''); // 공개판: 예전 ?sample= 링크는 가짜 회사 폴더로
   else if (sp) {
     const opt = Array.from($('#sampleSize').options).find(o => o.value === sp);
     $('#sampleSize').value = opt ? sp : '10000';

@@ -437,33 +437,8 @@ if (/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (/Macintosh/
     </div>
   </section>
 
-  <section class="block" id="merge">
-    <div class="wrap">
-      <div class="supp">
-        <div>
-          <div class="secHead" style="margin-bottom:0"><span class="kicker">부록 · <b>매달 하는 정리</b></span>
-            <h2>흩어진 탭·파일은 하나로 모아 조건으로 걸러요</h2></div>
-          <p class="secLead">월별 탭 12개, 연도별 파일 5개. 같은 양식의 파일과 탭을 한꺼번에 끌어다 놓으면 하나의 표로 모여요. "작년 이맘때 · 서울 · 카드 결제"처럼 칸마다 조건을 걸어 바로 걸러요.</p>
-          <ul>
-            <li><b>칸 순서가 달라도</b> 합쳐요. 제목이 조금 다르면 어떻게 맞출지 물어봐요.</li>
-            <li>메모·요약 탭은 빼고, <b>무엇을 뺐는지</b> 알려 드려요.</li>
-            <li>칠해 둔 <b>셀 색깔</b>로도 걸러요. 수십만 줄도 바로.</li>
-          </ul>
-          <a class="btn ghost" href="app/?sample=1">가짜 주문 1만 건으로 해 보기</a>
-        </div>
-        <div aria-hidden="true">
-          <div class="tabsMock"><span>1월</span><span>2월</span><span>3월</span><span>4월</span><span>5월</span><span>…</span><span>12월</span><span>2024년.xlsx</span><span>2025년.xlsx</span></div>
-          <div class="arrowDown">↓</div>
-          <div class="sheetMock"><table>
-            <tr><th>출처</th><th>주문일</th><th>지역</th><th>결제</th><th>금액</th></tr>
-            <tr><td>3월</td><td>2025-03-14</td><td>서울</td><td>카드</td><td>48,000</td></tr>
-            <tr><td>2024년</td><td>2024-03-02</td><td>서울</td><td>카드</td><td>31,500</td></tr>
-          </table></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
+  <!-- 부록 '매달 하는 정리'(파일 모아보기 소개 — 합치기·칸 조건·셀 색깔, 가짜 주문 1만 건)는 의뢰인 동의 전까지 뺌(2026-11-10).
+       파일 모아보기는 납품본 조회 화면에서 온 것이라. 되살릴 때는 이 주석을 넣은 커밋의 바로 전 버전에서 이 자리의 <section id="merge">를 가져올 것(git log -S 'id="merge"') -->
   <section class="block alt" id="how">
     <div class="wrap">
       <div class="secHead"><span class="kicker">쓰는 법</span><h2>폴더를 한 번 연결하면 끝이에요</h2>
