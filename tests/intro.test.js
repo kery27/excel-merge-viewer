@@ -154,17 +154,34 @@ async function main() {
   const m = await b2.newContext({ ...devices['Pixel 7'] });
   const mp = await m.newPage();
   mp.on('pageerror', e => errors.push(e.message));
-  const sticking = () => mp.evaluate(() => { const W = document.documentElement.clientWidth; const bad = []; document.querySelectorAll('body *').forEach(e => { if (e.closest('.tw, .tabs, .fsTableWrap')) return; const r = e.getBoundingClientRect(); if (r.width && r.right > W + 1) bad.push((e.id || e.className || e.tagName) + ':' + Math.round(r.right)); }); return bad.slice(0, 5); });
+  const sticking = () => mp.evaluate(() => { const W = document.documentElement.clientWidth; const bad = []; document.querySelectorAll('body *').forEach(e => { if (e.closest('.tw, .tabs, .fsTableWrap, #fsDemoQs')) return; const r = e.getBoundingClientRect(); if (r.width && r.right > W + 1) bad.push((e.id || e.className || e.tagName) + ':' + Math.round(r.right)); }); return bad.slice(0, 5); });
   await mp.goto(base);
   assert.deepEqual(await sticking(), [], '소개 페이지');
   await mp.goto(base + 'app/?demo=1&q=1250000');
   await mp.waitForFunction(() => window.__fsTest && window.__fsTest.state().lastCheck, null, { timeout: 60000 });
   await mp.waitForTimeout(300);
   assert.deepEqual(await sticking(), [], '체험 화면');
+  assert.equal(await mp.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, '체험 화면: 가로로 밀리지 않음(장면 단추 줄만 옆으로 밀림)');
   // 휴대폰은 체험 띠가 길어서, 장면 링크로 오면 장면 한 줄로 내려가 결과 줄이 첫 화면에 보이게
   await mp.waitForTimeout(800);
   assert.ok(await mp.evaluate(() => { const r = document.querySelector('#fsSummary').getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; }), '휴대폰: 결과 줄이 첫 화면에 보임');
-  assert.equal(await mp.isVisible('#fsDemoBar .dmList'), false, '휴대폰에서는 폴더 이름 줄을 줄임');
+  // 휴대폰은 위쪽을 짧게(2026-11-10): 짧은 안내, 장면 단추 한 줄(옆으로 밀기), 내려가지 않아도 결과가 보임
+  assert.equal(await mp.evaluate(() => scrollY), 0, '휴대폰: 화면을 내리지 않아도 결과 줄이 보임');
+  assert.equal(await mp.isVisible('#fsDemoBar .mLong'), false, '휴대폰: 체험 띠는 짧은 글');
+  assert.match(await mp.$eval('#fsDemoBar .dmHow', e => e.innerText), /장면을 눌러 보세요/);
+  assert.equal(await mp.$$eval('#fsDemoQs button', x => new Set(x.map(b => b.offsetTop)).size), 1, '휴대폰: 장면 단추는 한 줄');
+  assert.equal(await mp.isVisible('#offlineBtn'), false, '휴대폰: 오프라인용 내려받기는 숨김');
+  assert.equal(await mp.isVisible('#fsRescan'), false, '가짜 폴더에선 다시 확인 없음');
+  // 가장 작은 휴대폰(320×568)도 내리지 않고 결과 줄, 검색창은 한 줄 통째로
+  const se = await b2.newContext({ ...devices['iPhone SE'] });
+  const sp = await se.newPage();
+  sp.on('pageerror', e => errors.push(e.message));
+  await sp.goto(base + 'app/?demo=1&q=TS-88412');
+  await sp.waitForFunction(() => window.__fsTest && window.__fsTest.state().lastCheck, null, { timeout: 60000 });
+  await sp.waitForTimeout(800);
+  assert.ok(await sp.evaluate(() => { const r = document.querySelector('#fsSummary').getBoundingClientRect(); return scrollY === 0 && r.bottom <= innerHeight; }), '320×568: 결과 줄이 첫 화면에');
+  assert.ok(await sp.$eval('#fsQ', e => e.getBoundingClientRect().width) > 250, '320×568: 검색창이 눌리지 않음');
+  await se.close();
   // 진짜 휴대폰에는 폴더 고르기 기능이 없음(안드로이드 크롬 포함) → [내 폴더 연결하기]를 누르면 "PC에서" 안내 + 주소 보내기
   const m2 = await b2.newContext({ ...devices['Pixel 7'] });
   await m2.addInitScript(() => { delete window.showDirectoryPicker; navigator.share = async d => { window.__shared = d; }; });
@@ -174,6 +191,8 @@ async function main() {
   await mp2.waitForFunction(() => window.__fsTest && window.__fsTest.state().lastCheck, null, { timeout: 60000 });
   await mp2.click('#fsDemoExit');
   await mp2.waitForSelector('#fsConnect:not([hidden])');
+  assert.equal(await mp2.$eval('#fsFolderInfo', e => e.innerText.trim()), '', '체험을 끝내면 위쪽 줄의 가짜 폴더 정보도 지움');
+  assert.equal(await mp2.isVisible('#fsQ'), false, '폴더 연결이 안 되는 곳에선 검색창 숨김');
   assert.match(await mp2.$eval('#fsConnectText', e => e.innerText), /휴대폰·태블릿에서는 폴더 연결이 안 돼요. PC의 크롬이나 엣지/);
   assert.equal(await mp2.isVisible('#fsConnectBtn'), false, '휴대폰에서는 누를 수 없는 [폴더 연결]을 안 보임');
   await mp2.click('#fsSendLink');

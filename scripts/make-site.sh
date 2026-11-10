@@ -27,10 +27,11 @@ sub('<title>엑셀 모아보기</title>',
     '<meta property="og:url" content="' + url + '">')
 # 맨 위 띠: 체험판이라는 것과 만든 곳·문의
 sub('<header class="top">',
-    '<div style="background:var(--accent-soft);color:var(--ink);font-size:13px;padding:8px 20px;display:flex;gap:6px 14px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--line)">'
-    '<span><b>체험판</b> · 가짜 데이터로 눌러 보세요. 내 엑셀을 넣어도 이 PC 밖으로 나가지 않아요.</span>'
-    + ('<a href="' + intro + '" style="color:var(--accent);font-weight:700;text-decoration:none">어디에 쓰나요? 업종별 장면 보기</a>' if intro else '') +
-    '<a href="' + home + '#contact" style="color:var(--accent);font-weight:700;text-decoration:none;margin-left:auto">우리 회사 엑셀에 맞춰 만들기 문의 →</a></div>\n'
+    # 모양은 index.html의 .siteBar(휴대폰에선 .sbLong을 숨겨 한 줄로)
+    '<div class="siteBar">'
+    '<span><b>체험판</b><span class="sbLong"> · 가짜 데이터로 눌러 보세요. 내 엑셀을 넣어도 이 PC 밖으로 나가지 않아요.</span></span>'
+    + ('<a href="' + intro + '"><span class="sbLong">어디에 쓰나요? </span>업종별 장면 보기</a>' if intro else '') +
+    '<a class="sbContact" href="' + home + '#contact"><span class="sbLong">우리 회사 엑셀에 맞춰 만들기 </span>문의 →</a></div>\n'
     '<header class="top">')
 open(out, 'w', encoding='utf-8').write(s)
 PY
