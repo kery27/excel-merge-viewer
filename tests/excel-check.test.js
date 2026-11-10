@@ -132,7 +132,7 @@ async function main() {
   await page.fill('#fsQ', '샘플'); await page.press('#fsQ', 'Enter'); await settle();
   assert.match(await text('#fsSummary'), /일치 2줄 · 표 위 안내 글 1줄 · 파일 1개 · 가장 최근 2026-11-05 · 가장 오래된 2026-11-02/);
   // 위쪽 "줄 N개"도 표 데이터만(점검.xlsx 5줄 + 명세서 2줄, 안내 글 2줄은 빼고)
-  assert.match(await text('#fsFolderInfo'), /파일 2개 · 줄 7개/);
+  assert.match(await text('#fsFolderInfo'), /파일 2개 ▾ · 줄 7개/);
   await page.fill('#fsQ', '보이지않는상사'); await page.press('#fsQ', 'Enter'); await settle();
   assert.match(await text('#fsSummary'), /일치 1줄/);
   await page.fill('#fsQ', '100'); await page.press('#fsQ', 'Enter'); await settle();

@@ -129,6 +129,18 @@ async function main() {
   assert.match(await text('#fsProblems'), /못 읽은 파일 1개/);
   await page.click('#fsProblems summary');
   assert.match(await text('#fsProblems'), /깨진파일\.xlsx/);
+  // 읽은 파일 보기: '파일 4개'를 누르면 폴더별 목록 — 못 읽은 파일도 이유와 함께, 파일을 펼치면 탭·칸 제목
+  await page.click('#fsFolderInfo [data-fs-files]');
+  await page.waitForSelector('#fsFiles:not([hidden])');
+  assert.equal(await page.$$eval('#fsFiles .file', x => x.length), 5); // 읽은 4 + 못 읽은 1
+  assert.match(await text('#fsFiles'), /읽은 파일 4개\s*못 읽은 파일 1개/);
+  assert.match(await page.$eval('#fsFiles div.file', e => e.innerText), /깨진파일\.xlsx\s*못 읽음/);
+  const firstFile = await page.$eval('#fsFiles details.file', d => d.dataset.path);
+  await page.click('#fsFiles details.file > summary');
+  await page.waitForFunction(p => !/불러오는 중/.test(document.querySelector('#fsFiles details.file[data-path="' + p + '"] .shs').innerText), firstFile);
+  assert.match(await page.$eval('#fsFiles details.file .shs', e => e.innerText), /탭 .+ · \d+줄/, firstFile);
+  await page.click('#fsFilesClose');
+  assert.equal(await page.isVisible('#fsFiles'), false);
 
   // 기본: 띄어 쓴 그대로 한 덩어리로 찾음(사용자 결정 2026-11-09). (주)·㈜·주식회사는 무시
   await search('테스트상사');
@@ -280,7 +292,7 @@ async function main() {
   await p2.reload();
   await p2.click('#openFolderBtn');
   await p2.waitForTimeout(500);
-  assert.match(await p2.$eval('#fsFolderInfo', e => e.innerText), /파일 2개 · 줄 2개/, '저장본을 불러옴');
+  assert.match(await p2.$eval('#fsFolderInfo', e => e.innerText), /파일 2개 ▾ · 줄 2개/, '저장본을 불러옴');
   await useMock();
   await p2.waitForFunction(() => window.__fsTest.state().lastCheck);
   assert.equal(await p2.isVisible('#fsStatus'), false, '안 바뀐 파일은 다시 안 읽음');

@@ -36,6 +36,7 @@ async function main() {
     ind: c.dataset.ind,
     href: c.querySelector('.try').getAttribute('href'),
     claim: c.querySelector('.mini .n').textContent.trim(),
+    quote: c.querySelector('.quote').textContent.trim(),
     dates: [...c.querySelectorAll('.mini li .dt')].map(e => e.textContent.trim())
   })));
   assert.equal(cards.length, 7);
@@ -93,6 +94,9 @@ async function main() {
     assert.equal(await page.isVisible('#fsDemoBar'), true);
     const sum = await page.$eval('#fsSummary', e => e.innerText);
     assert.ok(sum.startsWith(c.claim), c.title + ': 카드 "' + c.claim + '" ↔ 앱 "' + sum + '"');
+    // 체험 띠: 그 장면 버튼이 눌린 모양 + 소개 페이지 카드와 같은 상황 한 줄
+    assert.equal(await page.$eval('#fsDemoQs [aria-pressed="true"]', e => e.dataset.demoQ), q, c.title + ' 버튼');
+    assert.ok((await page.$eval('#fsDemoScene', e => e.hidden ? '' : e.innerText)).includes(c.quote), c.title + ': 장면 한 줄이 카드의 "' + c.quote + '"와 다름');
     const resultDates = await page.$$eval('#fsResults td.fsD', x => x.map(e => e.textContent));
     for (const d of c.dates) {
       if (d.length === 7) assert.ok(resultDates.some(r => r.startsWith(d)) || /청구/.test(await page.$eval('#fsResults', e => e.innerText)), c.title + ' ' + d);
@@ -102,6 +106,25 @@ async function main() {
   // 체험 단추로도 찾을 말이 바뀜
   await page.click('#fsDemoQs [data-demo-q="LT-5517"]'); await page.waitForTimeout(300);
   assert.match(await page.$eval('#fsSummary', e => e.innerText), /^일치 4줄/);
+  assert.match(await page.$eval('#fsDemoBar .dmHow', e => e.innerText), /아래 버튼은 일하다 자주 생기는 장면/);
+  // 장면에 없는 말을 넣으면 장면 한 줄은 사라짐
+  await page.fill('#fsQ', '샘플 머그컵'); await page.press('#fsQ', 'Enter'); await page.waitForTimeout(300);
+  assert.equal(await page.isVisible('#fsDemoScene'), false);
+  assert.equal(await page.$$eval('#fsDemoQs [aria-pressed="true"]', x => x.length), 0);
+
+  // 읽은 파일 보기: 위쪽 '파일 52개'를 누르면 폴더별 목록, 파일을 펼치면 탭·칸 제목
+  await page.click('#fsFolderInfo [data-fs-files]');
+  await page.waitForSelector('#fsFiles:not([hidden])');
+  assert.equal(await page.$$eval('#fsFiles .file', x => x.length), 52);
+  assert.equal(await page.$$eval('#fsFiles details.dir', x => x.length), 10);
+  assert.equal(await page.$eval('#fsFiles details.dir[data-dir="출고/2026-10"]', d => d.open), false, '파일이 많은 폴더는 접어 둠');
+  assert.equal(await page.$eval('#fsFiles details.dir[data-dir="고객관리"]', d => d.open), true);
+  assert.equal(await page.$eval('#fsFolderInfo [data-fs-files]', e => e.getAttribute('aria-expanded')), 'true');
+  await page.click('#fsFiles details.file[data-path="고객관리/2019_계약관리.xlsx"] > summary');
+  await page.waitForFunction(() => /상반기/.test(document.querySelector('#fsFiles details.file[data-path="고객관리/2019_계약관리.xlsx"] .shs').innerText));
+  assert.match(await page.$eval('#fsFiles details.file[data-path="고객관리/2019_계약관리.xlsx"] .shs', e => e.innerText), /탭 상반기 · \d+줄 · 칸: /);
+  await page.click('#fsDemoBar [data-fs-files]'); // 체험 띠의 '엑셀·CSV 52개'로 닫기
+  assert.equal(await page.isVisible('#fsFiles'), false);
 
   // 체험은 아무것도 저장하지 않음 — 폴더 기억·저장본(OPFS·IndexedDB) 모두 없음
   const stored = await page.evaluate(async () => {
@@ -138,6 +161,10 @@ async function main() {
   await mp.waitForFunction(() => window.__fsTest && window.__fsTest.state().lastCheck, null, { timeout: 60000 });
   await mp.waitForTimeout(300);
   assert.deepEqual(await sticking(), [], '체험 화면');
+  // 휴대폰은 체험 띠가 길어서, 장면 링크로 오면 장면 한 줄로 내려가 결과 줄이 첫 화면에 보이게
+  await mp.waitForTimeout(800);
+  assert.ok(await mp.evaluate(() => { const r = document.querySelector('#fsSummary').getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; }), '휴대폰: 결과 줄이 첫 화면에 보임');
+  assert.equal(await mp.isVisible('#fsDemoBar .dmList'), false, '휴대폰에서는 폴더 이름 줄을 줄임');
   // 진짜 휴대폰에는 폴더 고르기 기능이 없음(안드로이드 크롬 포함) → [내 폴더 연결하기]를 누르면 "PC에서" 안내 + 주소 보내기
   const m2 = await b2.newContext({ ...devices['Pixel 7'] });
   await m2.addInitScript(() => { delete window.showDirectoryPicker; navigator.share = async d => { window.__shared = d; }; });

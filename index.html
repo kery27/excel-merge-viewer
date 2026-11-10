@@ -255,6 +255,30 @@
   #fsDemoQs { display: flex; gap: 6px; flex-wrap: wrap; }
   #fsDemoQs button { padding: 4px 10px; font-size: 12.5px; }
   #fsDemoQs button b { color: var(--accent); font-weight: 700; margin-left: 2px; }
+  #fsDemoQs button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  #fsDemoQs button[aria-pressed="true"] b { color: var(--on-accent); }
+  #fsDemoBar .dmHow { color: var(--ink); }
+  #fsDemoBar .dmHow b { color: var(--accent); margin-right: 6px; }
+  #fsDemoScene { color: var(--ink); border-top: 1px dashed var(--accent); padding-top: 8px; }
+  #fsDemoScene .cs { font-weight: 800; color: var(--accent); margin-right: 8px; letter-spacing: .04em; }
+  #fsDemoScene .kw { color: var(--sub); margin-left: 6px; white-space: nowrap; }
+  #fsDemoScene .kw b { color: var(--accent); }
+  .linkBtn { background: none; border: 0; border-radius: 0; padding: 0; font: inherit; color: var(--accent); text-decoration: underline dotted; text-underline-offset: 3px; cursor: pointer; }
+  .linkBtn b { color: inherit; }
+  #fsFiles { flex: none; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 1.6; max-height: 55vh; overflow: auto; }
+  #fsFiles .fh { display: flex; gap: 8px 12px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+  #fsFiles .fh .sub { color: var(--sub); flex: 1; min-width: 180px; }
+  #fsFiles summary { cursor: pointer; overflow-wrap: anywhere; }
+  #fsFiles .dir { margin: 3px 0; }
+  #fsFiles .dir > summary { font-weight: 700; color: var(--ink); }
+  #fsFiles .dir > div { padding: 2px 0 4px 18px; }
+  #fsFiles .file > summary, #fsFiles div.file { color: var(--ink); overflow-wrap: anywhere; }
+  #fsFiles div.file { padding-left: 14px; }
+  #fsFiles .meta { color: var(--sub); font-size: 12px; margin-left: 8px; font-weight: 400; }
+  #fsFiles .bad { color: var(--warn); }
+  #fsFiles .shs { margin: 2px 0 6px 16px; padding: 0; list-style: none; color: var(--sub); font-size: 12.5px; }
+  #fsFiles .shs li { margin: 2px 0; }
+  #fsFiles .shs .hd { color: var(--ink); font-weight: 600; }
   #fsMsg { display: flex; gap: 10px; align-items: flex-start; border-radius: 10px; padding: 10px 14px; font-size: 13px; line-height: 1.6; background: var(--accent-soft); border: 1px solid var(--accent); }
   #fsMsg.warn { background: var(--warn-soft); border-color: var(--warn); }
   #fsStatus { font-size: 13px; color: var(--sub); line-height: 1.6; }
@@ -301,6 +325,9 @@
   @media (max-width: 640px) {
     .entries { grid-template-columns: 1fr; }
     #fsSettingsBody { grid-template-columns: 1fr; }
+    /* 휴대폰: 체험 띠를 짧게(폴더 이름 줄은 '엑셀·CSV N개'를 눌러 보면 나옴), 단추는 글 아래로 */
+    #fsDemoBar .dmList { display: none; }
+    #fsDemoBar .dmTop > span { flex-basis: 100%; }
   }
 </style>
 </head>
@@ -365,8 +392,10 @@
       <button id="fsSettingsBtn" class="ghost">설정</button>
     </div>
     <div id="fsDemoBar" hidden>
-      <div class="dmTop"><span><b>가짜 회사 폴더</b>로 체험 중이에요 · <span id="fsDemoInfo"></span> · 모두 가짜 데이터, 아무것도 저장하지 않아요</span><button id="fsDemoExit">내 폴더 연결하기</button></div>
+      <div class="dmTop"><span><b>가짜 회사 폴더</b>로 체험 중이에요 · <span class="dmList">출고·반품·청구·통장·영업·쇼핑몰·생산·고객관리 폴더의 </span><button type="button" class="linkBtn" data-fs-files aria-controls="fsFiles"><span id="fsDemoInfo"></span></button> · 모두 가짜 데이터, 아무것도 저장하지 않아요</span><button id="fsDemoExit">내 폴더 연결하기</button></div>
+      <div class="dmHow"><b>이렇게 해 보세요</b>아래 버튼은 일하다 자주 생기는 장면이에요. 하나를 누르면 그 장면에서 찾는 말(송장번호·금액·거래처…)로 이 폴더의 엑셀을 한 번에 찾아요. 검색창에 직접 넣어 봐도 돼요.</div>
       <div id="fsDemoQs"></div>
+      <div id="fsDemoScene" hidden></div>
     </div>
     <div id="fsMsg" hidden></div>
     <div id="fsConnect" hidden>
@@ -377,6 +406,7 @@
     <div id="fsMain" hidden style="display:contents">
       <div id="fsStatus" hidden><span id="fsStatusText"></span><div class="bar"><i id="fsBar"></i></div></div>
       <div id="fsProblems" hidden></div>
+      <div id="fsFiles" hidden></div>
       <div class="fsBar">
         <input id="fsQ" type="search" placeholder="업체명·상품코드·송장번호… (띄어 쓴 그대로 찾아요 · 여러 말을 같이 찾으려면 + 로: 테스트상사+P0123)" autocomplete="off">
         <div id="fsPeriod"></div>
@@ -1406,6 +1436,12 @@ function workerMain() {
       rows, sheets, ms: performance.now() - t0
     };
   }
+  // 읽은 파일 보기: 파일 하나의 탭 이름·칸 제목·줄 수(part='above'는 제목 줄 위 안내 글)
+  function fsSheetsOf(path) {
+    if (!fdb) return [];
+    const r = fdb.exec('SELECT sheet, headers, rows, part FROM f_sheets WHERE path = ? ORDER BY id', [path]);
+    return r.length ? r[0].values.map(v => ({ sheet: v[0], headers: JSON.parse(v[1] || '[]'), rows: v[2], part: v[3] })) : [];
+  }
   function fsExport(folder) {
     if (folder !== undefined) fsMetaSet('folder', folder);
     return fdb.export();
@@ -1462,6 +1498,7 @@ function workerMain() {
       else if (cmd === 'fsState') result = fsState();
       else if (cmd === 'fsRenorm') result = fsRenorm(e.data.norm);
       else if (cmd === 'fsSearch') result = fsSearch(e.data);
+      else if (cmd === 'fsSheets') result = fsSheetsOf(e.data.path);
       else if (cmd === 'fsExport') { const b = fsExport(e.data.folder); result = b.buffer; transfer = [result]; }
       self.postMessage({ type: 'reply', id, result }, transfer);
     } catch (err) {
@@ -3355,7 +3392,8 @@ function fsRenderTop() {
   const ok = files.filter(f => f.status === 'ok').length;
   const bad = [...fs.known.entries()].filter(([, f]) => f.status !== 'ok');
   $('#fsFolderName').textContent = fs.dir ? fs.dir.name : (fs.savedFolder || '');
-  $('#fsFolderInfo').innerHTML = '파일 <b>' + fmt(ok) + '</b>개 · 줄 <b>' + fmt(fs.rows) + '</b>개' +
+  const filesOpen = !$('#fsFiles').hidden;
+  $('#fsFolderInfo').innerHTML = (files.length ? '<button type="button" class="linkBtn" data-fs-files aria-controls="fsFiles" aria-expanded="' + filesOpen + '" title="읽은 파일 목록 보기">파일 <b>' + fmt(ok) + '</b>개 ' + (filesOpen ? '▴' : '▾') + '</button>' : '파일 <b>0</b>개') + ' · 줄 <b>' + fmt(fs.rows) + '</b>개' +
     (fs.pendingOld ? ' · <span class="warnTxt">아직 ' + fmt(fs.pendingOld) + '개 읽는 중</span>' : '') +
     (fs.lastCheck ? ' · 마지막 확인 ' + hm(fs.lastCheck) : '') +
     (fs.observer ? ' · <span title="파일이 생기거나 바뀌면 바로 다시 읽어요">변경 감지 켜짐</span>' : '');
@@ -3365,7 +3403,57 @@ function fsRenderTop() {
   pb.innerHTML = (bad.length ? '<details><summary>못 읽은 파일 ' + bad.length + '개 — 이 파일들의 내용은 찾기에 나오지 않아요</summary><ul>' +
       bad.sort((a, b) => a[0].localeCompare(b[0], 'ko')).map(([p, f]) => '<li><b>' + esc(p) + '</b> — ' + esc(f.error || '읽지 못했어요') + '</li>').join('') + '</ul></details>' : '') +
     (ckh ? '<details><summary class="ckSum">확인할 것 ' + ckh.n + '개 파일 — 엑셀에 있는 그대로는 보여 줄 수 없는 칸(빼지 않고 넣었어요)</summary>' + ckh.html + '</details>' : '');
+  if (filesOpen && fs.filesShown !== fs.known.size + ':' + fs.rows) fsRenderFiles(); // 열어 둔 채 다시 읽었으면 목록도 새로
 }
+
+// ---- 읽은 파일 보기: 위쪽 '파일 N개'(체험 띠의 '엑셀·CSV N개')를 누르면 폴더별 목록, 파일을 펼치면 탭·칸 제목 ----
+function fsToggleFiles(open) {
+  const box = $('#fsFiles');
+  if (open === undefined) open = box.hidden;
+  box.hidden = !open;
+  if (open) fsRenderFiles(); else { box.innerHTML = ''; fs.filesShown = null; }
+  fsRenderTop();
+  if (open) box.scrollIntoView({ block: 'nearest' });
+}
+function fsRenderFiles() {
+  const box = $('#fsFiles');
+  // 다시 그려도 펼쳐 둔 폴더·파일은 그대로
+  const openDirs = new Set([...box.querySelectorAll('details.dir[open]')].map(d => d.dataset.dir));
+  const openFiles = new Set([...box.querySelectorAll('details.file[open]')].map(d => d.dataset.path));
+  const first = !box.innerHTML;
+  const entries = [...fs.known.entries()].sort((a, b) => a[0].localeCompare(b[0], 'ko'));
+  const groups = new Map();
+  for (const e of entries) { const i = e[0].lastIndexOf('/'); const dir = i < 0 ? '' : e[0].slice(0, i); if (!groups.has(dir)) groups.set(dir, []); groups.get(dir).push(e); }
+  const okN = entries.filter(([, f]) => f.status === 'ok').length, badN = entries.length - okN;
+  let h = '<div class="fh"><b>읽은 파일 ' + fmt(okN) + '개</b>' + (badN ? '<span class="bad">못 읽은 파일 ' + fmt(badN) + '개</span>' : '') +
+    '<span class="sub">폴더별로 묶었어요. 파일 이름을 누르면 그 파일의 탭과 칸 제목이 보여요.</span><button type="button" class="ghost" id="fsFilesClose">닫기</button></div>';
+  for (const [dir, list] of groups) {
+    const rows = list.reduce((s, [, f]) => s + (f.rows || 0), 0);
+    const open = first ? entries.length <= 80 && list.length <= 10 : openDirs.has(dir); // 처음엔 작은 폴더만 펼침
+    h += '<details class="dir" data-dir="' + esc(dir) + '"' + (open ? ' open' : '') + '><summary>' + esc(dir || '(맨 위)') + '<span class="meta">파일 ' + fmt(list.length) + '개 · 줄 ' + fmt(rows) + '개</span></summary><div>' +
+      list.map(([p, f]) => {
+        const name = esc(p.slice(p.lastIndexOf('/') + 1)), when = f.mtime ? ' · 수정 ' + ymd(f.mtime) : '';
+        if (f.status !== 'ok') return '<div class="file">' + name + '<span class="meta bad">못 읽음 — ' + esc(f.error || '읽지 못했어요') + when + '</span></div>';
+        return '<details class="file" data-path="' + esc(p) + '"' + (openFiles.has(p) ? ' open' : '') + '><summary>' + name + '<span class="meta">줄 ' + fmt(f.rows || 0) + '개' + (f.checks ? ' · 확인할 것 있음' : '') + when + '</span></summary><ul class="shs"><li>불러오는 중…</li></ul></details>';
+      }).join('') + '</div></details>';
+  }
+  box.innerHTML = h;
+  fs.filesShown = fs.known.size + ':' + fs.rows;
+  box.querySelectorAll('details.file[open]').forEach(fsLoadSheets);
+}
+async function fsLoadSheets(d) {
+  if (d.dataset.loaded) return;
+  d.dataset.loaded = '1';
+  const list = await call('fsSheets', { path: d.dataset.path });
+  d.querySelector('.shs').innerHTML = list.length ? list.map(s => {
+    if (s.part === 'above') return '<li>↳ "' + esc(s.sheet) + '" 탭 표 위 안내 글 · ' + fmt(s.rows) + '줄(건수에는 안 넣음)</li>';
+    const hs = s.headers.filter(x => String(x).trim());
+    return '<li>탭 <span class="hd">' + esc(s.sheet) + '</span> · ' + fmt(s.rows) + '줄' + (hs.length ? ' · 칸: ' + hs.slice(0, 12).map(esc).join(' · ') + (hs.length > 12 ? ' 외 ' + (hs.length - 12) + '칸' : '') : '') + '</li>';
+  }).join('') : '<li>표로 읽은 탭이 없어요</li>';
+}
+$('#fsFiles').addEventListener('toggle', e => { const d = e.target; if (d.matches && d.matches('details.file') && d.open) fsLoadSheets(d); }, true); // toggle은 위로 안 올라와서 잡는 단계에서
+$('#fsFiles').addEventListener('click', e => { if (e.target.id === 'fsFilesClose') fsToggleFiles(false); });
+document.addEventListener('click', e => { if (e.target.closest('[data-fs-files]')) fsToggleFiles(); });
 
 // ---- 찾기 ----
 const PERIODS = [['all', '전체'], ['7', '7일'], ['30', '30일'], ['90', '90일'], ['365', '1년']];
@@ -3379,6 +3467,7 @@ function fsRefreshResults() { if ($('#fsQ').value.trim()) fsRun(); }
 async function fsRun() {
   const qv = $('#fsQ').value.trim();
   const my = ++fsSeq;
+  if (fs.demo) fsDemoSceneSync();
   if (!qv) { fs.lastResult = null; $('#fsSummary').innerHTML = ''; $('#fsResults').innerHTML = fsHintHtml(); return; }
   const res = await call('fsSearch', { q: qv, from: fsFromDate(), order: fsCfg.order, cap: fsCfg.cap });
   if (my !== fsSeq) return; // 그 사이에 검색어가 바뀜
@@ -3670,10 +3759,30 @@ $('#offlineBtn').addEventListener('click', async () => {
 // 연결한다. 전부 누가 봐도 가짜인 데이터. 체험 중에는 아무것도 저장하지 않는다 — 저장본·폴더 기억·변경 감지 모두 끔.
 // 폴더 고르기가 없는 브라우저(사파리·휴대폰)에서도 체험은 된다(고르기 창을 안 쓰므로).
 // 장면별 찾을 말은 소개 페이지(intro/index.html)의 카드와 맞춘다 — 바꾸면 둘 다, tests/intro.test.js도.
+// [버튼 이름, 찾을 말, 그 장면의 상황(소개 페이지 장면 카드의 말과 같게 — tests/intro.test.js가 확인), 찾을 말의 종류]
 const DEMO_SCENES = [
-  ['반품 출고 확인', 'TS-88412'], ['오배송', 'P-3310'], ['이름 잘린 입금', '1250000'], ['거래처 지난 거래', '샘플마트'],
-  ['쇼핑몰 주문', '31005873412'], ['로트 추적', 'LT-5517'], ['몇 년 전 계약', '한빛샘플']
+  ['반품 출고 확인', 'TS-88412', '반품이 들어왔어요. 언제, 어느 거래처로 나간 물건이지?', '송장번호'],
+  ['오배송', 'P-3310', '마우스를 시켰는데 다른 물건이 왔어요.', '상품코드'],
+  ['이름 잘린 입금', '1250000', "통장에 '가나다유' 1,250,000원. 어느 거래처 돈이지?", '입금 금액'],
+  ['거래처 지난 거래', '샘플마트', '지난번이랑 같은 걸로요. 그때 얼마였죠?', '거래처 이름'],
+  ['쇼핑몰 주문', '31005873412', '주문번호 31005873412요. 언제 보내셨어요?', '주문번호'],
+  ['로트 추적', 'LT-5517', 'LT-5517 로트에 불량이래요. 어디로 나갔죠?', '로트번호'],
+  ['몇 년 전 계약', '한빛샘플', '2019년에 몇 개 샀었죠?', '업체 이름']
 ];
+// 휴대폰에서는 체험 띠가 길어 결과가 화면 아래로 밀림 → 장면 한 줄을 화면 맨 위로(그 아래 검색창·결과가 보이게)
+function fsDemoScrollToScene() {
+  if (!fs.demo || $('#fsDemoScene').hidden || !window.matchMedia('(max-width: 640px)').matches) return;
+  $('#fsDemoScene').scrollIntoView({ block: 'start', behavior: 'smooth' });
+}
+// 검색창의 말이 장면의 찾을 말이면 그 버튼을 눌린 모양으로, 아래에 장면 상황 한 줄
+function fsDemoSceneSync() {
+  const q = $('#fsQ').value.trim();
+  const i = DEMO_SCENES.findIndex(s => s[1] === q);
+  $('#fsDemoQs').querySelectorAll('[data-demo-q]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.demoQ === q)));
+  const box = $('#fsDemoScene');
+  box.hidden = i < 0;
+  if (i >= 0) { const [, word, situ, kind] = DEMO_SCENES[i]; box.innerHTML = '<span class="cs">CASE ' + String(i + 1).padStart(2, '0') + '</span>' + esc(situ) + '<span class="kw">찾을 말 · ' + esc(kind) + ' <b>' + esc(word) + '</b></span>'; }
+}
 function makeDemoTree() {
   const X = __xlsxFactory();
   let seed = 20261109;
@@ -3801,14 +3910,15 @@ async function fsStartDemo(q) {
   $('#fsMain').hidden = false; $('#fsRescan').hidden = false;
   $('#fsDemoBar').hidden = false;
   $('#fsDemoInfo').textContent = '엑셀·CSV ' + count + '개';
-  $('#fsDemoQs').innerHTML = DEMO_SCENES.map(([label, word]) => '<button type="button" class="ghost" data-demo-q="' + esc(word) + '">' + esc(label) + ' <b>' + esc(word) + '</b></button>').join('');
+  $('#fsDemoQs').innerHTML = DEMO_SCENES.map(([label, word]) => '<button type="button" class="ghost" data-demo-q="' + esc(word) + '" aria-pressed="false">' + esc(label) + ' <b>' + esc(word) + '</b></button>').join('');
   fsRenderTop();
   await fsSync('demo');
-  if (q) { $('#fsQ').value = q; await fsRun(); } else $('#fsQ').focus();
+  if (q) { $('#fsQ').value = q; await fsRun(); fsDemoScrollToScene(); } else $('#fsQ').focus();
 }
 async function fsExitDemo() {
   fs.demo = false; fs.dir = null; fs.ready = false; fs.known = new Map(); fs.rows = 0; fs.lastResult = null; fs.lastCheck = null; fs.savedFolder = null;
-  $('#fsDemoBar').hidden = true; $('#fsSummary').innerHTML = ''; $('#fsResults').innerHTML = ''; $('#fsQ').value = ''; fsSetStatus('');
+  $('#fsDemoBar').hidden = true; $('#fsDemoScene').hidden = true; $('#fsSummary').innerHTML = ''; $('#fsResults').innerHTML = ''; $('#fsQ').value = ''; fsSetStatus('');
+  $('#fsFiles').hidden = true; $('#fsFiles').innerHTML = ''; fs.filesShown = null; // 가짜 폴더 목록은 닫음
   try { history.replaceState(null, '', location.pathname); } catch (e) {}
   await openFolderView(); // 진짜 저장본을 다시 불러오고, 기억한 폴더가 있으면 그대로
 }
@@ -3829,7 +3939,7 @@ $('#fsDemoQs').addEventListener('click', e => {
   if (!b) return;
   $('#fsQ').value = b.dataset.demoQ;
   fs.period = null; fsRenderPeriod();
-  fsRun();
+  fsRun().then(fsDemoScrollToScene);
 });
 
 // 자동 테스트용: 폴더 고르기 창 없이 폴더 핸들을 넘겨 연결(헤드리스 크롬은 고르기 창을 못 띄움). 화면에서는 쓰지 않음.
