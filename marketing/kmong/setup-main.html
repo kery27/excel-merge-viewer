@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>크몽 메인 이미지 · 폴더 찾아보기 원격 세팅</title>
+<!--
+  크몽 세팅 상품(세팅상품_초안.md)의 메인 이미지, 652×488(4:3).
+  찍기: node marketing/kmong/render-setup.js → out/setup-main.png (2배, 1304×976)
+  크몽 메인이미지 가이드(2025-01-31)에서 지킬 것:
+    - 흰색이 아닌 배경
+    - 글자·디자인 요소는 상하좌우 50px 안쪽 (찍을 때 render-setup.js가 검사, 배경·초록 띠·큰 번호만 예외)
+    - 쓰지 않는 말: 무료·N원·할인·가성비·환불 같은 가격 표현, 최고·1위·추천·최초·유일, 연락처·주소(URL)
+  글꼴: 제목 명조는 Noto Serif KR Bold, 본문은 Pretendard. dist/font-src/에 있는 것(scripts/make-fonts.py가 받음)을 찍을 때만 쓴다.
+  디자인은 소개 페이지·카드뉴스와 같은 '사건 기록' 톤. 찾은 줄은 카드 2번(반품 출고 확인)과 같은 가짜 데이터.
+-->
+<style>
+  @font-face { font-family: "KM Serif"; src: url("../../dist/font-src/NotoSerifKR-Bold.otf"); font-weight: 700; }
+  @font-face { font-family: "KM Sans"; src: url("../../dist/font-src/Pretendard-SemiBold.otf"); font-weight: 600; }
+  @font-face { font-family: "KM Sans"; src: url("../../dist/font-src/Pretendard-Bold.otf"); font-weight: 700; }
+  @font-face { font-family: "KM Sans"; src: url("../../dist/font-src/Pretendard-ExtraBold.otf"); font-weight: 800; }
+  :root {
+    --paper: #EFE7D6; --card: #FFFDF8; --ink: #1B1B1B; --sub: #5E574C; --faint: #8F8676; --rule-soft: #CFC4AE;
+    --green: #1D6B3F; --green-soft: #CFE6D8; --mark: #F2D36B; --num: #E2D8C3;
+    --serif: "KM Serif", "EMV Serif", "Noto Serif KR", serif;
+    --sans: "KM Sans", "Pretendard", "Malgun Gothic", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { font-family: var(--sans); color: var(--ink); word-break: keep-all; -webkit-font-smoothing: antialiased; }
+  .img { position: relative; width: 652px; height: 488px; overflow: hidden; background: var(--paper); }
+
+  /* 배경 요소(가장자리까지 가도 됨) */
+  .band { position: absolute; left: 0; right: 0; bottom: 0; height: 152px; background: var(--green); }
+  .bigNo { position: absolute; right: 50px; top: 50px; font-family: var(--serif); font-weight: 700; font-size: 150px; line-height: 1; color: var(--num); }
+
+  /* 위: 사건 머리 + 제목 */
+  .head { position: absolute; left: 50px; right: 50px; top: 50px; border-top: 4px solid var(--ink); padding-top: 9px;
+    font-size: 14px; font-weight: 800; letter-spacing: .14em; line-height: 1.2; }
+  .head b { color: var(--green); }
+  h1 { position: absolute; left: 50px; top: 90px; margin: 0; font-family: var(--serif); font-weight: 700;
+    font-size: 44px; line-height: 1.24; letter-spacing: -.5px; white-space: nowrap; }
+
+  /* 오른쪽: 바탕화면 아이콘 */
+  .icon { position: absolute; right: 62px; top: 166px; width: 96px; text-align: center; }
+  .icon svg.sq { display: block; margin: 0 auto; filter: drop-shadow(0 6px 10px rgba(29,107,63,.28)); }
+  .icon span { display: block; margin-top: 6px; font-size: 14px; font-weight: 800; }
+  .icon svg.cur { position: absolute; left: 66px; top: 44px; }
+
+  /* 찾은 줄(오려 붙인 쪽지) — 초록 띠 경계에 살짝 걸침 */
+  .clip { position: absolute; left: 50px; right: 50px; top: 264px; background: var(--card); padding: 9px 16px 8px;
+    box-shadow: 0 2px 0 var(--rule-soft), 0 10px 22px rgba(60,45,20,.14); }
+  .clip .h { display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; font-weight: 800; letter-spacing: .1em; color: var(--sub); }
+  .clip .h mark { font-size: 18px; letter-spacing: 0; color: var(--ink); background: linear-gradient(transparent 58%, var(--mark) 58%); padding: 0 4px; }
+  .clip .h .n { margin-left: auto; letter-spacing: 0; font-weight: 700; }
+  .clip .r { display: flex; align-items: baseline; gap: 14px; margin-top: 6px; padding-top: 6px; border-top: 1.5px dashed var(--rule-soft);
+    font-size: 16px; font-weight: 600; white-space: nowrap; }
+  .clip .r b { font-family: var(--serif); font-weight: 700; font-size: 17px; }
+  .clip .r small { color: var(--faint); font-size: 13px; font-weight: 600; }
+
+  /* 아래 초록 띠: 무엇을 해 주는지 */
+  .offer { position: absolute; left: 50px; right: 50px; top: 372px; color: #fff; font-size: 22px; font-weight: 800; letter-spacing: -.4px; line-height: 1.25; white-space: nowrap; }
+  .chips { position: absolute; left: 50px; right: 50px; top: 410px; display: flex; gap: 18px; color: var(--green-soft);
+    font-size: 15px; font-weight: 700; line-height: 1.2; white-space: nowrap; }
+  .chips span::before { content: '✓ '; color: #fff; }
+</style>
+</head>
+<body>
+<div class="img">
+  <div class="band"></div>
+  <div class="bigNo">01</div>
+
+  <div class="head" data-safe>CASE 01 · <b>반품 출고 확인</b></div>
+  <h1 data-safe>반품 송장 하나 찾으려고<br>한 달 치 엑셀을<br>열고 계신가요?</h1>
+
+  <div class="icon" data-safe>
+    <svg class="sq" viewBox="0 0 64 64" width="64" height="64" aria-hidden="true">
+      <rect width="64" height="64" rx="14" fill="#1D6B3F"/>
+      <rect x="12" y="12" width="31" height="35" rx="3" fill="#FFFDF8"/>
+      <path d="M12 22.5h31M12 31h31M12 39.5h31M24 12v35" stroke="#1D6B3F" stroke-width="2" opacity=".5"/>
+      <circle cx="40" cy="40" r="9.5" fill="#1D6B3F" stroke="#FFFDF8" stroke-width="4"/>
+      <path d="M47 47l7 7" stroke="#FFFDF8" stroke-width="5" stroke-linecap="round"/>
+    </svg>
+    <span>엑셀 찾기</span>
+    <svg class="cur" viewBox="0 0 16 24" width="18" height="27" aria-hidden="true">
+      <path d="M1.5 1.5v18.5l4.8-4.6 3.4 7.2 3.1-1.5-3.3-7h6.6z" fill="#1B1B1B" stroke="#FFFDF8" stroke-width="1.5" stroke-linejoin="round"/>
+    </svg>
+  </div>
+
+  <div class="clip" data-safe>
+    <div class="h">찾은 줄 <mark>TS-88412</mark><span class="n">최신순</span></div>
+    <div class="r"><b>12일 전</b><span>출고 → (주)테스트상사</span><small>그날 출고 엑셀</small></div>
+  </div>
+
+  <div class="offer" data-safe>바탕화면 아이콘 하나로, 그 줄이 바로 나오게 세팅해 드려요</div>
+  <div class="chips" data-safe><span>원격으로 세팅</span><span>파일은 받지 않아요</span><span>직원 사용법 안내</span></div>
+</div>
+</body>
+</html>
