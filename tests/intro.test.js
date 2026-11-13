@@ -112,18 +112,26 @@ async function main() {
   assert.equal(await page.isVisible('#fsDemoScene'), false);
   assert.equal(await page.$$eval('#fsDemoQs [aria-pressed="true"]', x => x.length), 0);
 
-  // 읽은 파일 보기: 위쪽 '파일 52개'를 누르면 폴더별 목록, 파일을 펼치면 탭·칸 제목
+  // 읽은 파일 보기: 위쪽 '파일 N개'를 누르면 폴더별 목록, 파일을 펼치면 탭·칸 제목
+  // 가짜 회사 폴더는 '오늘' 기준으로 만들어져(출고는 최근 45일 중 일요일을 뺀 날마다 한 파일) 요일·달에 따라 파일 52~54개, 폴더 10~11개다.
+  // → 개수를 못 박지 않고, 위쪽에 적힌 수와 목록이 맞는지를 본다 (2026-11-13: 날짜가 지나 52·10으로 못 박은 확인이 깨졌음).
   await page.click('#fsFolderInfo [data-fs-files]');
   await page.waitForSelector('#fsFiles:not([hidden])');
-  assert.equal(await page.$$eval('#fsFiles .file', x => x.length), 52);
-  assert.equal(await page.$$eval('#fsFiles details.dir', x => x.length), 10);
-  assert.equal(await page.$eval('#fsFiles details.dir[data-dir="출고/2026-10"]', d => d.open), false, '파일이 많은 폴더는 접어 둠');
+  const shownFiles = Number((await page.$eval('#fsFolderInfo [data-fs-files]', e => e.textContent)).replace(/[^0-9]/g, ''));
+  const listedFiles = await page.$$eval('#fsFiles .file', x => x.length);
+  assert.equal(listedFiles, shownFiles, '위쪽 파일 수와 목록이 같음');
+  assert.ok(listedFiles >= 52 && listedFiles <= 54, '가짜 회사 폴더 파일 52~54개: ' + listedFiles);
+  const dirCount = await page.$$eval('#fsFiles details.dir', x => x.length);
+  assert.ok(dirCount >= 10 && dirCount <= 11, '폴더 10~11개: ' + dirCount);
+  const bigDirs = await page.$$eval('#fsFiles details.dir[data-dir^="출고/"]', ds => ds.map(d => [d.querySelectorAll('.file').length, d.open]));
+  assert.ok(bigDirs.some(([n]) => n > 10), '출고 폴더에 파일이 많은 달이 있음');
+  assert.ok(bigDirs.every(([n, open]) => n <= 10 || !open), '파일이 많은 폴더는 접어 둠: ' + JSON.stringify(bigDirs));
   assert.equal(await page.$eval('#fsFiles details.dir[data-dir="고객관리"]', d => d.open), true);
   assert.equal(await page.$eval('#fsFolderInfo [data-fs-files]', e => e.getAttribute('aria-expanded')), 'true');
   await page.click('#fsFiles details.file[data-path="고객관리/2019_계약관리.xlsx"] > summary');
   await page.waitForFunction(() => /상반기/.test(document.querySelector('#fsFiles details.file[data-path="고객관리/2019_계약관리.xlsx"] .shs').innerText));
   assert.match(await page.$eval('#fsFiles details.file[data-path="고객관리/2019_계약관리.xlsx"] .shs', e => e.innerText), /탭 상반기 · \d+줄 · 칸: /);
-  await page.click('#fsDemoBar [data-fs-files]'); // 체험 띠의 '엑셀·CSV 52개'로 닫기
+  await page.click('#fsDemoBar [data-fs-files]'); // 체험 띠의 '엑셀·CSV N개'로 닫기
   assert.equal(await page.isVisible('#fsFiles'), false);
 
   // 체험은 아무것도 저장하지 않음 — 폴더 기억·저장본(OPFS·IndexedDB) 모두 없음

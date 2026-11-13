@@ -400,7 +400,7 @@
     <p class="lead"><span class="mergeOnly">월별 탭, 연도별 파일로 흩어진 데이터를 한 화면에서 조건으로 걸러 보세요.<br></span><span class="folderOnlyShow">엑셀이 쌓이는 폴더를 한 번 연결해 두면, 찾을 말 하나로 그 안의 모든 엑셀에서 그 줄을 최신순으로 찾아요.<br></span>파일은 이 PC 밖으로 나가지 않아요. 인터넷이 없어도 됩니다.</p>
     <div class="entries">
       <div class="entry on mergeOnly"><b>파일 모아보기</b><span>같은 구조의 엑셀을 하나로 합쳐 칸 조건으로 걸러 봐요 — <span class="mLong">아래에 파일을 끌어다 놓으세요</span><span class="mShort">아래를 눌러 파일을 고르세요</span></span></div>
-      <button type="button" class="entry" id="demoEntryBtn" hidden><b>가짜 회사 폴더로 해 보기 →</b><span>출고·반품·청구·통장 같은 가짜 엑셀 52개로, 일하다 자주 생기는 장면을 바로 찾아봐요</span></button><button type="button" class="entry" id="openFolderBtn"><b>폴더 찾아보기 →</b><span class="phoneOnly">폴더 연결은 PC에서 돼요 · 휴대폰에서는 가짜 회사 폴더로 체험</span><span>폴더를 한 번 연결해 두면 키워드 하나로 그 안의 모든 엑셀에서 그 줄을 찾아요. 제목 형식이 달라도 돼요</span></button>
+      <button type="button" class="entry" id="demoEntryBtn" hidden><b>가짜 회사 폴더로 해 보기 →</b><span>출고·반품·청구·통장 같은 가짜 엑셀 50여 개로, 일하다 자주 생기는 장면을 바로 찾아봐요</span></button><button type="button" class="entry" id="openFolderBtn"><b>폴더 찾아보기 →</b><span class="phoneOnly">폴더 연결은 PC에서 돼요 · 휴대폰에서는 가짜 회사 폴더로 체험</span><span>폴더를 한 번 연결해 두면 키워드 하나로 그 안의 모든 엑셀에서 그 줄을 찾아요. 제목 형식이 달라도 돼요</span></button>
     </div>
     <div id="drop" class="mergeOnly">
       <strong><span class="mLong">엑셀·CSV 파일을 여기로 끌어다 놓으세요</span><span class="mShort">눌러서 엑셀·CSV 파일 고르기</span></strong>
@@ -3058,6 +3058,9 @@ $('#resetYes').addEventListener('click', async () => {
 
 // 공개 체험판: 폴더 찾아보기만(파일 모아보기로 들어가는 처음 화면 카드·끌어다 놓기·?sample= 은 막음 — 위 CSS .mergeOnly)
 const FOLDER_ONLY = document.documentElement.classList.contains('folderOnly');
+// 열자마자 폴더 찾아보기 화면으로: 바탕화면 아이콘으로 여는 세팅용 판(만드는 스크립트가 <html class="… startFolder">를 붙인다).
+// 연결해 둔 폴더가 있으면 바로 찾을 수 있고, 처음이면 [폴더 연결]이 보인다. [← 처음 화면]으로 가면 가짜 회사 폴더 체험도 그대로 있다.
+const START_FOLDER = document.documentElement.classList.contains('startFolder');
 // 화면 어디에 떨어뜨려도 받기(조회 중에 파일을 더 넣을 때도)
 let dragDepth = 0;
 window.addEventListener('dragenter', e => { e.preventDefault(); if (FOLDER_ONLY) return; dragDepth++; document.body.classList.add('dragging'); });
@@ -4014,6 +4017,7 @@ if (!BUNDLES_OK) {
     $('#sampleSize').value = opt ? sp : '10000';
     runSample();
   }
+  else if (START_FOLDER) openFolderView();
 }
 </script>
 </body>
